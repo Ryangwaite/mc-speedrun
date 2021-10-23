@@ -1,7 +1,18 @@
-import Button from '@mui/material/Button';
+import { Container } from '@mui/material';
+import { TopBar, TopBarOffset } from './common/AppBar';
+import Home from './home/home';
 
 function App() {
-  return <Button variant="contained">Hello World</Button>;
+    return (
+        <Container
+            disableGutters
+            maxWidth={false}
+        >
+            <TopBar />
+            <TopBarOffset />
+            <Home />
+        </Container>
+    )
 }
 
 export default App;
