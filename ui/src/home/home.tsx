@@ -1,3 +1,4 @@
+import React from "react";
 import { Button, Card, CardActions, CardContent, CardHeader, Divider, Grid, TextField } from "@mui/material";
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -6,26 +7,49 @@ interface IInputTextBoxProps {
     title: string,
     label: string,
     buttonLabel: string,
+    onSubmit: (inputContent: string) => void
 }
 
-function InputTextBox(props: IInputTextBoxProps) {
-    const { title, label, buttonLabel} = props
-    return (
-        <Card sx={{
-            marginLeft: "auto",
-            marginRight: "auto",
-            marginTop: "theme",
-            maxWidth: 320
-        }}>
-            <CardHeader title={title} sx={{ textAlign: "center" }} />
-            <CardContent>
-                <TextField id="outlined-basic" label={label} fullWidth />
-            </CardContent>
-            <CardActions>
-                <Button variant="contained" fullWidth>{buttonLabel}</Button>
-            </CardActions>
-        </Card>
-    )
+interface IInputTextBoxState {
+    fieldContent: string
+}
+
+class InputTextBox extends React.Component<IInputTextBoxProps, IInputTextBoxState> {
+    constructor(props: IInputTextBoxProps) {
+        super(props);
+        this.state = {
+            fieldContent: ""
+        }
+        this.onFieldChange = this.onFieldChange.bind(this);
+    }
+    
+    private onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
+        this.setState({fieldContent: event.target.value})
+    }
+    
+    render() {
+        const { title, label, buttonLabel, onSubmit} = this.props
+        return (
+            <Card sx={{
+                marginLeft: "auto",
+                marginRight: "auto",
+                maxWidth: 320
+            }}>
+                <CardHeader title={title} sx={{ textAlign: "center" }} />
+                <CardContent>
+                    <TextField id="outlined-basic" label={label} fullWidth onChange={this.onFieldChange}/>
+                </CardContent>
+                <CardActions>
+                    <Button
+                        disabled={!this.state.fieldContent}
+                        onClick={() => onSubmit(this.state.fieldContent)}
+                        variant="contained" 
+                        fullWidth
+                    >{buttonLabel}</Button>
+                </CardActions>
+            </Card>
+        )
+    }
 }
 
 /**
@@ -33,7 +57,6 @@ function InputTextBox(props: IInputTextBoxProps) {
  * depending on screen size
  */
 function ResponsiveDivider() {
-
     const theme: Theme = useTheme();
     const isSmallAndUp = useMediaQuery(theme.breakpoints.up("sm"));
 
@@ -71,12 +94,19 @@ function ResponsiveDivider() {
     }
 }
 
-
 interface IHomeProps {
     // TODO
 }
 
 function Home(props: IHomeProps) {
+
+    const onParticipantJoin = (code: string) => {
+        alert(`Preparing to join session '${code}'`)
+    }
+
+    const onHostBegin = (name: string) => {
+        alert(`Preparing to host session '${name}'`)
+    }
 
     return (
         <Grid
@@ -89,6 +119,7 @@ function Home(props: IHomeProps) {
                     title={"Join"} 
                     label={"Access Code"} 
                     buttonLabel={"Enter"}
+                    onSubmit={onParticipantJoin}
                 />
             </Grid>
             <ResponsiveDivider />
@@ -96,7 +127,8 @@ function Home(props: IHomeProps) {
                 <InputTextBox
                     title={"Host"}
                     label={"Name of quiz"}
-                    buttonLabel={"Join"}
+                    buttonLabel={"Begin"}
+                    onSubmit={onHostBegin}
                 />
             </Grid>
         </Grid>
