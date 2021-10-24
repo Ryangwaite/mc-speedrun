@@ -1,6 +1,7 @@
 import { Container } from '@mui/material';
 import { TopBar, TopBarOffset } from './common/AppBar';
 import Home from './home/home';
+import Lobby from './participant/Lobby';
 
 function App() {
     return (
@@ -10,7 +11,8 @@ function App() {
         >
             <TopBar />
             <TopBarOffset />
-            <Home />
+            {/* <Home /> */}
+            <Lobby />
         </Container>
     )
 }
