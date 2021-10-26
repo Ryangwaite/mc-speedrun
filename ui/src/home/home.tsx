@@ -113,6 +113,7 @@ function Home(props: IHomeProps) {
             container
             alignItems="center"
             justifyContent="center"
+            marginTop="5vh"
         >
             <Grid item xs={12} sm={5} >
                 <InputTextBox
