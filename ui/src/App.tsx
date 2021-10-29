@@ -1,28 +1,42 @@
-import { Container } from '@mui/material';
-import { TopBar, TopBarOffset } from './common/AppBar';
+import { Container, Box } from '@mui/material';
+import { TopBar } from './common/AppBar';
 import Home from './home/home';
 import Config from './host/Config';
 import Lobby from './participant/Lobby';
 
 function App() {
     return (
-        <Container
-            disableGutters
+        <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="stretch"
             sx={{
-                minHeight: "100vh",
-                minWidth: "100vw"
+                height: "100vh",
+                width: "100vw",
+                border: "1px solid blue"
+
             }}
         >
             <TopBar />
-            <TopBarOffset />
             {/* <Home /> */}
 
             {/* Participants Screens */}
             {/* <Lobby /> */}
 
             {/* Host Screens */}
-            <Config />
-        </Container>
+            {/* <Config /> */}
+
+            <Container
+                disableGutters={true}
+                sx={{
+                    background: "red",
+                    flexGrow: 1
+                }}
+            >
+                hi
+            </Container>
+
+        </Box>
     )
 }
 
