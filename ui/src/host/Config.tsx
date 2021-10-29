@@ -1,7 +1,10 @@
-import React from "react";
+import React, { ReactElement } from "react";
 import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField} from "@mui/material";
 import ParticipantList from "../common/ParticipantList";
 import { APP_BAR_HEIGHT } from "../common/AppBar";
+import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
+import { QuestionCard } from "../common/Question";
+
 
 interface ICategoriesBlockProps {
     categories: string[]
@@ -84,6 +87,35 @@ class ConfigColumn extends React.Component<IConfigColumnProps, IConfigColumnStat
     }
 }
 
+interface IQuestionColumnProps {
+    questionsAndAnswers: IQuestionAndAnswers[]
+}
+
+function QuestionColumn(props: IQuestionColumnProps) {
+
+    let renderedQuestions: React.ReactNode[] = []
+    for (const questionAndAnswer of props.questionsAndAnswers) {
+        const {question, options, answers} = questionAndAnswer;
+        renderedQuestions.push(
+            <QuestionCard
+                question={question}
+                options={options}
+                answers={answers}
+            />
+        )
+    }
+
+    return (
+        <Box
+            sx={{
+                overflow: "scroll"
+            }}
+        >
+            {renderedQuestions}
+        </Box>
+    )
+}
+
 interface IParticipantColumnProps {
     onStartClicked: () => void
 }
@@ -139,6 +171,8 @@ class Config extends React.Component<IConfigProps, IConfigState> {
 
     render() {
 
+        
+
         return (
             <Grid
                 container
@@ -165,7 +199,7 @@ class Config extends React.Component<IConfigProps, IConfigState> {
                         border: "1px solid green"
                     }}
                 >
-                    <Typography>Questions column</Typography>
+                    <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
                 </Grid>
                 <Grid
                     item
