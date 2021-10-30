@@ -116,9 +116,10 @@ class Lobby extends React.Component<ILobbyProps, ILobbyState> {
                 flexDirection="column"
                 justifyContent="flex-start"
                 alignItems="center"
-                // A bit hacky but ensures that the top of the JoinForm doesn't appear behind
-                // AppBar and it is in a fixed place with different numbers of participants
-                height="90vh"
+                height="100%"
+                sx={{
+                    overflowY: "auto"
+                }}
             >
                 <Typography>Waiting for host to start...</Typography>
 

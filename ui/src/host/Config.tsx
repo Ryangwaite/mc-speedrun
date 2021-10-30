@@ -1,10 +1,11 @@
 import React, { ReactElement } from "react";
-import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField} from "@mui/material";
+import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
 import ParticipantList from "../common/ParticipantList";
-import { APP_BAR_HEIGHT } from "../common/AppBar";
 import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
 import { QuestionCard } from "../common/Question";
 
+
+const COLUMN_WIDTH = "320px"
 
 interface ICategoriesBlockProps {
     categories: string[]
@@ -37,6 +38,7 @@ function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
                 id="outlined-number"
                 label="Number"
                 type="number"
+                helperText="seconds"
                 InputLabelProps={{
                     shrink: true,
                 }}
@@ -72,11 +74,17 @@ class ConfigColumn extends React.Component<IConfigColumnProps, IConfigColumnStat
 
         return (
             <Box
+                // Position
+                position="absolute"
+                top="0"
+                left="0"
+                bottom="0"
+                // Content
                 display="flex"
                 flexDirection="column"
+                maxWidth={COLUMN_WIDTH}
                 sx={{
                     overflowY: "auto",
-                    height: `calc(100vh - ${APP_BAR_HEIGHT})`
                 }}
             >
                 {inviteLinkComponent}
@@ -107,8 +115,14 @@ function QuestionColumn(props: IQuestionColumnProps) {
 
     return (
         <Box
+            // Position
+            position="absolute"
+            top="0"
+            bottom="0"
+            left="50%" // NOTE: the translateX(-50%) to position in centre
             sx={{
-                overflow: "scroll"
+                overflowY: "scroll",
+                transform: "translateX(-50%)" // There's no direct prop for this, hence its here
             }}
         >
             {renderedQuestions}
@@ -128,9 +142,14 @@ function ParticipantColumn(props: IParticipantColumnProps) {
 
     return (
         <Box
+            // Position
+            position="absolute"
+            top="0"
+            right="0"
+            bottom="0"
+            maxWidth={COLUMN_WIDTH}
             sx={{
                 overflowY: "auto",
-                height: `calc(100vh - ${APP_BAR_HEIGHT})`
             }}
         >
             <Typography variant="h4">Participants</Typography>
@@ -174,44 +193,24 @@ class Config extends React.Component<IConfigProps, IConfigState> {
         
 
         return (
-            <Grid
-                container
+            <Container
                 sx={{
-                    // height: "90vh"
+                    flexGrow: 1,
+                    // Position the container so the columns can be positioned relative to it
+                    position: "relative",
+                    minWidth: "100%",
                 }}
             >
-                <Grid
-                    item
-                    xs={2}
-                    sx={{
-                        border: "1px solid red"
-                    }}
-                >
-                    <ConfigColumn
-                        inviteUrl={"https://localhost/join/kjb34kj5h"}
-                        onQuestionDurationChange={this.onQuestionDurationChange}
-                    />
-                </Grid>
-                <Grid
-                    item
-                    xs={8}
-                    sx={{
-                        border: "1px solid green"
-                    }}
-                >
-                    <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
-                </Grid>
-                <Grid
-                    item
-                    xs={2}
-                    sx={{
-                        border: "1px solid blue",
-                        minHeight: `calc(100% - ${APP_BAR_HEIGHT})`
-                    }}
-                >
-                    <ParticipantColumn onStartClicked={this.onStartClicked} />
-                </Grid>
-            </Grid>
+                
+                <ConfigColumn
+                    inviteUrl={"https://localhost/join/kjb34kj5h"}
+                    onQuestionDurationChange={this.onQuestionDurationChange}
+                />
+            
+                <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
+            
+                <ParticipantColumn onStartClicked={this.onStartClicked} />
+            </Container>
         )
     }
 }

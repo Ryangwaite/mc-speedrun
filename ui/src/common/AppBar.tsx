@@ -9,15 +9,17 @@ interface ITopBarProps {
 export function TopBar(props: ITopBarProps) {
     return (
         <AppBar
-            position="fixed"
             sx={{
-                // Truncate the appbar text if it overflows on small screens
-                overflow: "hidden",
-                height: APP_BAR_HEIGHT
+                // Force the appbar to be positioned in the document flow
+                position: "static"
             }}
         >
             <Toolbar
                 disableGutters={true}
+                sx={{
+                    padding: 0,
+                    margin: 0,
+                }}
             >
                 <Typography
                     variant="h1"
@@ -32,6 +34,3 @@ export function TopBar(props: ITopBarProps) {
         </AppBar>
     )
 }
-
-// NOTE: This needs to be applied directly below AppBar else following content can appear behind
-export const TopBarOffset = () => <Toolbar sx={{height: APP_BAR_HEIGHT}}></Toolbar>
