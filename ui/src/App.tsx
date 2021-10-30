@@ -2,7 +2,9 @@ import { Container, Box } from '@mui/material';
 import { TopBar } from './common/AppBar';
 import Home from './home/home';
 import Config from './host/Config';
+
 import Lobby from './participant/Lobby';
+import Quiz from './participant/Quiz';
 
 function App() {
     return (
@@ -22,9 +24,10 @@ function App() {
 
             {/* Participants Screens */}
             {/* <Lobby /> */}
+            <Quiz />
 
             {/* Host Screens */}
-            <Config />
+            {/* <Config /> */}
         </Box>
     )
 }
