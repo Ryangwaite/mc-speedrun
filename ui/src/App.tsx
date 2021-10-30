@@ -24,18 +24,7 @@ function App() {
             {/* <Lobby /> */}
 
             {/* Host Screens */}
-            {/* <Config /> */}
-
-            <Container
-                disableGutters={true}
-                sx={{
-                    background: "red",
-                    flexGrow: 1
-                }}
-            >
-                hi
-            </Container>
-
+            <Config />
         </Box>
     )
 }
