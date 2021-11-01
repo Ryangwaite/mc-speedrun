@@ -1,6 +1,5 @@
 import React from "react";
-import { Card, Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, CardContent, CardActions} from "@mui/material";
-import { margin } from "@mui/system";
+import { Card, Typography, Box, CardContent, CardActions} from "@mui/material";
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined';
@@ -157,9 +156,6 @@ export class QuestionCard extends React.Component<IQuestionCardProps, IQuestionC
         return (
             <Card
                 variant="outlined"
-                sx={{
-                    margin: "40px"
-                }}
             >
                 <CardContent>
                     <Typography variant="h5">{question}</Typography>
