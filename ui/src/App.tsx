@@ -2,6 +2,7 @@ import { Container, Box } from '@mui/material';
 import { TopBar } from './common/AppBar';
 import Home from './home/home';
 import Config from './host/Config';
+import Observe from './host/Observe';
 
 import Lobby from './participant/Lobby';
 import Quiz from './participant/Quiz';
@@ -24,10 +25,11 @@ function App() {
 
             {/* Participants Screens */}
             {/* <Lobby /> */}
-            <Quiz />
+            {/* <Quiz /> */}
 
             {/* Host Screens */}
             {/* <Config /> */}
+            <Observe />
         </Box>
     )
 }

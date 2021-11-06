@@ -1,11 +1,8 @@
 import React from "react";
 import { Button, Typography, Box, Card, LinearProgress, Container} from "@mui/material";
-import ParticipantList from "../common/ParticipantList";
 import { QuestionCard } from "../common/Question";
 import { SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
-
-const LEADERBOARD_COLUMN_WIDTH = "300px"
-
+import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 interface IQuestionNumberCardProps {
     questionNumber: number,
     totalQuestions: number,
@@ -144,31 +141,6 @@ function PositionedQuizSection(props: IQuizSectionProps) {
     )
 }
 
-interface IParticipantColumnProps {
-}
-
-function ParticipantColumn(props: IParticipantColumnProps) {
-
-    const participants: Set<string> = new Set(Array.from(Array(100).keys()).map(x => `participant ${x}`));
-
-    return (
-        <Box
-            // Position on the rhs
-            position="absolute"
-            top="0"
-            right="0"
-            bottom="0"
-            maxWidth={LEADERBOARD_COLUMN_WIDTH}
-            sx={{
-                overflowY: "auto",
-            }}
-        >
-            <Typography variant="h4">Leaderboard</Typography>
-            <ParticipantList otherParticipants={participants} thisParticipant={null} />
-        </Box>
-    )
-}
-
 interface IQuizProps {
 }
 
@@ -199,7 +171,7 @@ class Quiz extends React.Component<IQuizProps, IQuizState> {
                     secondsRemaining={50}
                     totalSeconds={120}
                 />
-                <ParticipantColumn />
+                <LeaderboardColumn />
             </Box>
             
         )

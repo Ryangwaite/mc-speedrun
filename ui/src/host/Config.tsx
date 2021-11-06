@@ -1,8 +1,8 @@
 import React, { ReactElement } from "react";
 import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
-import ParticipantList from "../common/ParticipantList";
 import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
 import { QuestionCard } from "../common/Question";
+import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 
 
 const COLUMN_WIDTH = "320px"
@@ -142,18 +142,19 @@ function ParticipantColumn(props: IParticipantColumnProps) {
 
     return (
         <Box
-            // Position
+            // Position on the rhs
             position="absolute"
             top="0"
             right="0"
             bottom="0"
-            maxWidth={COLUMN_WIDTH}
+            width={LEADERBOARD_COLUMN_WIDTH}
+            marginRight="12px"
             sx={{
                 overflowY: "auto",
             }}
         >
             <Typography variant="h4">Participants</Typography>
-            <ParticipantList otherParticipants={participants} thisParticipant={null} />
+            <LeaderBoard />
             <Button variant="contained" onClick={() => onStartClicked()}>Start</Button>
         </Box>
     )
@@ -189,8 +190,6 @@ class Config extends React.Component<IConfigProps, IConfigState> {
     }
 
     render() {
-
-        
 
         return (
             <Container

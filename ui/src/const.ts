@@ -121,3 +121,83 @@ export const SAMPLE_QUESTIONS_AND_ANSWERS: IQuestionAndAnswers[] = [
     },
     
 ]
+
+export interface IParticipant {
+    name: string,
+    score: number,
+    position?: number, // where they are placed relative to others. First place is 1
+    selected: boolean, // For rendering purposes
+}
+
+export const SAMPLE_PARTICIPANTS: IParticipant[] = [
+    {
+        name: "ryan",
+        score: 65,
+        selected: false,
+    },
+    {
+        name: "james",
+        score: 1456,
+        selected: false,
+    },
+    {
+        name: "chicken",
+        score: 45,
+        selected: false,
+    },
+    {
+        name: "zombie",
+        score: 6,
+        selected: false,
+    },
+    {
+        name: "doge",
+        score: 998,
+        selected: false,
+    },
+    {
+        name: "Bruce",
+        score: 564,
+        selected: false,
+    },
+    {
+        name: "steve",
+        score: 9,
+        selected: false,
+    },
+    {
+        name: "sean",
+        score: 633,
+        selected: false,
+    },
+    {
+        name: "Devon",
+        score: 111,
+        selected: false,
+    },
+    {
+        name: "Sam",
+        score: 1,
+        selected: false,
+    },
+    {
+        name: "Apple",
+        score: 1000,
+        selected: false,
+    },
+    {
+        name: "dragon",
+        score: 7,
+        selected: false,
+    },
+    {
+        name: "ironman",
+        score: 9999,
+        selected: false,
+    },
+    {
+        name: "sjdfhs",
+        score: 6416,
+        selected: false,
+    },
+]
