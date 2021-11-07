@@ -101,7 +101,7 @@ class QuizSection extends React.Component<IQuizSectionProps, IQuizSectionState> 
                     <QuestionCard
                         question={question}
                         options={options}
-                        answers={answers}
+                        correctAnswers={answers}
                     />
                 </Container>
                     <Button

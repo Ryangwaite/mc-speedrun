@@ -20,7 +20,9 @@ function QuestionSection(props: IQuestionSectionProps) {
         renderedQuestions.push(
             <QuestionCardWithStats
                 {...questions}
+                correctAnswers={questions.answers}
                 answerStats={stats}
+                participantAnswers={[]} // So that none of them are marked
             />
         )
     }

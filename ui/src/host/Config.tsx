@@ -108,7 +108,7 @@ function QuestionColumn(props: IQuestionColumnProps) {
             <QuestionCard
                 question={question}
                 options={options}
-                answers={answers}
+                correctAnswers={answers}
             />
         )
     }
