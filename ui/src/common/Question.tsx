@@ -1,8 +1,13 @@
 import React from "react";
-import { Card, Typography, Box, CardContent, CardActions} from "@mui/material";
+import {
+    Card, Typography, Box, CardContent, CardActions,
+    List, ListItem, ListItemIcon, ListItemText, Container, Tooltip, Divider,
+} from "@mui/material";
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined';
+import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
+import { IQuestionAndAnswers, IQuestionAnswerStats } from "../const";
 
 enum OptionMode {
     PLAIN,                              // When no answer has been selected and it hasn't been marked
@@ -173,4 +178,141 @@ export class QuestionCard extends React.Component<IQuestionCardProps, IQuestionC
             </Card>
         )
     }
+}
+
+interface IQuestionStatsTooltipContentProps {
+    type:
+        "Correctly answered by" |
+        "Incorrectly answered by" |
+        "Time expired for",
+    names: string[]
+}
+
+function QuestionStatsTooltipContent(props: IQuestionStatsTooltipContentProps) {
+
+    const {type, names} = props
+
+    return (
+        <Container>
+            <Typography variant="subtitle1">{type}:</Typography>
+            <ul>
+                {names.map((value, index) => <li key={index}>{value}</li>)}
+            </ul>
+        </Container>
+    )
+}
+
+interface IQuestionStatsPanelProps {
+    answerStats: IQuestionAnswerStats
+}
+
+function QuestionStatsPanel(props: IQuestionStatsPanelProps) {
+
+    const {correctAnswerers, incorrectAnswerers, timeExpiredAnswerers} = props.answerStats;
+
+    return (
+        <List
+            dense
+            sx={{
+                minWidth: "128px"
+            }}
+        >
+            <Tooltip
+                title={
+                    <QuestionStatsTooltipContent
+                        type="Correctly answered by"
+                        names={correctAnswerers}
+                    />
+                }
+                arrow
+                placement="right"
+            >
+                <ListItem>
+                    <ListItemIcon>
+                        <CheckCircleOutlinedIcon sx={{color: "green"}} />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={correctAnswerers.length}
+                    />
+                </ListItem>
+            </Tooltip>
+            <Tooltip
+                title={
+                    <QuestionStatsTooltipContent
+                        type="Incorrectly answered by"
+                        names={incorrectAnswerers}
+                    />
+                }
+                arrow
+                placement="right"
+            >
+                <ListItem>
+                    <ListItemIcon>
+                        <CancelOutlinedIcon sx={{color: "red"}} />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={incorrectAnswerers.length}
+                    />
+                </ListItem>
+            </Tooltip>
+            <Tooltip
+                title={
+                    <QuestionStatsTooltipContent
+                        type="Time expired for"
+                        names={timeExpiredAnswerers}
+                    />
+                }
+                arrow
+                placement="right"
+            >
+                <ListItem>
+                    <ListItemIcon>
+                        <AccessAlarmIcon sx={{color: "grey"}} />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={timeExpiredAnswerers.length}
+                    />
+                </ListItem>
+            </Tooltip>
+        </List>
+    )
+}
+
+interface IQuestionCardWithStatsProps extends IQuestionCardProps {
+    answerStats: IQuestionAnswerStats
+}
+
+export function QuestionCardWithStats(props: IQuestionCardWithStatsProps) {
+
+    const {question, options, answers} = props
+
+    return (
+        <Card
+            variant="outlined"
+            sx={{
+                display: "flex",
+                alignItems: "center"
+            }}
+        >
+            <Container>
+                <CardContent>
+                    <Typography variant="h5">{question}</Typography>
+                    <Typography variant="caption" color="text.secondary">Select {answers.length}</Typography>
+                </CardContent>
+                <CardActions
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-evenly",
+                        margin: "8px"
+                    }}
+                >
+                    {options.map((option, index) => <Option text={option} choiceLabel={String.fromCharCode(65 + index) + ")"} />)}
+                </CardActions>
+            </Container>
+            <Divider flexItem orientation="vertical"/>
+            <QuestionStatsPanel {...props}/>
+        </Card>
+    )
+
+
 }

@@ -122,6 +122,66 @@ export const SAMPLE_QUESTIONS_AND_ANSWERS: IQuestionAndAnswers[] = [
     
 ]
 
+export interface IQuestionAnswerStats {
+    // The participant names that correctly answered
+    correctAnswerers: string[],
+    incorrectAnswerers: string[],
+    timeExpiredAnswerers: string[],
+}
+
+export const SAMPLE_QUESTION_STATS: IQuestionAnswerStats[] = [
+    {
+        correctAnswerers: ["ryan", "james", "chicken", "zombie", "ironman", "sjdfhs"],
+        incorrectAnswerers: ["doge", "Bruce", "steve", "sean",],
+        timeExpiredAnswerers: ["Devon", "Sam", "Apple", "dragon"],
+    },
+    {
+        correctAnswerers: [],
+        incorrectAnswerers: ["doge", "Bruce", "steve", "sean", "ryan", "james", "chicken", "zombie", "ironman"],
+        timeExpiredAnswerers: ["Devon", "sjdfhs", "Sam", "Apple", "dragon"],
+    },
+    {
+        correctAnswerers: ["ryan", "james", "chicken", "zombie", "ironman", "sjdfhs"],
+        incorrectAnswerers: [],
+        timeExpiredAnswerers: ["Devon", "Sam", "Apple", "dragon", "doge", "Bruce", "steve", "sean",],
+    },
+    {
+        correctAnswerers: ["ryan", "james", "chicken", "zombie", "ironman", "sjdfhs"],
+        incorrectAnswerers: ["doge", "Bruce", "steve", "sean", "Devon", "Sam", "Apple", "dragon"],
+        timeExpiredAnswerers: [],
+    },
+    {
+        correctAnswerers: ["ryan", "james", "chicken", "zombie", "ironman", "sjdfhs", "doge", "Bruce", "steve", "sean", "Devon", "Sam", "Apple", "dragon"],
+        incorrectAnswerers: [],
+        timeExpiredAnswerers: [],
+    },
+    {
+        correctAnswerers: [],
+        incorrectAnswerers: ["ryan", "james", "chicken", "zombie", "ironman", "sjdfhs", "doge", "Bruce", "steve", "sean", "Devon", "Sam", "Apple", "dragon"],
+        timeExpiredAnswerers: [],
+    },
+    {
+        correctAnswerers: [],
+        incorrectAnswerers: [],
+        timeExpiredAnswerers: ["ryan", "james", "chicken", "zombie", "ironman", "sjdfhs", "doge", "Bruce", "steve", "sean", "Devon", "Sam", "Apple", "dragon"],
+    },
+    {
+        correctAnswerers: ["ryan"],
+        incorrectAnswerers: ["doge"],
+        timeExpiredAnswerers: ["Devon"],
+    },
+    {
+        correctAnswerers: ["ryan"],
+        incorrectAnswerers: [],
+        timeExpiredAnswerers: [],
+    },
+    {
+        correctAnswerers: [],
+        incorrectAnswerers: ["doge", "Bruce"],
+        timeExpiredAnswerers: [],
+    },
+]
+
 export interface IParticipant {
     name: string,
     score: number,
