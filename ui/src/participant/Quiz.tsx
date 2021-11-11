@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Typography, Box, Card, LinearProgress, Container} from "@mui/material";
-import { QuestionCard } from "../common/Question";
-import { SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
+import { OptionMode, QuestionCard } from "../common/Question";
+import { IQuestionAndAnswers, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
 import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 interface IQuestionNumberCardProps {
     questionNumber: number,
@@ -48,7 +48,7 @@ function CountdownCard(props: ICountdownCardProps) {
                 variant="h4"
                 textAlign="center"
             >{secondsRemaining}s</Typography>
-            <LinearProgress variant="buffer" value={progressValue}/>
+            <LinearProgress variant="determinate" value={progressValue} />
         </Card>
     )
 }
@@ -58,65 +58,67 @@ interface IQuizSectionProps {
     totalQuestions: number,
     secondsRemaining: number,
     totalSeconds: number,
+    questionText: string,
+    numCorrectOptions: number,
+    options: {
+        text: string,
+        mode: OptionMode,
+    }[]
+    onSubmit: () => void,
+    onOptionClicked: (option: number) => void
 }
 
-interface IQuizSectionState {}
+function QuizSection(props: IQuizSectionProps) {
 
-class QuizSection extends React.Component<IQuizSectionProps, IQuizSectionState> {
-    constructor(props: IQuizSectionProps) {
-        super(props)
-        this.state = {}
-    }
+    const {
+        questionNumber, totalQuestions, secondsRemaining, totalSeconds,
+        questionText, numCorrectOptions, options,
+    } = props
 
-    render() {
-
-        const { questionNumber, totalQuestions, secondsRemaining, totalSeconds } = this.props
-
-        // Grab a question to render
-        const {question, options, answers} = SAMPLE_QUESTIONS_AND_ANSWERS[0];
-
-        return (
-            <Container
-                disableGutters={true}
-                maxWidth={false}  // Prevent mui from controlling the width
-                sx={{
-                    display: "grid",
-                    gridTemplateColumns: "50% 50%",
-                    gridTemplateRows: "84px 178px 64px",
-                    gridTemplateAreas: `'question-number      countdown'
-                                        'question            question'
-                                        'button              button'`,
-                    maxWidth: "800px",
-                    alignItems: "center",
-                    justifyContent: "center",
-                }}
-            >
-                <Container sx={{gridArea: "question-number"}}>
-                    <QuestionNumberCard questionNumber={questionNumber} totalQuestions={totalQuestions} />
-                </Container>
-                <Container sx={{gridArea: "countdown"}}>
-                    <CountdownCard secondsRemaining={secondsRemaining} totalSeconds={totalSeconds} />
-                </Container>
-                <Container sx={{gridArea: "question"}}>
-                    <QuestionCard
-                        question={question}
-                        options={options}
-                        correctAnswers={answers}
-                    />
-                </Container>
-                    <Button
-                        variant="contained"
-                        sx={{
-                            marginLeft: "auto",
-                            marginRight: "auto",
-                            gridArea: "button",
-                            placeSelf: "center"
-                        }}
-                    >Submit</Button>
+    return (
+        <Container
+            disableGutters={true}
+            maxWidth={false}  // Prevent mui from controlling the width
+            sx={{
+                display: "grid",
+                gridTemplateColumns: "50% 50%",
+                gridTemplateRows: "84px 178px 64px",
+                gridTemplateAreas: `'question-number      countdown'
+                                    'question            question'
+                                    'button              button'`,
+                maxWidth: "800px",
+                alignItems: "center",
+                justifyContent: "center",
+            }}
+        >
+            <Container sx={{gridArea: "question-number"}}>
+                <QuestionNumberCard questionNumber={questionNumber} totalQuestions={totalQuestions} />
             </Container>
-        )
-    }
+            <Container sx={{gridArea: "countdown"}}>
+                <CountdownCard secondsRemaining={secondsRemaining} totalSeconds={totalSeconds} />
+            </Container>
+            <Container sx={{gridArea: "question"}}>
+                <QuestionCard
+                    question={questionText}
+                    numCorrectOptions={numCorrectOptions}
+                    options={options}
+                    onOptionClicked={props.onOptionClicked}
+                />
+            </Container>
+                <Button
+                    variant="contained"
+                    onClick={props.onSubmit}
+                    sx={{
+                        marginLeft: "auto",
+                        marginRight: "auto",
+                        gridArea: "button",
+                        placeSelf: "center"
+                    }}
+                >Submit</Button>
+        </Container>
+    )
 }
+
 
 function PositionedQuizSection(props: IQuizSectionProps) {
     return (
@@ -145,16 +147,62 @@ interface IQuizProps {
 }
 
 interface IQuizState {
-    
+    // Just temporary state
+    currentQuestionIndex: number,
+    // What the user has currently selected as the correct answers before submitting
+    optionSelection: number[],
 }
 
 class Quiz extends React.Component<IQuizProps, IQuizState> {
     constructor(props: IQuizProps) {
         super(props)
-        this.state = {}
+        this.state = {
+            currentQuestionIndex: 0,
+            optionSelection: [],
+        }
+
+        this.onSubmit = this.onSubmit.bind(this);
+        this.clickOption = this.clickOption.bind(this);
+    }
+
+    clickOption(optionIndex: number) {
+        this.setState(prevState => {
+            let updatedOptionSelection = [...prevState.optionSelection]
+            if (updatedOptionSelection.includes(optionIndex)) {
+                // Remove it from selection
+                updatedOptionSelection.filter(x => x !== optionIndex)
+            } else {
+                // Add it to selection
+                updatedOptionSelection.push(optionIndex)
+            }
+            return {optionSelection: updatedOptionSelection}
+        })
+    }
+
+    onSubmit() {
+        console.log(`Selected options were: ${this.state.optionSelection}`)
+
+        // Just move onto next question
+        this.setState(prevState => ({
+            currentQuestionIndex: (prevState.currentQuestionIndex + 1) % SAMPLE_QUESTIONS_AND_ANSWERS.length // wrap around
+        }))
+
+        this.setState({optionSelection: []})
     }
 
     render() {
+
+        // Get some participants.
+        // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
+        const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
+        participants[10].selected = true // Make a "random" participant highlighted.
+
+        const qAndA: IQuestionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS[this.state.currentQuestionIndex]
+        const options = qAndA.options.map((value, index) => ({
+            text: value,
+            mode: this.state.optionSelection.includes(index) ? OptionMode.SELECTED_UNMARKED : OptionMode.PLAIN,
+        }))
+
         return (
             <Box
                 // Position the container so the Leaderboard and QuizSection can be positioned relative to it
@@ -166,12 +214,17 @@ class Quiz extends React.Component<IQuizProps, IQuizState> {
                 }}
             >
                 <PositionedQuizSection
-                    questionNumber={4}
-                    totalQuestions={50}
+                    questionNumber={this.state.currentQuestionIndex + 1}
+                    totalQuestions={SAMPLE_QUESTIONS_AND_ANSWERS.length}
                     secondsRemaining={50}
                     totalSeconds={120}
+                    questionText={qAndA.question}
+                    numCorrectOptions={qAndA.answers.length}
+                    options={options}
+                    onOptionClicked={this.clickOption}
+                    onSubmit={this.onSubmit}
                 />
-                <LeaderboardColumn />
+                <LeaderboardColumn participants={participants} />
             </Box>
             
         )

@@ -4,11 +4,11 @@ import ParticipantList from "../common/ParticipantList";
 
 interface IJoinListItemProps {
     listItemKey: string,
+    userJoined: boolean,
     onJoin: (name: string) => void
 }
 
 interface IJoinListItemState {
-    userJoined: boolean,
     nameField: string,
 }
 
@@ -16,7 +16,6 @@ class JoinListItem extends React.Component<IJoinListItemProps, IJoinListItemStat
     constructor(props: IJoinListItemProps) {
         super(props)
         this.state = {
-            userJoined: false,
             nameField: ""
         }
 
@@ -29,7 +28,6 @@ class JoinListItem extends React.Component<IJoinListItemProps, IJoinListItemStat
     }
 
     private onJoinClicked() {
-        this.setState({userJoined: true})
         this.props.onJoin(this.state.nameField);
     }
 
@@ -37,7 +35,7 @@ class JoinListItem extends React.Component<IJoinListItemProps, IJoinListItemStat
         const { listItemKey } = this.props;
         const { nameField } = this.state;
 
-        const content = this.state.userJoined ?
+        const content = this.props.userJoined ?
             <ListItemText primary={this.state.nameField} /> :
             <Container
                 sx={{
@@ -106,6 +104,7 @@ class Lobby extends React.Component<ILobbyProps, ILobbyState> {
         const participants: Set<string> = new Set(Array.from(Array(150).keys()).map(x => `participant ${x}`))
 
         let joinListItem = <JoinListItem
+            userJoined={this.state.userJoined}
             listItemKey={"joinListItem"}  // NOTE: probably come up with a better key than this
             onJoin={this.onJoin} 
         />;

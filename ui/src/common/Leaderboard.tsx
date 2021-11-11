@@ -1,6 +1,6 @@
 import { Box, Card, Container, Divider, List, ListItem, ListItemAvatar, ListItemText, Typography } from "@mui/material";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import { IParticipant, SAMPLE_PARTICIPANTS } from "../const";
+import { IParticipant} from "../const";
 import { getOrdinal } from "../utilities";
 
 interface ILeaderBoardItemScoreProps {
@@ -96,7 +96,7 @@ function LeaderBoardOmission(props: ILeaderBoardOmissionProps) {
 }
 
 interface ILeaderBoardProps {
-    participants?: IParticipant[]
+    participants: IParticipant[]
 }
 
 class LeaderBoardOmissionToken {}
@@ -108,12 +108,7 @@ export function LeaderBoard(props: ILeaderBoardProps) {
      * position +/-1. Gaps are rendered with a "...". There's 9 slots total. No omitting
      * will be done if there's <= 9 items.
      */
-
-    // Get some participants.
-    // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
-    const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
-    participants[10].selected = true // Make a "random" participant highlighted.
-
+    const { participants } = props
     participants.sort((a, b) => b.score - a.score) // sort highest to lowest
 
     let renderInstructions: (IParticipant|LeaderBoardOmissionToken)[] = []
@@ -168,10 +163,7 @@ export function LeaderBoard(props: ILeaderBoardProps) {
 
 export const LEADERBOARD_COLUMN_WIDTH = "300px"
 
-interface ILeaderboardColumnProps {
-}
-
-export function LeaderboardColumn(props: ILeaderboardColumnProps) {
+export function LeaderboardColumn(props: ILeaderBoardProps) {
 
     return (
         <Box
@@ -187,7 +179,7 @@ export function LeaderboardColumn(props: ILeaderboardColumnProps) {
             }}
         >
             <Typography variant="h4">Leaderboard</Typography>
-            <LeaderBoard />
+            <LeaderBoard {...props} />
         </Box>
     )
 }

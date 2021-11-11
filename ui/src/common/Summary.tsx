@@ -2,8 +2,8 @@ import { Box, Typography, Card, LinearProgress, Button, } from "@mui/material";
 import _ from "lodash";
 import React from "react";
 import { LeaderboardColumn } from "./Leaderboard";
-import { QuestionCardWithStats } from "./Question";
-import { IQuestionAndAnswers, IQuestionAnswerStats, SAMPLE_QUESTIONS_AND_ANSWERS, SAMPLE_QUESTION_STATS } from "../const";
+import { OptionMode, QuestionCardWithStats } from "./Question";
+import { IQuestionAndAnswers, IQuestionAnswerStats, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS, SAMPLE_QUESTION_STATS } from "../const";
 
 interface IProgressSectionProps {
     progressCurrent: number,        // i.e. how many participants have finished
@@ -13,7 +13,7 @@ interface IProgressSectionProps {
 function ProgressSection(props: IProgressSectionProps) {
     const {progressCurrent, progressTotal} = props
     
-    if (progressCurrent == progressTotal) {
+    if (progressCurrent === progressTotal) {
         // All Participants have finished
         return (
             <Box
@@ -122,20 +122,26 @@ class SummaryColumn extends React.Component<ISummaryColumnProps, ISummaryColumnS
 
 interface IQuestionSectionProps {
     questionAndAnswersWithStats: {
-        questions: IQuestionAndAnswers,
+        question: IQuestionAndAnswers,
         stats: IQuestionAnswerStats,
     }[]
 }
 
 function QuestionSection(props: IQuestionSectionProps) {
     let renderedQuestions: React.ReactNode[] = []
-    for (const {questions, stats} of props.questionAndAnswersWithStats) {
+    for (const {question, stats} of props.questionAndAnswersWithStats) {
+
+        const optionsAndMode = question.options.map((value, index) => ({
+            text: value,
+            mode: question.answers.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
+        }))
+
         renderedQuestions.push(
             <QuestionCardWithStats
-                {...questions}
-                correctAnswers={questions.answers}
+                question={question.question}
+                numCorrectOptions={question.answers.length}
+                options={optionsAndMode}
                 answerStats={stats}
-                participantAnswers={[]} // So that none of them are marked
             />
         )
     }
@@ -169,14 +175,19 @@ class Summary extends React.Component<ISummaryProps, ISummaryState> {
 
     render() {
 
+        // Get some participants.
+        // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
+        const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
+        participants[10].selected = true // Make a "random" participant highlighted.
+
         const questionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS.map(qAndA => ({...qAndA}))
         const questionStats = SAMPLE_QUESTION_STATS.map(stats => ({...stats}))
         const qAndAWithStats: {
-            questions: IQuestionAndAnswers,
+            question: IQuestionAndAnswers,
             stats: IQuestionAnswerStats,
         }[] = _.zipWith(questionAndAnswers, questionStats, (qAndA, stats) => {
             return {
-                questions: qAndA,
+                question: qAndA,
                 stats: stats,
             }
         })
@@ -193,7 +204,7 @@ class Summary extends React.Component<ISummaryProps, ISummaryState> {
             >
                 <SummaryColumn />
                 <QuestionSection questionAndAnswersWithStats={qAndAWithStats}/>
-                <LeaderboardColumn />
+                <LeaderboardColumn participants={participants} />
             </Box>
         )
     }

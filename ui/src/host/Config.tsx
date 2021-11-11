@@ -1,8 +1,9 @@
 import React, { ReactElement } from "react";
 import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
 import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
-import { QuestionCard } from "../common/Question";
+import { OptionMode, QuestionCard } from "../common/Question";
 import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
+import ParticipantList from "../common/ParticipantList";
 
 
 const COLUMN_WIDTH = "320px"
@@ -53,46 +54,37 @@ interface IConfigColumnProps {
     onQuestionDurationChange: (duration: number) => void
 }
 
-interface IConfigColumnState { }
+function ConfigColumn(props: IConfigColumnProps) {
 
-class ConfigColumn extends React.Component<IConfigColumnProps, IConfigColumnState> {
-    constructor(props: IConfigColumnProps) {
-        super(props);
-        this.state = {}
-    }
+    const { onQuestionDurationChange } = props
 
-    render() {
+    // TODO: make it so the link can be copied but not followed 
+    const inviteLinkComponent = props.inviteUrl ? <Typography variant={"body1"}>
+        Invite participants with this link: <Link>{props.inviteUrl}</Link>
+    </Typography> : null;
 
-        const { onQuestionDurationChange } = this.props
+    const categories = ["category1", "category2", "category3", "category4"]
 
-        // TODO: make it so the link can be copied but not followed 
-        const inviteLinkComponent = this.props.inviteUrl ? <Typography variant={"body1"}>
-            Invite participants with this link: <Link>{this.props.inviteUrl}</Link>
-        </Typography> : null;
-
-        const categories = ["category1", "category2", "category3", "category4"]
-
-        return (
-            <Box
-                // Position
-                position="absolute"
-                top="0"
-                left="0"
-                bottom="0"
-                // Content
-                display="flex"
-                flexDirection="column"
-                maxWidth={COLUMN_WIDTH}
-                sx={{
-                    overflowY: "auto",
-                }}
-            >
-                {inviteLinkComponent}
-                <CategoriesBlock categories={categories} />
-                <QuestionDurationBlock onDurationChanged={onQuestionDurationChange}/>
-            </Box>
-        )
-    }
+    return (
+        <Box
+            // Position
+            position="absolute"
+            top="0"
+            left="0"
+            bottom="0"
+            // Content
+            display="flex"
+            flexDirection="column"
+            maxWidth={COLUMN_WIDTH}
+            sx={{
+                overflowY: "auto",
+            }}
+        >
+            {inviteLinkComponent}
+            <CategoriesBlock categories={categories} />
+            <QuestionDurationBlock onDurationChanged={onQuestionDurationChange}/>
+        </Box>
+    )
 }
 
 interface IQuestionColumnProps {
@@ -104,11 +96,17 @@ function QuestionColumn(props: IQuestionColumnProps) {
     let renderedQuestions: React.ReactNode[] = []
     for (const questionAndAnswer of props.questionsAndAnswers) {
         const {question, options, answers} = questionAndAnswer;
+
+        const optionsAndMode = options.map((value, index) => ({
+            text: value,
+            mode: answers.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
+        }))
+
         renderedQuestions.push(
             <QuestionCard
                 question={question}
-                options={options}
-                correctAnswers={answers}
+                numCorrectOptions={answers.length}
+                options={optionsAndMode}
             />
         )
     }
@@ -131,14 +129,13 @@ function QuestionColumn(props: IQuestionColumnProps) {
 }
 
 interface IParticipantColumnProps {
+    participants: Set<string>,
     onStartClicked: () => void
 }
 
 function ParticipantColumn(props: IParticipantColumnProps) {
 
-    const participants: Set<string> = new Set(Array.from(Array(10).keys()).map(x => `participant ${x}`));
-
-    const { onStartClicked } = props
+    const { participants, onStartClicked } = props
 
     return (
         <Box
@@ -154,7 +151,10 @@ function ParticipantColumn(props: IParticipantColumnProps) {
             }}
         >
             <Typography variant="h4">Participants</Typography>
-            <LeaderBoard />
+            <ParticipantList
+                thisParticipant={null}
+                otherParticipants={participants}
+            />
             <Button variant="contained" onClick={() => onStartClicked()}>Start</Button>
         </Box>
     )
@@ -191,6 +191,8 @@ class Config extends React.Component<IConfigProps, IConfigState> {
 
     render() {
 
+        const participants: Set<string> = new Set(Array.from(Array(10).keys()).map(x => `participant ${x}`));
+
         return (
             <Container
                 sx={{
@@ -208,7 +210,10 @@ class Config extends React.Component<IConfigProps, IConfigState> {
             
                 <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
             
-                <ParticipantColumn onStartClicked={this.onStartClicked} />
+                <ParticipantColumn
+                    participants={participants}
+                    onStartClicked={this.onStartClicked}
+                />
             </Container>
         )
     }

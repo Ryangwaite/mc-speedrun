@@ -1,4 +1,3 @@
-import React from "react";
 import {
     Card, Typography, Box, CardContent, CardActions,
     List, ListItem, ListItemIcon, ListItemText, Container, Tooltip, Divider,
@@ -9,7 +8,7 @@ import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import { IQuestionAnswerStats } from "../const";
 
-enum OptionMode {
+export enum OptionMode {
     PLAIN,                              // When no answer has been selected and it hasn't been marked
     SELECTED_UNMARKED,                  // When an option has been selected but not yet been marked
     SELECTED_AND_MARKED_CORRECT,        // when an option has been selected and marked as correct
@@ -19,177 +18,144 @@ enum OptionMode {
 
 interface IOptionProps {
     text: string,
-    selectable: boolean, // Whether the option is selectable i.e. when participant selecting it as a correct answer
     choiceLabel: string,  // e.g. "a)"
-    initialMode?: OptionMode,
-    onClick?: (isSelected: boolean) => void                    // Only applies to 'PLAIN' and 'SELECTED_UNMARKED' modes
+    mode: OptionMode,
+    onClick?: () => void                    // Only applies to 'PLAIN' and 'SELECTED_UNMARKED' modes
 }
 
-interface IOptionState {
-    mode: OptionMode
-}
+function Option(props: IOptionProps) {
 
-class Option extends React.Component<IOptionProps, IOptionState> {
-    constructor(props: IOptionProps) {
-        super(props);
-        this.state = {
-            mode: this.props.initialMode === undefined ? OptionMode.PLAIN : this.props.initialMode
-        };
+    const { text, choiceLabel, mode, onClick } = props;
 
-        this.toggleOptionSelection = this.toggleOptionSelection.bind(this);
-    }
-
-    /**
-     * Toggles the option between 'PLAIN' and 'SELECTED_UNMARKED'.
-     * 
-     * Invokes the 'onClick' prop with the updated selection state of the button
-     * post toggle.
-     */
-    toggleOptionSelection() {
-        if (this.props.selectable) {
-            this.setState((state, props) => {         
-                const updatedMode = state.mode === OptionMode.PLAIN ? OptionMode.SELECTED_UNMARKED : OptionMode.PLAIN;
-                if (props.onClick) {
-                    props.onClick(updatedMode === OptionMode.SELECTED_UNMARKED)
-                }
-                return {mode: updatedMode}
-            })
-        }
-    }
-
-    render() {
-        // const { mode } = this.state;
-        const { text, choiceLabel } = this.props;
-
-        switch (this.state.mode) {
-            case OptionMode.PLAIN:
-                return (
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        onClick={() => this.toggleOptionSelection()}
-                    >
-                        <Typography
-                            variant="body1"
-                            sx={{userSelect: "none"}} // Dont display text highlight for copy-paste onclick
-                        >{choiceLabel} {text}</Typography>
-                    </Box>
-                )
-            case OptionMode.SELECTED_UNMARKED:
-                return (
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        onClick={() => this.toggleOptionSelection()}
-                    >
-                        <Typography
-                            variant="body1"
-                            sx={{
-                                border: "1px solid green",
-                                userSelect: "none", // Dont display text highlight for copy-paste onclick
-                            }}
-                        >{choiceLabel} {text}</Typography>
-                    </Box>
-                )
-            case OptionMode.SELECTED_AND_MARKED_CORRECT:
-                return (
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                    >
-                        <Typography
-                            variant="body1"
-                            sx={{
-                                border: "1px solid green",
-                                background: "green",
-                                userSelect: "none", // Dont display text highlight for copy-paste onclick
-                            }}
-                        >{choiceLabel} {text}</Typography>
-                        <CheckCircleOutlinedIcon sx={{color: "green"}} />
-                    </Box>
-                )
-            case OptionMode.SELECTED_AND_MARKED_INCORRECT:
-                return (
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                    >
-                        <Typography
-                            variant="body1"
-                            sx={{
-                                border: "1px solid red",
-                                userSelect: "none", // Dont display text highlight for copy-paste onclick
-                            }}
-                        >{choiceLabel} {text}</Typography>
-                        <CancelOutlinedIcon sx={{color: "red"}} />
-                    </Box>
-                )
-            case OptionMode.UNSELECTED_AND_MARKED_CORRECT:
-                return (
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                    >
-                        <Typography
-                            variant="body1"
-                            sx={{
-                                border: "1px solid green",
-                                userSelect: "none", // Dont display text highlight for copy-paste onclick
-                            }}
-                        >{choiceLabel} {text}</Typography>
-                        <CircleOutlinedIcon fontSize="small" sx={{color: "green"}} />
-                    </Box>
-                )
-            default:
-                throw new Error(`Invalid Option mode '${this.state.mode}'`)
-        }
+    switch (mode) {
+        case OptionMode.PLAIN:
+            return (
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    onClick={onClick}
+                >
+                    <Typography
+                        variant="body1"
+                        sx={{userSelect: "none"}} // Dont display text highlight for copy-paste onclick
+                    >{choiceLabel} {text}</Typography>
+                </Box>
+            )
+        case OptionMode.SELECTED_UNMARKED:
+            return (
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    onClick={onClick}
+                >
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            border: "1px solid green",
+                            userSelect: "none", // Dont display text highlight for copy-paste onclick
+                        }}
+                    >{choiceLabel} {text}</Typography>
+                </Box>
+            )
+        case OptionMode.SELECTED_AND_MARKED_CORRECT:
+            return (
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                >
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            border: "1px solid green",
+                            background: "green",
+                            userSelect: "none", // Dont display text highlight for copy-paste onclick
+                        }}
+                    >{choiceLabel} {text}</Typography>
+                    <CheckCircleOutlinedIcon sx={{color: "green"}} />
+                </Box>
+            )
+        case OptionMode.SELECTED_AND_MARKED_INCORRECT:
+            return (
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                >
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            border: "1px solid red",
+                            userSelect: "none", // Dont display text highlight for copy-paste onclick
+                        }}
+                    >{choiceLabel} {text}</Typography>
+                    <CancelOutlinedIcon sx={{color: "red"}} />
+                </Box>
+            )
+        case OptionMode.UNSELECTED_AND_MARKED_CORRECT:
+            return (
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                >
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            border: "1px solid green",
+                            userSelect: "none", // Dont display text highlight for copy-paste onclick
+                        }}
+                    >{choiceLabel} {text}</Typography>
+                    <CircleOutlinedIcon fontSize="small" sx={{color: "green"}} />
+                </Box>
+            )
+        default:
+            throw new Error(`Invalid Option mode '${mode}'`)
     }
 }
 
 interface IQuestionCardProps {
     question: string,
-    options: string[],
-    correctAnswers: number[],
+    numCorrectOptions: number,
+    options: {
+        text: string,
+        mode: OptionMode
+    }[],
+    onOptionClicked?: (optionIndex: number) => void,
 }
 
-interface IQuestionCardState {}
+export function QuestionCard(props: IQuestionCardProps) {
+    const { question, options, numCorrectOptions, onOptionClicked} = props
 
-export class QuestionCard extends React.Component<IQuestionCardProps, IQuestionCardState> {
-    constructor(props: IQuestionCardProps) {
-        super(props);
-        this.state = {}
-    }
-
-    render() {
-        const { question, options, correctAnswers} = this.props
-
-        
-
-        return (
-            <Card
-                variant="outlined"
+    return (
+        <Card
+            variant="outlined"
+        >
+            <CardContent>
+                <Typography variant="h5">{question}</Typography>
+                <Typography variant="caption" color="text.secondary">Select {numCorrectOptions}</Typography>
+            </CardContent>
+            <CardActions
+                sx={{
+                    display: "flex",
+                    justifyContent: "space-evenly",
+                    margin: "8px"
+                }}
             >
-                <CardContent>
-                    <Typography variant="h5">{question}</Typography>
-                    <Typography variant="caption" color="text.secondary">Select {correctAnswers.length}</Typography>
-                </CardContent>
-                <CardActions
-                    sx={{
-                        display: "flex",
-                        justifyContent: "space-evenly",
-                        margin: "8px"
-                    }}
-                >
-                    {options.map((option, index) => <Option selectable={true} text={option} choiceLabel={String.fromCharCode(65 + index) + ")"} />)}
-                </CardActions>
-            </Card>
-        )
-    }
+                {options.map((option, index) => (
+                    <Option
+                        key={index}
+                        text={option.text}
+                        choiceLabel={String.fromCharCode(65 + index) + ")"}
+                        onClick={onOptionClicked ? () => onOptionClicked(index) : undefined}
+                        mode={option.mode}
+                    />))
+                }
+            </CardActions>
+        </Card>
+    )
 }
 
 interface IQuestionStatsTooltipContentProps {
@@ -290,32 +256,22 @@ function QuestionStatsPanel(props: IQuestionStatsPanelProps) {
     )
 }
 
-interface IQuestionCardWithStatsProps extends IQuestionCardProps {
-    participantAnswers: number[],
+interface IQuestionCardWithStatsProps {
+    question: string,
+    numCorrectOptions: number,
+    options: {
+        text: string,
+        mode: OptionMode,
+    }[],
     answerStats: IQuestionAnswerStats
 }
 
 export function QuestionCardWithStats(props: IQuestionCardWithStatsProps) {
 
-    const {question, options, correctAnswers, participantAnswers} = props
+    const {question, numCorrectOptions, options} = props
 
     const optionElements = options.map((option, index) => {
-
-        // Determine initial label
-        let initialMode = undefined
-        if (correctAnswers.includes(index)) {
-            // Find out of the user choose it
-            if (participantAnswers?.includes(index)) {
-                initialMode = OptionMode.SELECTED_AND_MARKED_CORRECT
-            } else {
-                initialMode = OptionMode.UNSELECTED_AND_MARKED_CORRECT
-            }
-        } else if (participantAnswers?.includes(index)) {
-            // This option is not correct but the participant selected it
-            initialMode = OptionMode.SELECTED_AND_MARKED_INCORRECT
-        } // else dont provide an initialLabel since this is unmarked so will toggle between "PLAIN" and "SELECTED_UNMARKED"
-
-        return <Option selectable={false} text={option} choiceLabel={String.fromCharCode(65 + index) + ")"} initialMode={initialMode} />
+        return <Option text={option.text} choiceLabel={String.fromCharCode(65 + index) + ")"} mode={option.mode} />
     })
 
     return (
@@ -329,7 +285,7 @@ export function QuestionCardWithStats(props: IQuestionCardWithStatsProps) {
             <Container>
                 <CardContent>
                     <Typography variant="h5">{question}</Typography>
-                    <Typography variant="caption" color="text.secondary">Select {correctAnswers.length}</Typography>
+                    <Typography variant="caption" color="text.secondary">Select {numCorrectOptions}</Typography>
                 </CardContent>
                 <CardActions
                     sx={{
