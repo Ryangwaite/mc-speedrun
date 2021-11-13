@@ -2,7 +2,7 @@ import React from "react";
 import { Button, Card, CardActions, CardContent, CardHeader, Divider, Grid, TextField } from "@mui/material";
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-
+import { useNavigate } from "react-router-dom";
 interface IInputTextBoxProps {
     title: string,
     label: string,
@@ -100,12 +100,16 @@ interface IHomeProps {
 
 function Home(props: IHomeProps) {
 
+    let navigate = useNavigate();
+
     const onParticipantJoin = (code: string) => {
-        alert(`Preparing to join session '${code}'`)
+        console.debug(`Joining lobby with code '${code}'`)
+        navigate(`/lobby`) // TODO: Put code in the URL
     }
 
     const onHostBegin = (name: string) => {
-        alert(`Preparing to host session '${name}'`)
+        console.debug(`Hosting lobby with name '${name}'`)
+        navigate(`/config`) // TODO: Use name somehow to create quiz session
     }
 
     return (
