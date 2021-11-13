@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Typography, Box, Card, LinearProgress, Container} from "@mui/material";
 import { OptionMode, QuestionCard } from "../common/Question";
 import { IQuestionAndAnswers, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
@@ -146,89 +146,67 @@ function PositionedQuizSection(props: IQuizSectionProps) {
 interface IQuizProps {
 }
 
-interface IQuizState {
-    // Just temporary state
-    currentQuestionIndex: number,
-    // What the user has currently selected as the correct answers before submitting
-    optionSelection: number[],
-}
+function Quiz(props: IQuizProps) {
 
-class Quiz extends React.Component<IQuizProps, IQuizState> {
-    constructor(props: IQuizProps) {
-        super(props)
-        this.state = {
-            currentQuestionIndex: 0,
-            optionSelection: [],
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+    const [optionSelection, setOptionSelection] = useState<number[]>([])
+
+    function clickOption(optionIndex: number) {
+        let updatedSelection = [...optionSelection]
+        if (updatedSelection.includes(optionIndex)) {
+            // Remove it from selection
+            updatedSelection = updatedSelection.filter(x => x !== optionIndex)
+        } else {
+            // Add it to selection
+            updatedSelection.push(optionIndex)
         }
-
-        this.onSubmit = this.onSubmit.bind(this);
-        this.clickOption = this.clickOption.bind(this);
+        setOptionSelection(updatedSelection)
     }
 
-    clickOption(optionIndex: number) {
-        this.setState(prevState => {
-            let updatedOptionSelection = [...prevState.optionSelection]
-            if (updatedOptionSelection.includes(optionIndex)) {
-                // Remove it from selection
-                updatedOptionSelection.filter(x => x !== optionIndex)
-            } else {
-                // Add it to selection
-                updatedOptionSelection.push(optionIndex)
-            }
-            return {optionSelection: updatedOptionSelection}
-        })
-    }
-
-    onSubmit() {
-        console.log(`Selected options were: ${this.state.optionSelection}`)
+    function onSubmit() {
+        console.log(`Selected options were: ${optionSelection}`)
 
         // Just move onto next question
-        this.setState(prevState => ({
-            currentQuestionIndex: (prevState.currentQuestionIndex + 1) % SAMPLE_QUESTIONS_AND_ANSWERS.length // wrap around
-        }))
-
-        this.setState({optionSelection: []})
+        setCurrentQuestionIndex((currentQuestionIndex + 1) % SAMPLE_QUESTIONS_AND_ANSWERS.length) // wrap around
+        setOptionSelection([]) // deselect options
     }
 
-    render() {
+    // Get some participants.
+    // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
+    const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
+    participants[10].selected = true // Make a "random" participant highlighted.
 
-        // Get some participants.
-        // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
-        const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
-        participants[10].selected = true // Make a "random" participant highlighted.
+    const qAndA: IQuestionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS[currentQuestionIndex]
+    const options = qAndA.options.map((value, index) => ({
+        text: value,
+        mode: optionSelection.includes(index) ? OptionMode.SELECTED_UNMARKED : OptionMode.PLAIN,
+    }))
 
-        const qAndA: IQuestionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS[this.state.currentQuestionIndex]
-        const options = qAndA.options.map((value, index) => ({
-            text: value,
-            mode: this.state.optionSelection.includes(index) ? OptionMode.SELECTED_UNMARKED : OptionMode.PLAIN,
-        }))
-
-        return (
-            <Box
-                // Position the container so the Leaderboard and QuizSection can be positioned relative to it
-                position="relative"
-                sx={{
-                    flexGrow: 1,
-                    minWidth: "100%",
-                    height: "100%"
-                }}
-            >
-                <PositionedQuizSection
-                    questionNumber={this.state.currentQuestionIndex + 1}
-                    totalQuestions={SAMPLE_QUESTIONS_AND_ANSWERS.length}
-                    secondsRemaining={50}
-                    totalSeconds={120}
-                    questionText={qAndA.question}
-                    numCorrectOptions={qAndA.answers.length}
-                    options={options}
-                    onOptionClicked={this.clickOption}
-                    onSubmit={this.onSubmit}
-                />
-                <LeaderboardColumn participants={participants} />
-            </Box>
-            
-        )
-    }
+    return (
+        <Box
+            // Position the container so the Leaderboard and QuizSection can be positioned relative to it
+            position="relative"
+            sx={{
+                flexGrow: 1,
+                minWidth: "100%",
+                height: "100%"
+            }}
+        >
+            <PositionedQuizSection
+                questionNumber={currentQuestionIndex + 1}
+                totalQuestions={SAMPLE_QUESTIONS_AND_ANSWERS.length}
+                secondsRemaining={50}
+                totalSeconds={120}
+                questionText={qAndA.question}
+                numCorrectOptions={qAndA.answers.length}
+                options={options}
+                onOptionClicked={clickOption}
+                onSubmit={onSubmit}
+            />
+            <LeaderboardColumn participants={participants} />
+        </Box>
+        
+    )
 }
 
 export default Quiz;

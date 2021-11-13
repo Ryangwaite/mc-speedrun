@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Box, TextField, ListItem, ListItemText, Container, Typography} from "@mui/material";
 import ParticipantList from "../common/ParticipantList";
 
@@ -8,127 +8,102 @@ interface IJoinListItemProps {
     onJoin: (name: string) => void
 }
 
-interface IJoinListItemState {
-    nameField: string,
-}
+function JoinListItem(props: IJoinListItemProps) {
 
-class JoinListItem extends React.Component<IJoinListItemProps, IJoinListItemState> {
-    constructor(props: IJoinListItemProps) {
-        super(props)
-        this.state = {
-            nameField: ""
-        }
+    const [nameField, setNameField] = useState("");
 
-        this.onFieldChange = this.onFieldChange.bind(this)
-        this.onJoinClicked = this.onJoinClicked.bind(this)
+    function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const value = event.target.value
+        setNameField(value)
+        console.debug(`Name field changed to '${value}'`)
     }
 
-    private onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
-        this.setState({nameField: event.target.value});
+    function onJoinClicked() {
+        props.onJoin(nameField);
+        console.debug(`Join clicked with '${nameField}'`)
     }
 
-    private onJoinClicked() {
-        this.props.onJoin(this.state.nameField);
-    }
+    const { listItemKey, userJoined } = props;
 
-    render() {
-        const { listItemKey } = this.props;
-        const { nameField } = this.state;
-
-        const content = this.props.userJoined ?
-            <ListItemText primary={this.state.nameField} /> :
-            <Container
+    const content = userJoined ?
+        <ListItemText primary={nameField} /> :
+        <Container
+            sx={{
+                display: "flex",
+                alignItems: "baseline"
+            }}
+        >
+            <TextField
+                fullWidth
+                id="outlined-basic"
+                label="name"
+                onChange={onFieldChange}
+            />
+            <Button
+                disabled={!nameField}
+                onClick={onJoinClicked}
+                variant="contained"
                 sx={{
-                    display: "flex",
-                    alignItems: "baseline"
+                    margin: 2
                 }}
-            >
-                <TextField
-                    fullWidth
-                    id="outlined-basic"
-                    label="name"
-                    onChange={this.onFieldChange}
-                />
-                <Button
-                    disabled={!nameField}
-                    onClick={() => this.onJoinClicked()}
-                    variant="contained"
-                    sx={{
-                        margin: 2
-                    }}
-                >JOIN</Button>
-            </Container>
+            >JOIN</Button>
+        </Container>
 
-        return (
-            <ListItem
-                key={listItemKey}
-                sx={{
-                    border: "1px solid green", // TODO: properly style this
-                }}
-            >
-                {content}
-            </ListItem>
-        )
-    }
+    return (
+        <ListItem
+            key={listItemKey}
+            sx={{
+                border: "1px solid green", // TODO: properly style this
+            }}
+        >
+            {content}
+        </ListItem>
+    )
 }
 
 interface ILobbyProps {
     // participants // will add this eventually
 }
 
-interface ILobbyState {
+function Lobby(props: ILobbyProps) {
+
     // Whether the user has entered their name and pressed the "JOIN" button
-    userJoined: boolean,
-    username: string
-}
+    const [userJoined, setUserJoined] = useState(false)
+    const [username, setUsername] = useState("")
 
-class Lobby extends React.Component<ILobbyProps, ILobbyState> {
-    constructor(props: ILobbyProps) {
-        super(props)
-        this.state = {
-            userJoined: false,
-            username: ""
-        }
-        this.onJoin = this.onJoin.bind(this)
+    function onJoin(name: string) {
+        setUserJoined(true)
+        setUsername(name)
+        console.debug(`'${name}' joined`)
     }
 
-    private onJoin(name: string) {
-        this.setState({
-            userJoined: true,
-            username: name
-        })
-        alert(`'${name}' joined`)
-    }
+    const participants: Set<string> = new Set(Array.from(Array(150).keys()).map(x => `participant ${x}`))
 
-    render() {
-        const participants: Set<string> = new Set(Array.from(Array(150).keys()).map(x => `participant ${x}`))
+    let joinListItem = <JoinListItem
+        userJoined={userJoined}
+        listItemKey={"joinListItem"}  // NOTE: probably come up with a better key than this
+        onJoin={onJoin} 
+    />;
 
-        let joinListItem = <JoinListItem
-            userJoined={this.state.userJoined}
-            listItemKey={"joinListItem"}  // NOTE: probably come up with a better key than this
-            onJoin={this.onJoin} 
-        />;
+    return (
+        <Box
+            display="flex"
+            flexDirection="column"
+            justifyContent="flex-start"
+            alignItems="center"
+            height="100%"
+            sx={{
+                overflowY: "auto"
+            }}
+        >
+            <Typography>Waiting for host to start...</Typography>
 
-        return (
-            <Box
-                display="flex"
-                flexDirection="column"
-                justifyContent="flex-start"
-                alignItems="center"
-                height="100%"
-                sx={{
-                    overflowY: "auto"
-                }}
-            >
-                <Typography>Waiting for host to start...</Typography>
-
-                <ParticipantList
-                    thisParticipant={joinListItem}
-                    otherParticipants={participants}
-                />
-            </Box>
-        )
-    }
+            <ParticipantList
+                thisParticipant={joinListItem}
+                otherParticipants={participants}
+            />
+        </Box>
+    )
 }
 
 export default Lobby;

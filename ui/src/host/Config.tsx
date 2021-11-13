@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useState } from "react";
 import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
 import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
 import { OptionMode, QuestionCard } from "../common/Question";
@@ -163,60 +163,44 @@ function ParticipantColumn(props: IParticipantColumnProps) {
 interface IConfigProps {
 }
 
-interface IConfigState {
-    questionDuration: number // seconds
-}
+function Config(props: IConfigProps) {
 
-class Config extends React.Component<IConfigProps, IConfigState> {
-    constructor(props: IConfigProps) {
-        super(props)
-        this.state = {
-            questionDuration: 120
-        }
+    const [questionDuration, setQuestionDuration] = useState(120)
 
-        this.onQuestionDurationChange = this.onQuestionDurationChange.bind(this)
-        this.onStartClicked = this.onStartClicked.bind(this)
+    function onQuestionDurationChange(duration: number) {
+        console.debug(`Question duration changed to: ${duration}`)
+        setQuestionDuration(duration)
     }
 
-    onQuestionDurationChange(duration: number) {
-        console.log(`Question duration changed to: ${duration}`)
-        this.setState({
-            questionDuration: duration
-        })
-    }
-
-    onStartClicked() {
+    function onStartClicked() {
         alert("Start clicked")
     }
 
-    render() {
+    const participants: Set<string> = new Set(Array.from(Array(10).keys()).map(x => `participant ${x}`));
 
-        const participants: Set<string> = new Set(Array.from(Array(10).keys()).map(x => `participant ${x}`));
-
-        return (
-            <Container
-                sx={{
-                    flexGrow: 1,
-                    // Position the container so the columns can be positioned relative to it
-                    position: "relative",
-                    minWidth: "100%",
-                }}
-            >
-                
-                <ConfigColumn
-                    inviteUrl={"https://localhost/join/kjb34kj5h"}
-                    onQuestionDurationChange={this.onQuestionDurationChange}
-                />
+    return (
+        <Container
+            sx={{
+                flexGrow: 1,
+                // Position the container so the columns can be positioned relative to it
+                position: "relative",
+                minWidth: "100%",
+            }}
+        >
             
-                <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
-            
-                <ParticipantColumn
-                    participants={participants}
-                    onStartClicked={this.onStartClicked}
-                />
-            </Container>
-        )
-    }
+            <ConfigColumn
+                inviteUrl={"https://localhost/join/kjb34kj5h"}
+                onQuestionDurationChange={onQuestionDurationChange}
+            />
+        
+            <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
+        
+            <ParticipantColumn
+                participants={participants}
+                onStartClicked={onStartClicked}
+            />
+        </Container>
+    )
 }
 
 export default Config;

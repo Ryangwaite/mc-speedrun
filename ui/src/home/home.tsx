@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Card, CardActions, CardContent, CardHeader, Divider, Grid, TextField } from "@mui/material";
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -10,46 +10,37 @@ interface IInputTextBoxProps {
     onSubmit: (inputContent: string) => void
 }
 
-interface IInputTextBoxState {
-    fieldContent: string
-}
+function InputTextBox(props: IInputTextBoxProps) {
 
-class InputTextBox extends React.Component<IInputTextBoxProps, IInputTextBoxState> {
-    constructor(props: IInputTextBoxProps) {
-        super(props);
-        this.state = {
-            fieldContent: ""
-        }
-        this.onFieldChange = this.onFieldChange.bind(this);
+    const [fieldContent, setFieldContent] = useState("")
+
+    function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const value = event.target.value;
+        console.debug(`Field has updated to '${value}'`)
+        setFieldContent(value)
     }
     
-    private onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
-        this.setState({fieldContent: event.target.value})
-    }
-    
-    render() {
-        const { title, label, buttonLabel, onSubmit} = this.props
-        return (
-            <Card sx={{
-                marginLeft: "auto",
-                marginRight: "auto",
-                maxWidth: 320
-            }}>
-                <CardHeader title={title} sx={{ textAlign: "center" }} />
-                <CardContent>
-                    <TextField id="outlined-basic" label={label} fullWidth onChange={this.onFieldChange}/>
-                </CardContent>
-                <CardActions>
-                    <Button
-                        disabled={!this.state.fieldContent}
-                        onClick={() => onSubmit(this.state.fieldContent)}
-                        variant="contained" 
-                        fullWidth
-                    >{buttonLabel}</Button>
-                </CardActions>
-            </Card>
-        )
-    }
+    const { title, label, buttonLabel, onSubmit} = props
+    return (
+        <Card sx={{
+            marginLeft: "auto",
+            marginRight: "auto",
+            maxWidth: 320
+        }}>
+            <CardHeader title={title} sx={{ textAlign: "center" }} />
+            <CardContent>
+                <TextField id="outlined-basic" label={label} fullWidth onChange={onFieldChange}/>
+            </CardContent>
+            <CardActions>
+                <Button
+                    disabled={!fieldContent}
+                    onClick={() => onSubmit(fieldContent)}
+                    variant="contained" 
+                    fullWidth
+                >{buttonLabel}</Button>
+            </CardActions>
+        </Card>
+    )
 }
 
 /**

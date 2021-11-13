@@ -87,37 +87,27 @@ function StatCard(props: IStatCardProps) {
 
 interface ISummaryColumnProps {}
 
-interface ISummaryColumnState { }
-
-class SummaryColumn extends React.Component<ISummaryColumnProps, ISummaryColumnState> {
-    constructor(props: ISummaryColumnProps) {
-        super(props);
-        this.state = {}
-    }
-
-    render() {
-
-        return (
-            <Box
-                // Position
-                position="absolute"
-                top="0"
-                left="0"
-                bottom="0"
-                // Content
-                display="flex"
-                flexDirection="column"
-                maxWidth="320px" // TODO: Pull out to a const
-                sx={{
-                    overflowY: "auto",
-                }}
-            >
-                <ProgressSection progressCurrent={15} progressTotal={15} />
-                <StatCard value="5:21" label="Time elapsed" />
-                <StatCard value="20s" label="Avg. answer time" />
-            </Box>
-        )
-    }
+function SummaryColumn(props: ISummaryColumnProps) {
+    return (
+        <Box
+            // Position
+            position="absolute"
+            top="0"
+            left="0"
+            bottom="0"
+            // Content
+            display="flex"
+            flexDirection="column"
+            maxWidth="320px" // TODO: Pull out to a const
+            sx={{
+                overflowY: "auto",
+            }}
+        >
+            <ProgressSection progressCurrent={15} progressTotal={15} />
+            <StatCard value="5:21" label="Time elapsed" />
+            <StatCard value="20s" label="Avg. answer time" />
+        </Box>
+    )
 }
 
 interface IQuestionSectionProps {
@@ -165,49 +155,39 @@ function QuestionSection(props: IQuestionSectionProps) {
 
 interface ISummaryProps {}
 
-interface ISummaryState {}
+function Summary(props: ISummaryProps) {
+    // Get some participants.
+    // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
+    const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
+    participants[10].selected = true // Make a "random" participant highlighted.
 
-class Summary extends React.Component<ISummaryProps, ISummaryState> {
-    constructor(props: ISummaryProps) {
-        super(props)
-        this.state = {}
-    }
+    const questionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS.map(qAndA => ({...qAndA}))
+    const questionStats = SAMPLE_QUESTION_STATS.map(stats => ({...stats}))
+    const qAndAWithStats: {
+        question: IQuestionAndAnswers,
+        stats: IQuestionAnswerStats,
+    }[] = _.zipWith(questionAndAnswers, questionStats, (qAndA, stats) => {
+        return {
+            question: qAndA,
+            stats: stats,
+        }
+    })
 
-    render() {
-
-        // Get some participants.
-        // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
-        const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
-        participants[10].selected = true // Make a "random" participant highlighted.
-
-        const questionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS.map(qAndA => ({...qAndA}))
-        const questionStats = SAMPLE_QUESTION_STATS.map(stats => ({...stats}))
-        const qAndAWithStats: {
-            question: IQuestionAndAnswers,
-            stats: IQuestionAnswerStats,
-        }[] = _.zipWith(questionAndAnswers, questionStats, (qAndA, stats) => {
-            return {
-                question: qAndA,
-                stats: stats,
-            }
-        })
-
-        return (
-            <Box
-                // Position the container so the LeaderBoard and QuizSection can be positioned relative to it
-                position="relative"
-                sx={{
-                    flexGrow: 1,
-                    minWidth: "100%",
-                    height: "100%",
-                }}
-            >
-                <SummaryColumn />
-                <QuestionSection questionAndAnswersWithStats={qAndAWithStats}/>
-                <LeaderboardColumn participants={participants} />
-            </Box>
-        )
-    }
+    return (
+        <Box
+            // Position the container so the LeaderBoard and QuizSection can be positioned relative to it
+            position="relative"
+            sx={{
+                flexGrow: 1,
+                minWidth: "100%",
+                height: "100%",
+            }}
+        >
+            <SummaryColumn />
+            <QuestionSection questionAndAnswersWithStats={qAndAWithStats}/>
+            <LeaderboardColumn participants={participants} />
+        </Box>
+    )
 }
 
 export default Summary;
