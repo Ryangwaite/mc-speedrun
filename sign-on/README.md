@@ -11,3 +11,9 @@ To enable auto-build on save, in a seperate terminal in the root of this directo
 ```bash
  ./gradlew -t build -x test -i
 ```
+
+## Running Tests
+### Command-line
+```bash
+./gradlew test
+```

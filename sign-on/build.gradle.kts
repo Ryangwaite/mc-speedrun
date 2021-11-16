@@ -7,6 +7,10 @@ plugins {
     kotlin("jvm") version "1.5.31"
 }
 
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
 group = "com.ryangwaite"
 version = "0.0.1"
 application {
@@ -21,6 +25,8 @@ dependencies {
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 }
