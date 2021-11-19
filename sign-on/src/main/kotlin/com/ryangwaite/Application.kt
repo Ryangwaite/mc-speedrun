@@ -1,23 +1,29 @@
 package com.ryangwaite
+import com.ryangwaite.routes.host
 import com.ryangwaite.routes.participant
+import com.ryangwaite.utilities.IRepository
+import com.ryangwaite.utilities.MemoryRepository
 import io.ktor.application.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.features.*
+import io.ktor.serialization.*
 import io.ktor.server.netty.*
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
-// NOTE: This is temporary until redis is added
-var sessions = mutableListOf<String>()
-
 fun Application.module(testing: Boolean = false) {
-    configureRouting()
+    install(ContentNegotiation) {
+        json()
+    }
+
+    val repository = MemoryRepository()
+    configureRouting(repository)
 }
 
 /**
  * Configure routing via extension so that it can be tested
  * independent of module.
  */
-fun Application.configureRouting() {
-    participant()
+fun Application.configureRouting(repository: IRepository) {
+    participant(repository)
+    host(repository)
 }

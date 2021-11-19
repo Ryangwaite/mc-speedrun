@@ -1,0 +1,78 @@
+openapi: "3.0.3"
+info:
+  title: sign-on API
+  version: 1.0.0
+paths:
+  /sign-on/{quiz_id}/join:
+    parameters:
+      - name: quiz_id
+        in: path
+        required: true
+        description: id of the hosted quiz to join
+        schema:
+          type: string
+    post:
+      summary: Join the hosted sessions session designed by {quiz_id}
+      responses:
+        '404':
+          description: the code was not found
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Invalid quiz ID 'badcode' provided"
+        '200':
+          description: successfully created a JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - token_type
+                  - expires_in
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: number
+              example: {
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwOi8vMC4wLjAuMDo4MDgwLyIsImlzSG9zdCI6ZmFsc2UsInF1aXpJZCI6IjA4NmM5NjEwIiwiaXNzIjoiaHR0cDovLzAuMC4wLjA6ODA4MC8iLCJleHAiOjE2Njg4NTM3MzJ9.I0qEa0Blo942lYuXDBMlmlew8AiLjVBqtDdzF2CGeZI",
+                "token_type": "Bearer",
+                "expires_in": 31536000
+              }
+  /sign-on/host/{quiz_name}:
+    parameters:
+      - name: quiz_name
+        in: path
+        required: true
+        description: display name of the quiz to create
+        schema:
+          type: string
+    post:
+      summary: Create a hosted session with name '{quiz_name}'
+      responses:
+        '200':
+          description: Successfully created a JWT token and quiz session
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - token_type
+                  - expires_in
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: number
+              example: {
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwOi8vMC4wLjAuMDo4MDgwLyIsImlzSG9zdCI6dHJ1ZSwicXVpeklkIjoiMDg2Yzk2MTAiLCJpc3MiOiJodHRwOi8vMC4wLjAuMDo4MDgwLyIsImV4cCI6MTY2ODg1MzcyMX0.od5w-YPcslsZ_E4GBYwW7tnCHixOI3y02VZQF5v9xBc",
+                "token_type": "Bearer",
+                "expires_in": 31536000
+              }
