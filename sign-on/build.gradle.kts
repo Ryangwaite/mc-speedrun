@@ -12,6 +12,18 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// Compile all Kotlin code to JVM 1.8 bytecode...
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    kotlinOptions.jvmTarget = "1.8"
+}
+// ...and the same for Java code
+tasks.withType<JavaCompile> {
+    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+}
+
 group = "com.ryangwaite"
 version = "0.0.1"
 application {
