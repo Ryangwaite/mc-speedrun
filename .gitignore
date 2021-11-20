@@ -170,3 +170,6 @@ aws-asset-icons/
 
 sign-on/build/
 sign-on/.gradle/
+
+speed-run/build/
+speed-run/.gradle/
