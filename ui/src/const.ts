@@ -1,6 +1,5 @@
 export const APP_NAME: string = "Multiple Choice Speedrun"
 
-
 export interface IQuestionAndAnswers {
     readonly question: string,
     readonly category: string,
@@ -261,3 +260,12 @@ export const SAMPLE_PARTICIPANTS: IParticipant[] = [
         selected: false,
     },
 ]
+
+/**
+ * Gets the base URL from the evironment for contacting the sign-on service
+ * CORs will need to be enable so that any requests succeed.
+ * @returns 
+ */
+export function getSignOnBaseUrl(): string {
+    return process.env.REACT_APP__SIGN_ON_URL ? process.env.REACT_APP__SIGN_ON_URL : ""
+}

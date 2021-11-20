@@ -3,6 +3,7 @@ import { Button, Card, CardActions, CardContent, CardHeader, Divider, Grid, Text
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate } from "react-router-dom";
+import { postHostQuiz, postJoinQuiz } from "../api/auth";
 interface IInputTextBoxProps {
     title: string,
     label: string,
@@ -93,14 +94,28 @@ function Home(props: IHomeProps) {
 
     let navigate = useNavigate();
 
-    const onParticipantJoin = (code: string) => {
+    const onParticipantJoin = async (code: string) => {
         console.debug(`Joining lobby with code '${code}'`)
-        navigate(`/lobby`) // TODO: Put code in the URL
+        try {
+            const authorizationResponse = await postJoinQuiz(code)
+            // TODO: Store the JWT token somewhere
+            console.log("Authorization Response:", authorizationResponse)
+            navigate(`/lobby`)
+        } catch(e) {
+            alert("Failed to join session:" + e)
+        }
     }
 
-    const onHostBegin = (name: string) => {
+    const onHostBegin = async (name: string) => {
         console.debug(`Hosting lobby with name '${name}'`)
-        navigate(`/config`) // TODO: Use name somehow to create quiz session
+        try {
+            const authorizationResponse = await postHostQuiz(name)
+            // TODO: Store the JWT token somewhere
+            console.log("Authorization Response:", authorizationResponse)
+            navigate(`/config`)
+        } catch(e) {
+            alert("Failed to host session:" + e)
+        }
     }
 
     return (
