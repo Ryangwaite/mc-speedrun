@@ -1,0 +1,10 @@
+# Exclude files from the ui directory
+ui/node_modules
+ui/.pnp
+ui/.pnp.js
+ui/coverage
+ui/build
+ui/.DS_Store
+ui/npm-debug.log*
+ui/yarn-debug.log*
+ui/yarn-error.log*

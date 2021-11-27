@@ -16,7 +16,7 @@ fun Application.module(testing: Boolean = false) {
     }
     install(CORS) {
         // Allow the frontend served from the React dev server to access this server. todo: pass in through config??
-        host("localhost:3000")
+        host("localhost")
     }
 
     val repository = MemoryRepository()
