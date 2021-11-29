@@ -6,7 +6,7 @@
   - [2.1 Question Set Loader](#21-question-set-loader)
   - [2.2 Question Set Store](#22-question-set-store)
   - [2.3 speed-run Fargate Cluster](#23-speed-run-fargate-cluster)
-  - [2.4 speed-run State](#24-speed-run-state)
+  - [2.4 speed-run Cache](#24-speed-run-cache)
   - [2.5 speed-run Reporter](#25-speed-run-reporter)
   - [2.6 speed-run Store](#26-speed-run-store)
   - [2.7 sign-on](#27-sign-on)
@@ -37,8 +37,8 @@ An EFS file share mounted into each ECS.
 ### 2.3 speed-run Fargate Cluster
 Application load balancer with multiple elastic scaling *speed-run* service containers. Each has the *Question Set Store* EFS mounted. *speed-run* persists current running speed-run state to *speed-run State* (Redis). On completion, sends a job to *Completion Job Queue*.
 
-### 2.4 speed-run State
-An elasticached redis instance that stores state of in-progress speedruns.
+### 2.4 speed-run Cache
+An elasticached redis instance that stores state of in-progress speedruns. Also has a pub-sub mechanism for keeping all `speed-run` instances for a particular quiz session in sync.
 
 ### 2.5 speed-run Reporter
 Lamda function that gets triggered when jobs are written to the *Completion Job Queue* (SQS standard queue). It extacts and loads the elasticache speed-run state into *speed-run Store*

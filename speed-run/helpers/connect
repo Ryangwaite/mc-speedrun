@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+
+"""
+Queries the 'sign-on' service to get a JWT token then connects
+via 'websocat' and hooks up stdin/stdout to it.
+Assumes that sign-on is running on port 80 of the localhost. Its
+best spun up as part of the deployment/docker-compose.yml environment.
+"""
+
+import requests
+import argparse
+import sys
+import os
+
+
+def main(args=None):
+    parser = argparse.ArgumentParser(description="""
+Queries the 'sign-on' service to get a JWT token then connects as a client/pariticipant
+via 'websocat' and hooks up stdin/stdout to it
+""")
+    parser.add_argument("-c", "--access-code", required=True, help="Access code of the quiz to join")
+    parser.add_argument("address", help="The speedrun hostname and port to connect to e.g. localhost:8081")
+    parsed_args = parser.parse_args(args)
+
+    response = requests.post(f"http://localhost/sign-on/{parsed_args.access_code}/join")
+    if response.status_code != 200:
+        sys.exit(f"Failed to get JWT token from sign-on service. Error: {response.text}")
+
+    response_json = response.json()
+    jwt_token = response_json["access_token"]
+    
+    # connect to websocket
+    ws_address = f"ws://{parsed_args.address}/speed-run/{parsed_args.access_code}/ws"
+    auth_header = f"Authorization: Bearer {jwt_token}"
+    args = ["websocat", f"-H={auth_header}", ws_address]
+    print(f"Connecting to websocket '{ws_address}' with header '{auth_header}'")
+    print("-------------------------------------")
+    os.execvp("websocat", args)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
