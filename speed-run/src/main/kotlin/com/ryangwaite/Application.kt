@@ -1,40 +1,45 @@
 package com.ryangwaite
 
 import com.auth0.jwt.JWT
-import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.ryangwaite.routes.speedRun
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
 import io.ktor.config.*
-import io.ktor.response.*
-import io.ktor.routing.*
 import io.ktor.server.netty.*
 import io.ktor.websocket.*
-import io.ktor.http.cio.websocket.*
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
     install(WebSockets)
+    installJwtAuthentication()
+    configureRouting()
+    log.info("hey")
+}
 
+fun Application.installJwtAuthentication() {
     install(Authentication) {
         jwt {
             verifier(buildJwtVerifier(environment))
             validate { credential ->
                 // Check that the claims are the correct format
-                val quizId = credential.payload.getClaim("quizId").asString() ?: return@validate null // auth fail
-                if (quizId.isEmpty()) return@validate null
-                credential.payload.getClaim("isHost").asBoolean() ?: return@validate null
+                val quizId = credential.payload.getClaim("quizId").asString()
+                if (quizId.isNullOrEmpty()) {
+                    log.warn("quizId '$quizId' is invalid. Must be non-empty.")
+                    return@validate null
+                }
+                if (credential.payload.getClaim("isHost").asBoolean() == null) {
+                    log.warn("isHost '${credential.payload.getClaim("isHost")}' is invalid. Must be a boolean.")
+                    return@validate null
+                }
 
                 // JWT is valid
                 JWTPrincipal(credential.payload)
             }
         }
     }
-
-    configureRouting()
 }
 
 /**
@@ -48,7 +53,7 @@ fun Application.configureRouting() {
 /**
  * Builds the JWT verifier from the environment config
  */
-fun buildJwtVerifier(environment: ApplicationEnvironment): JWTVerifier {
+fun buildJwtVerifier(environment: ApplicationEnvironment): com.auth0.jwt.interfaces.JWTVerifier {
     val secret = environment.config.property("jwt.secret").getString()
     val issuer = environment.config.property("jwt.issuer").getString()
     val audience = environment.config.property("jwt.audience").getString()

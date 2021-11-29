@@ -8,6 +8,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "1.5.31"
 }
 
+// Junit Jupiter is imported so need to explicitly set to use JUnit platform
 tasks.withType<Test> {
     useJUnitPlatform()
 }
@@ -47,4 +48,5 @@ dependencies {
 
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 }
