@@ -8,6 +8,27 @@ import ParticipantList from "../common/ParticipantList";
 
 const COLUMN_WIDTH = "320px"
 
+interface IQuizNameBlockProps {
+    onQuizNameChange: (name: string) => void
+}
+
+function QuizNameBlock(props: IQuizNameBlockProps): JSX.Element {
+    return (
+        <Box>
+            <Typography variant="h4">Quiz Name</Typography>
+            <TextField
+                id="outlined-number"
+                label="Name"
+                type="text"
+                InputLabelProps={{
+                    shrink: true,
+                }}
+                onChange={(event) => props.onQuizNameChange(event.target.value)}
+            />
+        </Box>
+    )
+}
+
 interface ICategoriesBlockProps {
     categories: string[]
 }
@@ -51,12 +72,13 @@ function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
 
 interface IConfigColumnProps {
     inviteUrl?: string,
-    onQuestionDurationChange: (duration: number) => void
+    onQuestionDurationChange: (duration: number) => void,
+    onQuizNameChange: (name: string) => void,
 }
 
 function ConfigColumn(props: IConfigColumnProps) {
 
-    const { onQuestionDurationChange } = props
+    const { onQuestionDurationChange, onQuizNameChange } = props
 
     // TODO: make it so the link can be copied but not followed 
     const inviteLinkComponent = props.inviteUrl ? <Typography variant={"body1"}>
@@ -81,6 +103,7 @@ function ConfigColumn(props: IConfigColumnProps) {
             }}
         >
             {inviteLinkComponent}
+            <QuizNameBlock onQuizNameChange={onQuizNameChange} />
             <CategoriesBlock categories={categories} />
             <QuestionDurationBlock onDurationChanged={onQuestionDurationChange}/>
         </Box>
@@ -165,7 +188,13 @@ interface IConfigProps {
 
 function Config(props: IConfigProps) {
 
+    const [quizName, setQuizName] = useState("")
     const [questionDuration, setQuestionDuration] = useState(120)
+
+    function onQuizNameChange(name: string) {
+        console.debug(`Quiz name change to: ${name}`)
+        setQuizName(name)
+    }
 
     function onQuestionDurationChange(duration: number) {
         console.debug(`Question duration changed to: ${duration}`)
@@ -190,6 +219,7 @@ function Config(props: IConfigProps) {
             
             <ConfigColumn
                 inviteUrl={"https://localhost/join/kjb34kj5h"}
+                onQuizNameChange={onQuizNameChange}
                 onQuestionDurationChange={onQuestionDurationChange}
             />
         

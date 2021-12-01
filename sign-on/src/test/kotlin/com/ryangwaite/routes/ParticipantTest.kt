@@ -49,7 +49,7 @@ class ParticipantTest {
         }
         val quizId = "testCode1234"
         val repository = MemoryRepository()
-        repository.createQuiz(quizId, "Name")
+        repository.createQuiz(quizId)
         application.participant(repository)
 
         with(handleRequest(HttpMethod.Post, "/sign-on/$quizId/join") {

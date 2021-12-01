@@ -2,7 +2,7 @@ package com.ryangwaite.utilities
 
 interface IRepository {
     fun quizExists(id: String): Boolean
-    fun createQuiz(id: String, name: String)
+    fun createQuiz(id: String)
     fun deleteQuiz(id: String)
 }
 
@@ -15,11 +15,11 @@ class MemoryRepository(): IRepository {
 
     override fun quizExists(id: String): Boolean = quizzes.containsKey(id)
 
-    override fun createQuiz(id: String, name: String) {
+    override fun createQuiz(id: String) {
         if (quizExists(id)) {
             throw IllegalArgumentException("A quiz with the id '$id' already exists")
         }
-        quizzes[id] = name
+        quizzes[id] = "PLACEHOLDER QUIZ METADATA"
     }
 
     override fun deleteQuiz(id: String) {

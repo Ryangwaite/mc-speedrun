@@ -23,12 +23,11 @@ fun Application.host(
     generateQuizId: () -> String = {generateCodeImpl()},
 ) {
     routing {
-        post("/sign-on/host/{quiz_name}") {
-            val quizName = call.parameters["quiz_name"]!!
+        post("/sign-on/host") {
 
             val quizId = generateQuizId()
-            repository.createQuiz(quizId, quizName)
-            log.info("Created new quiz session: id = $quizId, name = $quizName")
+            repository.createQuiz(quizId)
+            log.info("Created new quiz session: id = $quizId")
 
             val (token, expiresInSecs) = createJwtToken(environment, quizId, true)
 

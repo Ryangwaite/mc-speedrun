@@ -6,8 +6,8 @@ interface IAuthorizationResponse {
     expires_in: number, // seconds
 }
 
-export async function postHostQuiz(quizName: string): Promise<IAuthorizationResponse> {
-    const response = await fetchSignOn(`/sign-on/host/${quizName}`, {
+export async function postHostQuiz(): Promise<IAuthorizationResponse> {
+    const response = await fetchSignOn(`/sign-on/host`, {
         method: "POST",
     })
 

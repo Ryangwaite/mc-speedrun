@@ -43,14 +43,7 @@ paths:
                 "token_type": "Bearer",
                 "expires_in": 31536000
               }
-  /sign-on/host/{quiz_name}:
-    parameters:
-      - name: quiz_name
-        in: path
-        required: true
-        description: display name of the quiz to create
-        schema:
-          type: string
+  /sign-on/host:
     post:
       summary: Create a hosted session with name '{quiz_name}'
       responses:

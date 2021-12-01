@@ -31,7 +31,6 @@ class HostTest {
             put("jwt.audience", TEST_AUDIENCE)
         }
         val quizId = "12345678"
-        val quizName = "quizzesname"
         val repository = MemoryRepository()
         application.host(repository)
 
@@ -40,7 +39,7 @@ class HostTest {
         mockkStatic(::generateCodeImpl)
         every { generateCodeImpl() } returns quizId
 
-        with(handleRequest(HttpMethod.Post, "/sign-on/host/$quizName") {
+        with(handleRequest(HttpMethod.Post, "/sign-on/host") {
             // NOTE: Add headers and body if needed
         }) {
             // Assertions
@@ -55,6 +54,5 @@ class HostTest {
             // todo: assert the other attributes of the payload
         }
         assertEquals(1, repository.quizzes.size)
-        assertEquals(quizName, repository.quizzes[quizId])
     }
 }
