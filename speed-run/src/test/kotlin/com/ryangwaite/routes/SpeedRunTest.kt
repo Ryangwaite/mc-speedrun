@@ -19,7 +19,7 @@ const val JWT_TEST_AUDIENCE = "http://test.audience:8080/"
 const val JWT_TEST_ISSUER = "http://test.issuer:8080/"
 const val JWT_TEST_SECRET = "default-secret"
 
-fun createTestJwtToken(
+fun createTestHostJwtToken(
     audience: String = JWT_TEST_AUDIENCE,
     issuer: String = JWT_TEST_ISSUER,
     quizId: String = "12345",
@@ -45,7 +45,7 @@ class SpeedRunTest {
             }
             module()
         }) {
-            val invalidToken = createTestJwtToken(secret = JWT_TEST_SECRET + "invalid")
+            val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
             val quizId = "12345"
             handleWebSocket("/speed-run/$quizId/ws") {
                 addHeader("Authorization", "Bearer $invalidToken")
@@ -71,9 +71,8 @@ class SpeedRunTest {
             }
             module()
         }) {
-            val invalidToken = createTestJwtToken(isHost = isHost, quizId = quizId)
-            val quizId = "12345"
-            handleWebSocket("/speed-run/$quizId/ws") {
+            val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
+            handleWebSocket("/speed-run/12345/ws") {
                 addHeader("Authorization", "Bearer $invalidToken")
             }.apply {
                 assertEquals(HttpStatusCode.Unauthorized, response.status())

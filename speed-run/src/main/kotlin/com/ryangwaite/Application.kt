@@ -30,9 +30,17 @@ fun Application.installJwtAuthentication() {
                     log.warn("quizId '$quizId' is invalid. Must be non-empty.")
                     return@validate null
                 }
-                if (credential.payload.getClaim("isHost").asBoolean() == null) {
+                val isHost = credential.payload.getClaim("isHost").asBoolean()
+                if (isHost == null) {
                     log.warn("isHost '${credential.payload.getClaim("isHost")}' is invalid. Must be a boolean.")
                     return@validate null
+                }
+                if (!isHost) {
+                    val userId = credential.payload.getClaim("userId").asString()
+                    if (userId.isNullOrEmpty()) {
+                        log.warn("userId '$userId' is invalid. Must be non-empty.")
+                        return@validate null
+                    }
                 }
 
                 // JWT is valid
@@ -51,7 +59,8 @@ fun Application.configureRouting() {
 }
 
 /**
- * Builds the JWT verifier from the environment config
+ * Builds the JWT verifier from the environment config.
+ * This only verifies the constant config across paricipant and host JWTs.
  */
 fun buildJwtVerifier(environment: ApplicationEnvironment): com.auth0.jwt.interfaces.JWTVerifier {
     val secret = environment.config.property("jwt.secret").getString()
