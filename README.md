@@ -37,6 +37,8 @@ An EFS file share mounted into each ECS.
 ### 2.3 speed-run Fargate Cluster
 Application load balancer with multiple elastic scaling *speed-run* service containers. Each has the *Question Set Store* EFS mounted. *speed-run* persists current running speed-run state to *speed-run State* (Redis). On completion, sends a job to *Completion Job Queue*.
 
+See [message protocol spec](docs/message-protocol.md) for the messages sent between the host/participants and speed-run instances.
+
 ### 2.4 speed-run Cache
 An elasticached redis instance that stores state of in-progress speedruns. Also has a pub-sub mechanism for keeping all `speed-run` instances for a particular quiz session in sync.
 
