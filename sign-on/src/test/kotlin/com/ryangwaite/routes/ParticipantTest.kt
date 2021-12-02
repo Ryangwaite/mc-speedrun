@@ -3,8 +3,8 @@ package com.ryangwaite.routes
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.ryangwaite.models.AuthorizationResponse
-import com.ryangwaite.module
 import com.ryangwaite.utilities.MemoryRepository
+import com.ryangwaite.utilities.generateId
 import io.ktor.application.*
 import io.ktor.config.*
 import io.ktor.features.*
@@ -12,6 +12,8 @@ import io.ktor.http.*
 import io.ktor.serialization.*
 import kotlin.test.*
 import io.ktor.server.testing.*
+import io.mockk.every
+import io.mockk.mockkStatic
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -52,6 +54,10 @@ class ParticipantTest {
         repository.createQuiz(quizId)
         application.participant(repository)
 
+        val userId = "userid01"
+        mockkStatic(::generateId)
+        every { generateId() } returns userId
+
         with(handleRequest(HttpMethod.Post, "/sign-on/$quizId/join") {
             // NOTE: Add headers and body if needed
         }) {
@@ -62,6 +68,7 @@ class ParticipantTest {
                 .withIssuer(TEST_ISSUER)
                 .withClaim("quizId", quizId)
                 .withClaim("isHost", false)
+                .withClaim("userId", userId)
                 .build()
             assertDoesNotThrow { jwtVerifier.verify(payload.access_token) }
             // todo: assert the other attributes of the payload

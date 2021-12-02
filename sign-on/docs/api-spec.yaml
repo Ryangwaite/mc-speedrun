@@ -39,7 +39,7 @@ paths:
                   expires_in:
                     type: number
               example: {
-                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwOi8vMC4wLjAuMDo4MDgwLyIsImlzSG9zdCI6ZmFsc2UsInF1aXpJZCI6IjA4NmM5NjEwIiwiaXNzIjoiaHR0cDovLzAuMC4wLjA6ODA4MC8iLCJleHAiOjE2Njg4NTM3MzJ9.I0qEa0Blo942lYuXDBMlmlew8AiLjVBqtDdzF2CGeZI",
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwOi8vdGVzdC5hdWRpZW5jZTo4MDgwLyIsImlzSG9zdCI6ZmFsc2UsInF1aXpJZCI6InRlc3RDb2RlMTIzNCIsImlzcyI6Imh0dHA6Ly90ZXN0Lmlzc3Vlcjo4MDgwLyIsImV4cCI6MTY2OTk3NDA0MiwidXNlcklkIjoidXNlcmlkMDEifQ.Aghwr9p9GWg14ZUPuLiXESzbEW8_M5xm6UKpX7h-CWw",
                 "token_type": "Bearer",
                 "expires_in": 31536000
               }

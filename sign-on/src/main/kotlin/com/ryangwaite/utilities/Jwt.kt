@@ -4,8 +4,17 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.application.*
 import io.ktor.config.*
+import io.ktor.sessions.*
+import io.ktor.util.*
 import org.joda.time.DateTime
 import java.util.*
+
+/**
+ * Generate an 8 character code that is unique
+ */
+fun generateId(): String {
+    return generateNonce().take(8)
+}
 
 /**
  * Create the JWT token for the given session [quizId] for both hosts
@@ -25,13 +34,19 @@ fun createJwtToken(environment: ApplicationEnvironment, quizId: String, isHost: 
     val expiresInSecs = 365 * 24 * 60 * 60
     val expiryDate: Date = DateTime().plusSeconds(expiresInSecs).toDate()
 
-    val token = JWT.create()
+    val tokenBuilder = JWT.create()
         .withAudience(audience)
         .withIssuer(issuer)
+        .withExpiresAt(expiryDate)
         .withClaim("quizId", quizId)
         .withClaim("isHost", isHost)
-        .withExpiresAt(expiryDate)
-        .sign(Algorithm.HMAC256(secret))
+
+    if (!isHost) {
+        val userId = generateId()
+        tokenBuilder.withClaim("userId", userId)
+    }
+
+    val token = tokenBuilder.sign(Algorithm.HMAC256(secret))
 
     return Pair(token, expiresInSecs)
 }

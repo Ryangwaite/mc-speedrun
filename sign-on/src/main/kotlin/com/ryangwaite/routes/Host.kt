@@ -8,24 +8,15 @@ import com.ryangwaite.models.AuthorizationResponse
 import com.ryangwaite.utilities.IRepository
 import com.ryangwaite.utilities.MemoryRepository
 import com.ryangwaite.utilities.createJwtToken
+import com.ryangwaite.utilities.generateId
+import io.ktor.util.*
 import java.util.*
 
-/**
- * Generate an 8 character code that is most likely unique
- */
-fun generateCodeImpl(): String {
-    return UUID.randomUUID().toString().replace("-", "").take(8)
-}
-
-fun Application.host(
-    repository: IRepository,
-    // Overideable for tests
-    generateQuizId: () -> String = {generateCodeImpl()},
-) {
+fun Application.host(repository: IRepository) {
     routing {
         post("/sign-on/host") {
 
-            val quizId = generateQuizId()
+            val quizId = generateId()
             repository.createQuiz(quizId)
             log.info("Created new quiz session: id = $quizId")
 

@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.ryangwaite.models.AuthorizationResponse
 import com.ryangwaite.utilities.MemoryRepository
+import com.ryangwaite.utilities.generateId
 import io.ktor.application.*
 import io.ktor.config.*
 import io.ktor.features.*
@@ -34,10 +35,10 @@ class HostTest {
         val repository = MemoryRepository()
         application.host(repository)
 
-        // Mock the generateQuizId. See the following for details on
+        // Mock the generateId. See the following for details on
         // how this works:https://blog.kotlin-academy.com/mocking-is-not-rocket-science-mockk-advanced-features-42277e5983b5
-        mockkStatic(::generateCodeImpl)
-        every { generateCodeImpl() } returns quizId
+        mockkStatic(::generateId)
+        every { generateId() } returns quizId
 
         with(handleRequest(HttpMethod.Post, "/sign-on/host") {
             // NOTE: Add headers and body if needed
