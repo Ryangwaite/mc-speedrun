@@ -2,6 +2,8 @@ package com.ryangwaite.routes
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.ryangwaite.configureRedis
+import com.ryangwaite.configureRouting
 import com.ryangwaite.installJwtAuthentication
 import com.ryangwaite.module
 import io.ktor.application.*
@@ -43,7 +45,9 @@ class SpeedRunTest {
                 put("jwt.issuer", JWT_TEST_ISSUER)
                 put("jwt.audience", JWT_TEST_AUDIENCE)
             }
-            module()
+            install(io.ktor.websocket.WebSockets)
+            installJwtAuthentication()
+            configureRouting()
         }) {
             val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
             val quizId = "12345"
@@ -69,7 +73,9 @@ class SpeedRunTest {
                 put("jwt.issuer", JWT_TEST_ISSUER)
                 put("jwt.audience", JWT_TEST_AUDIENCE)
             }
-            module()
+            install(io.ktor.websocket.WebSockets)
+            installJwtAuthentication()
+            configureRouting()
         }) {
             val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
             handleWebSocket("/speed-run/12345/ws") {

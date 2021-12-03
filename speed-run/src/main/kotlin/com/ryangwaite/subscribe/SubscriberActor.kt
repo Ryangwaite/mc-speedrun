@@ -1,6 +1,6 @@
 package com.ryangwaite.subscribe
 
-import com.ryangwaite.RedisClient
+import com.ryangwaite.config.RedisClient
 import com.ryangwaite.connection.ConnectionManagerMsg
 import com.ryangwaite.connection.SubscriptionMsg
 import kotlinx.coroutines.CoroutineScope

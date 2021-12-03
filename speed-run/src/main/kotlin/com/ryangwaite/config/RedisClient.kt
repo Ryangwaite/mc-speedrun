@@ -1,4 +1,4 @@
-package com.ryangwaite
+package com.ryangwaite.config
 
 import io.ktor.config.*
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +27,7 @@ object RedisClient {
             useSingleServer().setAddress(address)
         }
 
-        this.INSTANCE = Redisson.create(config).rxJava()
+        INSTANCE = Redisson.create(config).rxJava()
         println("Configured redis client for instance '$address'") // todo replace with proper log
     }
 
