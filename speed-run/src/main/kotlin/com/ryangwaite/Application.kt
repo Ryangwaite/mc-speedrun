@@ -16,7 +16,6 @@ fun Application.module(testing: Boolean = false) {
     install(WebSockets)
     installJwtAuthentication()
     configureRouting()
-    log.info("hey")
 }
 
 fun Application.installJwtAuthentication() {

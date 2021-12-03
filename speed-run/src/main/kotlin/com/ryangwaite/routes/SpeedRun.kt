@@ -1,37 +1,52 @@
 package com.ryangwaite.routes
 
-import com.ryangwaite.connection.Connection
+import com.ryangwaite.connection.*
 import io.ktor.application.*
 import io.ktor.auth.*
+import io.ktor.auth.jwt.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.LinkedHashSet
+
 
 fun Application.speedRun() {
     routing {
-        val connections = Collections.synchronizedSet<Connection>(LinkedHashSet())
+
+        val connectionManager = connectionManagerActor()
+
         authenticate {
             webSocket("/speed-run/{quiz_id}/ws") {
 
-                log.info("New connection initiated from '$this'")
+                // Signal to block on while the connectionManager is using the connection
+                val websocketClosed = CompletableDeferred<Exception?>()
 
-                // TODO: process JWT token to pull out a couple of parameters needed for building the connection
-                val thisConnection = Connection(this, "12345", true)
-                connections += thisConnection
+                // Build connection from JWT claims
+                val principal = call.principal<JWTPrincipal>()
+                val quizId = principal!!.payload.getClaim("quizId").asString()
+                val connection: Connection = if (principal!!.payload.getClaim("isHost").asBoolean()) {
+                    log.info("New Host connection initiated from '$this' with quizId: $quizId")
+                    HostConnection(this, websocketClosed,quizId)
+                } else {
+                    val userId = principal!!.payload.getClaim("userId").asString()
+                    log.info("New Participant connection initiated from '$this' with quizId: $quizId, userId: $userId")
+                    ParticipantConnection(this, websocketClosed, quizId, userId)
+                }
 
                 try {
-                    for (frame in incoming) {
-                        // Only process text frames - skip all else
-                        frame as? Frame.Text ?: continue
-                        val receivedText = frame.readText()
-                        send("You sent: $receivedText")
+
+                    connectionManager.send(NewConnection(connection))
+                    val exception: Exception? = websocketClosed.await()
+                    if (exception != null) {
+                        throw exception
                     }
                 } catch (e: Exception) {
                     log.error("Error: $e")
                 } finally {
-                    connections -= thisConnection
                     log.info("Connection '$this' closed.")
                 }
             }
