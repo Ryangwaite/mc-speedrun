@@ -79,6 +79,14 @@ fun CoroutineScope.connectionManagerActor() = actor<ConnectionManagerMsg> {
                 }
                 println("Connections: $connections")
             }
+            is SubscriptionMsg -> {
+                // Let all clients know the content
+                connections.entries.forEach { (_, clients: MutableList<Connection>) ->
+                    clients.forEach {
+                        it.socketSession.outgoing.send(Frame.Text("Received this over the pubsub: '${msg.msg}'"))
+                    }
+                }
+            }
         }
     }
 

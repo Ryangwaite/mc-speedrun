@@ -45,6 +45,9 @@ dependencies {
     implementation("io.ktor:ktor-auth:$ktor_version")
     implementation("io.ktor:ktor-auth-jwt:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("org.redisson:redisson:3.16.4")
+    implementation("io.reactivex.rxjava3:rxjava:3.1.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.5.2")
 
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")

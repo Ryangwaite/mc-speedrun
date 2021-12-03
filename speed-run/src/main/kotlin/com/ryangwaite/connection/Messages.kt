@@ -1,7 +1,5 @@
 package com.ryangwaite.connection
 
-import kotlinx.coroutines.CompletableDeferred
-
 sealed class ConnectionManagerMsg
 
 class NewConnection(
@@ -10,4 +8,8 @@ class NewConnection(
 
 class RemoveConnection(
     val connection: Connection,
+): ConnectionManagerMsg()
+
+class SubscriptionMsg(
+    val msg: String
 ): ConnectionManagerMsg()

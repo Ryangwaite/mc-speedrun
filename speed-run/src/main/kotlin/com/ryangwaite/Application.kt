@@ -15,6 +15,7 @@ fun main(args: Array<String>): Unit = EngineMain.main(args)
 fun Application.module(testing: Boolean = false) {
     install(WebSockets)
     installJwtAuthentication()
+    configureRedis()
     configureRouting()
 }
 
@@ -77,4 +78,8 @@ fun buildJwtVerifier(environment: ApplicationEnvironment): com.auth0.jwt.interfa
         .withClaimPresence("isHost")
         .withClaimPresence("quizId")
         .build()
+}
+
+fun Application.configureRedis() {
+    RedisClient.init(environment.config)
 }

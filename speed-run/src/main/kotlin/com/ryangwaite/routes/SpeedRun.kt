@@ -1,6 +1,7 @@
 package com.ryangwaite.routes
 
 import com.ryangwaite.connection.*
+import com.ryangwaite.subscribe.subscriberActor
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
@@ -17,7 +18,8 @@ import kotlin.collections.LinkedHashSet
 fun Application.speedRun() {
     routing {
 
-        val connectionManager = connectionManagerActor()
+        val connectionManagerChannel = connectionManagerActor()
+        val subscriberChannel = subscriberActor(connectionManagerChannel)
 
         authenticate {
             webSocket("/speed-run/{quiz_id}/ws") {
@@ -39,7 +41,7 @@ fun Application.speedRun() {
 
                 try {
 
-                    connectionManager.send(NewConnection(connection))
+                    connectionManagerChannel.send(NewConnection(connection))
                     val exception: Exception? = websocketClosed.await()
                     if (exception != null) {
                         throw exception
