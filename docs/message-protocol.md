@@ -18,13 +18,17 @@ Payload:
 ## PARTICIPANT-CONFIG
 This is sent when the client has pressed the "join" button on the "/lobby" page.
 Note that as soon as the participants websocket connection has been established the userId is created in Redis so this just configures the name associated with the userID.
+
+Payload:
 ```json
 {
   name: string
 }
 ```
 ## BROADCAST-PARTICIPANT-CONFIG
-This is sent to the host and all participants except the participant that triggered the broadcast i.e. the participant that sent `PARTICIPANT-CONFIG`
+This is sent to the host and all participants.
+
+Payload:
 ```json
 {
   userId: string,
@@ -146,8 +150,8 @@ Payload:
         {
             question: string,
             options: string[],
-            correctAnswers: number[],
-            participantAnswers: number[],
+            correctOptions: number[],
+            participantOptions: number[],
             correctAnswerers: [
                 {userId: string, name: string},
                 ...
@@ -185,8 +189,8 @@ Payload:
         {
             question: string,
             options: string[],
-            correctAnswers: number[],
-            participantAnswers: number[],
+            correctOptions: number[],
+            participantOptions: number[],
             correctAnswerers: [
                 {userId: string, name: string},
                 ...
