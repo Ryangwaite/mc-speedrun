@@ -6,7 +6,7 @@ import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
-import { IQuestionAnswerStats } from "../const";
+import { IQuestionAnswerStats } from "../../const";
 
 export enum OptionMode {
     PLAIN,                              // When no answer has been selected and it hasn't been marked

@@ -1,7 +1,7 @@
 import { Box, Card, Container, Divider, List, ListItem, ListItemAvatar, ListItemText, Typography } from "@mui/material";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import { IParticipant} from "../const";
-import { getOrdinal } from "../utilities";
+import { IParticipant} from "../../const";
+import { getOrdinal } from "../../utilities";
 
 interface ILeaderBoardItemScoreProps {
     score: number,

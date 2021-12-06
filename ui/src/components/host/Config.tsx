@@ -1,6 +1,6 @@
 import React, { ReactElement, useState } from "react";
 import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
-import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../const";
+import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
 import { OptionMode, QuestionCard } from "../common/Question";
 import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";

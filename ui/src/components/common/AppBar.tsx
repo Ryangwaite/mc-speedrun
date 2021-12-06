@@ -1,5 +1,5 @@
 import {AppBar, Toolbar, Typography} from '@mui/material';
-import { APP_NAME } from '../const';
+import { APP_NAME } from '../../const';
 
 export const APP_BAR_HEIGHT = "48px"//"64px"
 interface ITopBarProps {

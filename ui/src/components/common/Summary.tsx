@@ -3,7 +3,7 @@ import _ from "lodash";
 import React from "react";
 import { LeaderboardColumn } from "./Leaderboard";
 import { OptionMode, QuestionCardWithStats } from "./Question";
-import { IQuestionAndAnswers, IQuestionAnswerStats, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS, SAMPLE_QUESTION_STATS } from "../const";
+import { IQuestionAndAnswers, IQuestionAnswerStats, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS, SAMPLE_QUESTION_STATS } from "../../const";
 
 interface IProgressSectionProps {
     progressCurrent: number,        // i.e. how many participants have finished

@@ -1,11 +1,11 @@
 import { Container, Box } from '@mui/material';
-import { TopBar } from './common/AppBar';
-import Home from './home/home';
-import Config from './host/Config';
-import Summary from './common/Summary';
+import { TopBar } from './components/common/AppBar';
+import Home from './components/home/home';
+import Config from './components/host/Config';
+import Summary from './components/common/Summary';
 
-import Lobby from './participant/Lobby';
-import Quiz from './participant/Quiz';
+import Lobby from './components/participant/Lobby';
+import Quiz from './components/participant/Quiz';
 import { Route, Routes } from 'react-router-dom';
 
 function App() {

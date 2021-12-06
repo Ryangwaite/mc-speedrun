@@ -3,7 +3,7 @@ import { Button, Card, CardActions, CardContent, CardHeader, Divider, Grid, Text
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate } from "react-router-dom";
-import { postHostQuiz, postJoinQuiz } from "../api/auth";
+import { postHostQuiz, postJoinQuiz } from "../../api/auth";
 interface ITextButtonCardProps {
     title: string,
     label: string,
