@@ -15,12 +15,28 @@ services:
       - JWT_SECRET=dockercomposesecret
       - JWT_ISSUER=http://sign-on/
       - JWT_AUDIENCE=http://0.0.0.0/
+  speed-run:
+    depends_on:
+      - redis
+    image: speed-run
+    build:
+      # speed-run/ as context and dockerfile path relative to it
+      context: ../speed-run/
+      dockerfile: Dockerfile
+    environment:
+      - SPEED_RUN_PORT=80
+      - JWT_SECRET=dockercomposesecret
+      - JWT_ISSUER=http://sign-on/
+      - JWT_AUDIENCE=http://0.0.0.0/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
   reverse-proxy:
     depends_on:
       # Depends on all backend services that nginx proxies to since the resolver
       # runs at startup and must be able to find the address corresponding to
       # the container name.
       - sign-on
+      - speed-run
     image: reverse-proxy
     build:
       # Repo root as context and dockerfile path relative to it

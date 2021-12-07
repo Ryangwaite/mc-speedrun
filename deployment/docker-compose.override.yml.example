@@ -1,0 +1,15 @@
+# This overrides the default docker-compose.yml file to expose ports to the host
+# This makes it easy to develop individual services outside of the stack which
+# call all other services running in the docker-compose environment.
+
+version: '3.9'
+services:
+  redis:
+    ports:
+      - "6379:6379"
+  sign-on:
+    ports:
+      - "8080:80"
+  speed-run:
+    ports:
+      - "8081:80"
