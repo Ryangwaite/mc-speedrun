@@ -2,13 +2,9 @@ package com.ryangwaite.routes
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.ryangwaite.configureRedis
 import com.ryangwaite.configureRouting
-import com.ryangwaite.installJwtAuthentication
-import com.ryangwaite.module
 import io.ktor.application.*
 import io.ktor.config.*
-import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.server.testing.*
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import java.util.*
+import kotlin.test.assertIs
 
 const val JWT_TEST_AUDIENCE = "http://test.audience:8080/"
 const val JWT_TEST_ISSUER = "http://test.issuer:8080/"
@@ -36,6 +33,21 @@ fun createTestHostJwtToken(
         .sign(Algorithm.HMAC256(secret))
 
 class SpeedRunTest {
+
+    @Test
+    fun `No token provided`() {
+        withTestApplication({
+            install(io.ktor.websocket.WebSockets)
+            configureRouting()
+        }) {
+            val quizId = "12345"
+            handleWebSocketConversation("/speed-run/$quizId/ws") {incoming, outgoing ->
+                val closeFrame = incoming.receive() as Frame.Close
+                assertEquals("Missing 'token' query parameter", closeFrame.readReason()!!.message)
+            }
+        }
+    }
+
     @Test
     fun `JWT fails verification`() {
         withTestApplication({
@@ -46,15 +58,13 @@ class SpeedRunTest {
                 put("jwt.audience", JWT_TEST_AUDIENCE)
             }
             install(io.ktor.websocket.WebSockets)
-            installJwtAuthentication()
             configureRouting()
         }) {
             val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
             val quizId = "12345"
-            handleWebSocket("/speed-run/$quizId/ws") {
-                addHeader("Authorization", "Bearer $invalidToken")
-            }.apply {
-                assertEquals(HttpStatusCode.Unauthorized, response.status())
+            handleWebSocketConversation("/speed-run/$quizId/ws?token=$invalidToken") {incoming, outgoing ->
+                val closeFrame = incoming.receive() as Frame.Close
+                assertEquals("Invalid token '${invalidToken}' received. Reason: The Token's Signature resulted invalid when verified using the Algorithm: HmacSHA256", closeFrame.readReason()!!.message)
             }
 
         }
@@ -74,14 +84,13 @@ class SpeedRunTest {
                 put("jwt.audience", JWT_TEST_AUDIENCE)
             }
             install(io.ktor.websocket.WebSockets)
-            installJwtAuthentication()
+//            installJwtAuthentication()
             configureRouting()
         }) {
             val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
-            handleWebSocket("/speed-run/12345/ws") {
-                addHeader("Authorization", "Bearer $invalidToken")
-            }.apply {
-                assertEquals(HttpStatusCode.Unauthorized, response.status())
+            handleWebSocketConversation("/speed-run/12345/ws?token=$invalidToken") {incoming, outgoing ->
+                // The first frame received should be a close due to an error
+                assertIs<Frame.Close>(incoming.receive())
             }
 
         }

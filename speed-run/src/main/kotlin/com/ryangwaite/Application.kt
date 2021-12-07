@@ -14,25 +14,11 @@ import io.ktor.websocket.*
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
-    install(WebSockets)
-    installJwtAuthentication()
+    install(WebSockets) {
+
+    }
     configureRedis()
     configureRouting()
-}
-
-fun Application.installJwtAuthentication() {
-    install(Authentication) {
-        jwt {
-            verifier(buildJwtVerifier(environment))
-            validate { credential -> try {
-                    validateJwt(credential)
-                } catch (e: JWTVerificationException) {
-                    log.warn(e.message)
-                    null
-                }
-            }
-        }
-    }
 }
 
 /**

@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.*
 
 fun CoroutineScope.subscriberActor(wsSendChannel: SendChannel<ConnectionManagerMsg>) = actor<SubscriberMsg> {
 
-    val subscription: Flow<String> = RedisClient.subscribeToTopic("test")
-
-    subscription.collect {
-        wsSendChannel.send(SubscriptionMsg(it))
-    }
+//    val subscription: Flow<String> = RedisClient.subscribeToTopic("test")
+//
+//    subscription.collect {
+//        wsSendChannel.send(SubscriptionMsg(it))
+//    }
 }

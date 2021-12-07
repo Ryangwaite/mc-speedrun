@@ -10,7 +10,7 @@ import io.ktor.config.*
 
 /**
  * Builds the JWT verifier from the environment config.
- * This only verifies the constant config across paricipant and host JWTs.
+ * This only verifies the constant config across participant and host JWTs.
  */
 fun buildJwtVerifier(environment: ApplicationEnvironment): com.auth0.jwt.interfaces.JWTVerifier {
     val secret = environment.config.property("jwt.secret").getString()
@@ -35,7 +35,7 @@ fun buildJwtVerifier(environment: ApplicationEnvironment): com.auth0.jwt.interfa
  * Validates the jwt returning a string containing the error message
  * when invalid, else returns JWtPrincipal
  */
-fun validateJwt(credential: JWTCredential):JWTPrincipal {
+fun validateJwt(credential: JWTCredential): JWTPrincipal {
     // Check that the claims are the correct format
     val quizId = credential.payload.getClaim("quizId").asString()
     if (quizId.isNullOrEmpty()) {
