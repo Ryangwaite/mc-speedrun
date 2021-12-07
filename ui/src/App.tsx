@@ -9,6 +9,9 @@ import Quiz from './components/participant/Quiz';
 import { Route, Routes } from 'react-router-dom';
 
 function App() {
+
+    // Todo initialize websocket connection here passing in the dispatch method above
+
     return (
         <Box
             display="flex"
@@ -18,7 +21,6 @@ function App() {
                 height: "100vh",
                 width: "100vw",
                 border: "1px solid blue"
-
             }}
         >
             <TopBar />

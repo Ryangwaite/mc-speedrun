@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Button, Box, TextField, ListItem, ListItemText, Container, Typography} from "@mui/material";
 import ParticipantList from "../common/ParticipantList";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { selectUsername, setUsername } from "../../slices/participant";
 
 interface IJoinListItemProps {
     listItemKey: string,
@@ -69,11 +71,12 @@ function Lobby(props: ILobbyProps) {
 
     // Whether the user has entered their name and pressed the "JOIN" button
     const [userJoined, setUserJoined] = useState(false)
-    const [username, setUsername] = useState("")
+
+    const dispatch = useAppDispatch()
 
     function onJoin(name: string) {
         setUserJoined(true)
-        setUsername(name)
+        dispatch(setUsername(name))
         console.debug(`'${name}' joined`)
     }
 
