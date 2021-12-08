@@ -10,13 +10,15 @@ import io.ktor.server.netty.*
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
-fun Application.module(testing: Boolean = false) {
+fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
-    install(CORS) {
-        // Allow the frontend served from the React dev server to access this server. todo: pass in through config??
-        host("localhost")
+    if (environment.developmentMode) {
+        install(CORS) {
+            log.info("Enabling CORS from any host")
+            anyHost()
+        }
     }
 
     val repository = MemoryRepository()

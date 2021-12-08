@@ -10,6 +10,10 @@ services:
   sign-on:
     ports:
       - "8080:80"
+    environment:
+      - SIGN_ON_DEVELOPMENT_MODE=true
   speed-run:
     ports:
       - "8081:80"
+    environment:
+      - SPEED_RUN_DEVELOPMENT_MODE=true

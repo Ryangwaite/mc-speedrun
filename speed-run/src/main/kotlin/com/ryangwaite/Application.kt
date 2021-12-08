@@ -8,17 +8,22 @@ import com.ryangwaite.routes.speedRun
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
+import io.ktor.features.*
 import io.ktor.server.netty.*
 import io.ktor.websocket.*
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
-    install(WebSockets) {
-
-    }
+    install(WebSockets)
     configureRedis()
     configureRouting()
+    if (environment.developmentMode) {
+        install(CORS) {
+            log.info("Enabling CORS from any host")
+            anyHost()
+        }
+    }
 }
 
 /**
