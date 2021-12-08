@@ -139,8 +139,7 @@ function Home(props: IHomeProps) {
         console.debug(`Joining lobby with code '${code}'`)
         try {
             const authorizationResponse = await postJoinQuiz(code)
-            const token = authorizationResponse.access_token
-            dispatch(websocketConnect(code, token))
+            dispatch(websocketConnect(authorizationResponse.access_token))
             navigate(`/lobby`)
         } catch(e) {
             alert("Failed to join session:" + e)
@@ -151,8 +150,7 @@ function Home(props: IHomeProps) {
         console.debug('Hosting lobby')
         try {
             const authorizationResponse = await postHostQuiz()
-            // TODO: Store the JWT token somewhere
-            console.log("Authorization Response:", authorizationResponse)
+            dispatch(websocketConnect(authorizationResponse.access_token))
             navigate(`/config`)
         } catch(e) {
             alert("Failed to host session:" + e)

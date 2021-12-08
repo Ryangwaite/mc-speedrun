@@ -1,14 +1,22 @@
+import jwtDecode from "jwt-decode";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import WrappedWebsocket from "../api/websocket";
 import { RootState } from "../store"
 
+interface IJwtData {
+    aud: string,
+    exp: number,
+    isHost: boolean,
+    iss: string,
+    quizId: string,
+}
+
 // Actions
 const WEBSOCKET_CONNECT = "WEBSOCKET_CONNECT"
-export const websocketConnect = function(quizId: string, token: string) {
+export const websocketConnect = function(token: string) {
     return {
         type: WEBSOCKET_CONNECT,
         payload: {
-            quizId,
             token,
         }
     }
@@ -56,14 +64,15 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
     return store => next => action => {
         switch (action.type) {
             case WEBSOCKET_CONNECT:
-                let {quizId, token} = (action as WebsocketConnectPayload).payload
+                const {token} = (action as WebsocketConnectPayload).payload
+                const claims = jwtDecode(token) as IJwtData
 
                 // Bind our listeners before connecting
                 socket.onOpen = onOpen(store)
                 socket.onClose = onClose(store)
                 socket.onMessage = onMessage(store)
 
-                socket.connect(quizId, token)
+                socket.connect(claims.quizId, token)
                 break
             case WEBSOCKET_DISCONNECT:
                 socket.disconnect()
