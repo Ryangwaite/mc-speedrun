@@ -1,4 +1,4 @@
-import { Container, Box } from '@mui/material';
+import { Box } from '@mui/material';
 import { TopBar } from './components/common/AppBar';
 import Home from './components/home/home';
 import Config from './components/host/Config';

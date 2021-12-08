@@ -269,3 +269,12 @@ export const SAMPLE_PARTICIPANTS: IParticipant[] = [
 export function getSignOnBaseUrl(): string {
     return process.env.REACT_APP__SIGN_ON_URL ? process.env.REACT_APP__SIGN_ON_URL : ""
 }
+
+/**
+ * Gets the base URL from the environment for contacting the speed-run service
+ * CORs will need to be enabled on this service so that the request succeeds.
+ * @returns 
+ */
+export function getSpeedRunBaseUrl(): string {
+    return process.env.REACT_APP__SPEED_RUN_URL ? process.env.REACT_APP__SPEED_RUN_URL : ""
+}

@@ -1,16 +1,26 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import commonReducer from './slices/common';
 import participantReducer from './slices/participant'
+import { websocketMiddleware } from "./middleware/websocket";
 
-export const store = configureStore({
-    reducer: {
-        common: commonReducer,
-        participant: participantReducer,
-    },
-    devTools: true
+// Build rootReducer before pasing to `configureStore` so that
+// we can pull out a RootState type from it to use for correct
+// typing of middleware. If the reducer object is passed directly
+// to configureStore then `RootState` determined with ` ReturnType<typeof store.getState>`
+// introduces a circular dependency when adding middleware.
+const rootReducer = combineReducers({
+    common: commonReducer,
+    participant: participantReducer,
 })
 
+export const store = configureStore({
+    reducer: rootReducer,
+    devTools: true,
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(
+        websocketMiddleware,
+    )
+})
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<typeof store.getState>
+export type RootState = ReturnType<typeof rootReducer>
+
 export type AppDispatch = typeof store.dispatch

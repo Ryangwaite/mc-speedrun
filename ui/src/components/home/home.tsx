@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { Button, Card, CardActions, CardContent, CardHeader, Divider, Grid, TextField, Typography } from "@mui/material";
+import { Button, Card, CardActions, CardHeader, Divider, Grid, TextField, Typography } from "@mui/material";
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate } from "react-router-dom";
 import { postHostQuiz, postJoinQuiz } from "../../api/auth";
+import { websocketConnect } from "../../middleware/websocket";
+import { useAppDispatch } from "../../hooks";
 interface ITextButtonCardProps {
     title: string,
     label: string,
@@ -130,15 +132,15 @@ interface IHomeProps {
 }
 
 function Home(props: IHomeProps) {
-
+    const dispatch = useAppDispatch()
     let navigate = useNavigate();
 
     const onParticipantJoin = async (code: string) => {
         console.debug(`Joining lobby with code '${code}'`)
         try {
             const authorizationResponse = await postJoinQuiz(code)
-            // TODO: Store the JWT token somewhere
-            console.log("Authorization Response:", authorizationResponse)
+            const token = authorizationResponse.access_token
+            dispatch(websocketConnect(code, token))
             navigate(`/lobby`)
         } catch(e) {
             alert("Failed to join session:" + e)
