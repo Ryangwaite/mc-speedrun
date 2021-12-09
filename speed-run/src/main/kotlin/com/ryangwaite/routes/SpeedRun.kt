@@ -5,6 +5,8 @@ import com.auth0.jwt.interfaces.DecodedJWT
 import com.ryangwaite.config.buildJwtVerifier
 import com.ryangwaite.config.validateJwt
 import com.ryangwaite.connection.*
+import com.ryangwaite.redis.IDataStore
+import com.ryangwaite.subscribe.ISubscribe
 import com.ryangwaite.subscribe.subscriberActor
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -21,11 +23,11 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.LinkedHashSet
 
 
-fun Application.speedRun() {
+fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish) {
     routing {
 
-        val connectionManagerChannel = connectionManagerActor()
-        val subscriberChannel = subscriberActor(connectionManagerChannel)
+        val connectionManagerChannel = connectionManagerActor(dataStore)
+        val subscriberChannel = subscriberActor(subscriber, connectionManagerChannel)
 
         webSocket("/speed-run/{quiz_id}/ws") {
 
@@ -59,7 +61,6 @@ fun Application.speedRun() {
             }
 
             try {
-
                 connectionManagerChannel.send(NewConnection(connection))
                 val exception: Exception? = websocketClosed.await()
                 if (exception != null) {

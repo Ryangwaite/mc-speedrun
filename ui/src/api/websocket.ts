@@ -1,4 +1,5 @@
 import { getSpeedRunBaseUrl } from "../const"
+import Packet from "./protocol/packet"
 
 export default class WrappedWebsocket {
 
@@ -25,5 +26,10 @@ export default class WrappedWebsocket {
 
     disconnect(...args: any[]) {
         this.socket?.close(...args)
+    }
+
+    send(packet: Packet<{}>) {
+        const serializedPacket = JSON.stringify(packet)
+        this.socket?.send(serializedPacket)
     }
 }

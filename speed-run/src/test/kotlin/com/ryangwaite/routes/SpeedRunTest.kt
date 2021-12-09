@@ -3,12 +3,18 @@ package com.ryangwaite.routes
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.ryangwaite.configureRouting
+import com.ryangwaite.connection.IPublish
+import com.ryangwaite.redis.IDataStore
+import com.ryangwaite.subscribe.ISubscribe
 import io.ktor.application.*
 import io.ktor.config.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.server.testing.*
+import io.mockk.impl.annotations.MockK
+import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import java.util.*
@@ -32,13 +38,23 @@ fun createTestHostJwtToken(
         .withExpiresAt(Calendar.getInstance().run {add(Calendar.YEAR, 1); time}) // 1 year in future
         .sign(Algorithm.HMAC256(secret))
 
+@ExtendWith(MockKExtension::class)
 class SpeedRunTest {
+
+    @MockK
+    lateinit var datastore: IDataStore
+
+    @MockK
+    lateinit var subscriber: ISubscribe
+
+    @MockK
+    lateinit var publisher: IPublish
 
     @Test
     fun `No token provided`() {
         withTestApplication({
             install(io.ktor.websocket.WebSockets)
-            configureRouting()
+            configureRouting(datastore, subscriber, publisher)
         }) {
             val quizId = "12345"
             handleWebSocketConversation("/speed-run/$quizId/ws") {incoming, outgoing ->
@@ -58,7 +74,7 @@ class SpeedRunTest {
                 put("jwt.audience", JWT_TEST_AUDIENCE)
             }
             install(io.ktor.websocket.WebSockets)
-            configureRouting()
+            configureRouting(datastore, subscriber, publisher)
         }) {
             val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
             val quizId = "12345"
@@ -85,7 +101,7 @@ class SpeedRunTest {
             }
             install(io.ktor.websocket.WebSockets)
 //            installJwtAuthentication()
-            configureRouting()
+            configureRouting(datastore, subscriber, publisher)
         }) {
             val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
             handleWebSocketConversation("/speed-run/12345/ws?token=$invalidToken") {incoming, outgoing ->

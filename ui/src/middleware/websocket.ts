@@ -1,6 +1,9 @@
+import { PayloadAction } from "@reduxjs/toolkit";
 import jwtDecode from "jwt-decode";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
+import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
+import { setUsername } from "../slices/participant";
 import { RootState } from "../store"
 
 interface IJwtData {
@@ -77,8 +80,11 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
             case WEBSOCKET_DISCONNECT:
                 socket.disconnect()
                 break
-            // case WEBSOCKET_SEND:
-                // todo...
+            // Intercept all of these to broadcast to server before forwarding onto reducers
+            case setUsername.type:
+                const name = (action as PayloadAction<string>).payload
+                socket.send(Packet.ParticipantConfig(name))
+                return next(action)
             default:
                 console.debug("Passing the next action:", action)
                 return next(action)

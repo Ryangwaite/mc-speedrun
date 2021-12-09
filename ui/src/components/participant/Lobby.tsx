@@ -77,7 +77,6 @@ function Lobby(props: ILobbyProps) {
     function onJoin(name: string) {
         setUserJoined(true)
         dispatch(setUsername(name))
-        console.debug(`'${name}' joined`)
     }
 
     const participants: Set<string> = new Set(Array.from(Array(150).keys()).map(x => `participant ${x}`))

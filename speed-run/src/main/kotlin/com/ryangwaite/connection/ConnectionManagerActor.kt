@@ -1,14 +1,20 @@
 package com.ryangwaite.connection
 
+import com.ryangwaite.protocol.Msg
+import com.ryangwaite.protocol.Packet
+import com.ryangwaite.protocol.ParticipantConfigMsg
+import com.ryangwaite.redis.IDataStore
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import java.util.*
 import java.util.logging.Logger
 import kotlin.collections.LinkedHashSet
 
-fun CoroutineScope.connectionManagerActor() = actor<ConnectionManagerMsg> {
+fun CoroutineScope.connectionManagerActor(datastore: IDataStore) = actor<ConnectionManagerMsg> {
 
     /**
      * IMPORTANT: All operations on the 'connections' map itself must be performed
@@ -36,6 +42,19 @@ fun CoroutineScope.connectionManagerActor() = actor<ConnectionManagerMsg> {
         this.channel.send(RemoveConnection(connection))
     }
 
+    suspend fun processInboundClientPacket(quizId: String, packet: String, userId: String? = null) {
+        val deserializedPacket = Json.decodeFromString<Packet>(packet)
+        when (val payload = deserializedPacket.payload) {
+            is ParticipantConfigMsg -> {
+                datastore.apply {
+                    setUsername(quizId, userId!!, payload.name)
+                    addLeaderboardItem(quizId, userId, 0)
+                }
+            }
+            else -> println("Unknown packet received: $packet")
+        }
+    }
+
     for (msg: ConnectionManagerMsg in channel) {
         when (msg) {
             is NewConnection -> {
@@ -50,10 +69,9 @@ fun CoroutineScope.connectionManagerActor() = actor<ConnectionManagerMsg> {
                         for (frame in connection.socketSession.incoming) {
                             frame as? Frame.Text ?: continue
                             val text = frame.readText()
-                            if (text == "bye\n") {
-                                break
-                            } else {
-                                connection.socketSession.outgoing.send(Frame.Text("You sent: $text"))
+                            when (connection) {
+                                is HostConnection -> processInboundClientPacket(connection.quizId, text)
+                                is ParticipantConnection -> processInboundClientPacket(connection.quizId, text, userId = connection.userId)
                             }
                         }
                     } finally {
