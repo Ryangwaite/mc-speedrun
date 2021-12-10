@@ -1,20 +1,13 @@
 import { PayloadAction } from "@reduxjs/toolkit";
 import jwtDecode from "jwt-decode";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
+import { getJwtTokenClaims } from "../api/auth";
 import { BroadcastLeaderboardMsgType, BROADCAST_LEADERBOARD, ParticipantConfigMsgType, PARTICIPANT_CONFIG } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
 import { setLeaderboard } from "../slices/common";
 import { setUsername } from "../slices/participant";
 import { RootState } from "../store"
-
-interface IJwtData {
-    aud: string,
-    exp: number,
-    isHost: boolean,
-    iss: string,
-    quizId: string,
-}
 
 // Actions
 const WEBSOCKET_CONNECT = "WEBSOCKET_CONNECT"
@@ -74,7 +67,7 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
         switch (action.type) {
             case WEBSOCKET_CONNECT:
                 const {token} = (action as WebsocketConnectPayload).payload
-                const claims = jwtDecode(token) as IJwtData
+                const claims = getJwtTokenClaims(token)
 
                 // Bind our listeners before connecting
                 socket.onOpen = onOpen(store)

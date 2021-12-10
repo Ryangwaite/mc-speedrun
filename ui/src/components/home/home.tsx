@@ -3,9 +3,11 @@ import { Button, Card, CardActions, CardHeader, Divider, Grid, TextField} from "
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate } from "react-router-dom";
-import { postHostQuiz, postJoinQuiz } from "../../api/auth";
+import { getJwtTokenClaims, getParticipantJwtTokenClaims, postHostQuiz, postJoinQuiz } from "../../api/auth";
 import { websocketConnect } from "../../middleware/websocket";
 import { useAppDispatch } from "../../hooks";
+import { setUserId } from "../../slices/participant";
+import { setQuizId } from "../../slices/common";
 interface ITextButtonCardProps {
     title: string,
     label: string,
@@ -139,7 +141,13 @@ function Home(props: IHomeProps) {
         console.debug(`Joining lobby with code '${code}'`)
         try {
             const authorizationResponse = await postJoinQuiz(code)
-            dispatch(websocketConnect(authorizationResponse.access_token))
+            const token = authorizationResponse.access_token
+            const {userId, quizId} = getParticipantJwtTokenClaims(token)
+            
+            dispatch(setUserId(userId))
+            dispatch(setQuizId(quizId))
+            dispatch(websocketConnect(token))
+
             navigate(`/lobby`)
         } catch(e) {
             alert("Failed to join session:" + e)
@@ -150,7 +158,12 @@ function Home(props: IHomeProps) {
         console.debug('Hosting lobby')
         try {
             const authorizationResponse = await postHostQuiz()
-            dispatch(websocketConnect(authorizationResponse.access_token))
+            const token = authorizationResponse.access_token
+            const {quizId} = getJwtTokenClaims(token)
+
+            dispatch(setQuizId(quizId))
+            dispatch(websocketConnect(token))
+
             navigate(`/config`)
         } catch(e) {
             alert("Failed to host session:" + e)

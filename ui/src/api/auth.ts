@@ -1,3 +1,4 @@
+import jwtDecode from "jwt-decode";
 import { fetchSignOn } from "../utilities";
 
 interface IAuthorizationResponse {
@@ -30,4 +31,24 @@ export async function postJoinQuiz(quizId: string): Promise<IAuthorizationRespon
 
     const json: IAuthorizationResponse = await response.json()
     return json
+}
+
+export interface IJwtData {
+    aud: string,
+    exp: number,
+    isHost: boolean,
+    iss: string,
+    quizId: string,
+}
+
+export interface IParticipantJwtData extends IJwtData {
+    userId: string,
+}
+
+export function getJwtTokenClaims(token: string) {
+    return jwtDecode(token) as IJwtData
+}
+
+export function getParticipantJwtTokenClaims(token: string) {
+    return jwtDecode(token) as IParticipantJwtData
 }

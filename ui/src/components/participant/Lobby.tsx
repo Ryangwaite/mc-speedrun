@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Box, TextField, ListItem, ListItemText, Container, Typography} from "@mui/material";
 import ParticipantList from "../common/ParticipantList";
 import { useAppDispatch, useAppSelector } from "../../hooks";
-import { selectUsername, setUsername } from "../../slices/participant";
+import { selectUserId, setUsername } from "../../slices/participant";
 import { selectLeaderboard } from "../../slices/common";
 
 interface IJoinListItemProps {
@@ -76,10 +76,9 @@ function Lobby(props: ILobbyProps) {
     const dispatch = useAppDispatch()
 
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
+    const userId = useAppSelector(state => selectUserId(state))
 
-    // TODO: Exclude this user
-    const participants = leaderboard
-    
+    const otherParticipants = leaderboard.filter(participant => participant.userId !== userId)
     
     function onJoin(name: string) {
         setUserJoined(true)
@@ -107,7 +106,7 @@ function Lobby(props: ILobbyProps) {
 
             <ParticipantList
                 thisParticipant={joinListItem}
-                otherParticipants={participants}
+                otherParticipants={otherParticipants}
             />
         </Box>
     )

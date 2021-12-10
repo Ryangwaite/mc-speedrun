@@ -6,7 +6,7 @@ import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";
 import { ILeaderboardItem } from "../../types";
 import { useAppSelector } from "../../hooks";
-import { selectLeaderboard } from "../../slices/common";
+import { selectLeaderboard, selectQuizId } from "../../slices/common";
 
 
 const COLUMN_WIDTH = "320px"
@@ -194,6 +194,7 @@ function Config(props: IConfigProps) {
     const [quizName, setQuizName] = useState("")
     const [questionDuration, setQuestionDuration] = useState(120)
 
+    const quizId = useAppSelector(state => selectQuizId(state))
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
 
     function onQuizNameChange(name: string) {
@@ -221,7 +222,7 @@ function Config(props: IConfigProps) {
         >
             
             <ConfigColumn
-                inviteUrl={"https://localhost/join/kjb34kj5h"}
+                inviteUrl={`${window.location.origin}/join/${quizId}`}
                 onQuizNameChange={onQuizNameChange}
                 onQuestionDurationChange={onQuestionDurationChange}
             />
