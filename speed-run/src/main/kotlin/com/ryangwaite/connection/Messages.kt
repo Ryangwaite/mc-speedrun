@@ -1,5 +1,7 @@
 package com.ryangwaite.connection
 
+import com.ryangwaite.protocol.ProtocolMsg
+
 sealed class ConnectionManagerMsg
 
 class NewConnection(
@@ -10,6 +12,7 @@ class RemoveConnection(
     val connection: Connection,
 ): ConnectionManagerMsg()
 
-class SubscriptionMsg(
-    val msg: String
+class ForwardMsg(
+    val quizId: String,
+    val msgToForward: ProtocolMsg,
 ): ConnectionManagerMsg()

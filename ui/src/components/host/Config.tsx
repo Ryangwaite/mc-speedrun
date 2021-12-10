@@ -1,9 +1,12 @@
-import React, { ReactElement, useState } from "react";
-import { Button, Grid, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
+import React, { useState } from "react";
+import { Button, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
 import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
 import { OptionMode, QuestionCard } from "../common/Question";
-import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
+import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";
+import { ILeaderboardItem } from "../../types";
+import { useAppSelector } from "../../hooks";
+import { selectLeaderboard } from "../../slices/common";
 
 
 const COLUMN_WIDTH = "320px"
@@ -152,7 +155,7 @@ function QuestionColumn(props: IQuestionColumnProps) {
 }
 
 interface IParticipantColumnProps {
-    participants: Set<string>,
+    participants: ILeaderboardItem[],
     onStartClicked: () => void
 }
 
@@ -191,6 +194,8 @@ function Config(props: IConfigProps) {
     const [quizName, setQuizName] = useState("")
     const [questionDuration, setQuestionDuration] = useState(120)
 
+    const leaderboard = useAppSelector(state => selectLeaderboard(state))
+
     function onQuizNameChange(name: string) {
         console.debug(`Quiz name change to: ${name}`)
         setQuizName(name)
@@ -204,8 +209,6 @@ function Config(props: IConfigProps) {
     function onStartClicked() {
         alert("Start clicked")
     }
-
-    const participants: Set<string> = new Set(Array.from(Array(10).keys()).map(x => `participant ${x}`));
 
     return (
         <Container
@@ -226,7 +229,7 @@ function Config(props: IConfigProps) {
             <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
         
             <ParticipantColumn
-                participants={participants}
+                participants={leaderboard}
                 onStartClicked={onStartClicked}
             />
         </Container>

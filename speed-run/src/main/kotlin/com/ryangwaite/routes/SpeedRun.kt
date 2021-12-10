@@ -6,7 +6,9 @@ import com.ryangwaite.config.buildJwtVerifier
 import com.ryangwaite.config.validateJwt
 import com.ryangwaite.connection.*
 import com.ryangwaite.redis.IDataStore
+import com.ryangwaite.subscribe.AddSubscription
 import com.ryangwaite.subscribe.ISubscribe
+import com.ryangwaite.subscribe.RemoveSubscription
 import com.ryangwaite.subscribe.subscriberActor
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -26,8 +28,8 @@ import kotlin.collections.LinkedHashSet
 fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish) {
     routing {
 
-        val connectionManagerChannel = connectionManagerActor(dataStore)
-        val subscriberChannel = subscriberActor(subscriber, connectionManagerChannel)
+        val connectionManagerChannel = connectionManagerActor(dataStore, publisher)
+        val subscriberChannel = subscriberActor(dataStore, subscriber, connectionManagerChannel)
 
         webSocket("/speed-run/{quiz_id}/ws") {
 
@@ -62,6 +64,7 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
 
             try {
                 connectionManagerChannel.send(NewConnection(connection))
+                subscriberChannel.send(AddSubscription(quizId))
                 val exception: Exception? = websocketClosed.await()
                 if (exception != null) {
                     throw exception
@@ -69,6 +72,7 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
             } catch (e: Exception) {
                 log.error("Error: $e")
             } finally {
+                subscriberChannel.send(RemoveSubscription(quizId))
                 log.info("Connection '$this' closed.")
             }
         }

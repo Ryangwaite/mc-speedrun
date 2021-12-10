@@ -5,7 +5,7 @@ import com.ryangwaite.models.LeaderboardItem
 import com.ryangwaite.models.ParticipantQuestion
 import kotlinx.serialization.Serializable
 
-sealed class Msg {
+sealed class ProtocolMsg {
     @Serializable
     enum class Type {
         // Messages from the quiz host to the server which a response is not sent back for
@@ -37,78 +37,78 @@ data class HostConfigMsg(
     val quizName: String,
     val categories: List<String>,
     val duration: Int,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
-class HostStartMsg: Msg()
+class HostStartMsg: ProtocolMsg()
 
 @Serializable
 data class NotifyHostAnswerMsg(
     val userId: String,
     val questionIndex: Int,
     val answerResult: String,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
-class RequestHostQuizSummaryMsg: Msg()
+class RequestHostQuizSummaryMsg: ProtocolMsg()
 
 @Serializable
 data class ResponseHostQuizSummaryMsg(
     val totalTimeElapsed: Int, // milliseconds
     val questions: List<HostQuestion>,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class ParticipantConfigMsg(
     val name: String,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class ParticipantAnswerMsg(
     val questionIndex: Int,
     val selectedOptionIndexes: List<Int>,
     val answeredInDuration: Int, // milliseconds
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class ParticipantAnswerTimeoutMsg(
     val questionIndex: Int
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class RequestParticipantQuestionMsg(
     val questionIndex: Int,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class ResponseParticipantQuestionMsg(
     val questionIndex: Int,
     val options: List<String>,
     val numberOfOptionsToSelect: Int,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class RequestParticipantResultsMsg(
     val userId: String,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class ResponseParticipantResultsMsg(
     val userId: String,
     val totalTimeElapsed: Int,
     val questions: List<ParticipantQuestion>
-): Msg()
+): ProtocolMsg()
 
 @Serializable
 data class BroadcastParticipantConfigMsg(
     val userId: String,
     val name: String,
-): Msg()
+): ProtocolMsg()
 
 @Serializable
-class BroadcastStartMsg(): Msg()
+class BroadcastStartMsg(): ProtocolMsg()
 
 @Serializable
 data class BroadcastLeaderboardMsg(
     val leaderboard: List<LeaderboardItem>
-): Msg()
+): ProtocolMsg()

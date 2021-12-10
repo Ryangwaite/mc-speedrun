@@ -1,16 +1,16 @@
 import _ from "lodash";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { IParticipant } from "../types";
+import { ILeaderboardItem } from "../types";
 import { RootState } from "../store";
 
 interface ICommonState {
     quizId?: string,
-    participants: IParticipant[]
+    leaderboard: ILeaderboardItem[]
 }
 
 // State consists of that which is the superset of participant and hosts
 const initialState: ICommonState = {
-    participants: []
+    leaderboard: []
 }
 
 export const commonSlice = createSlice({
@@ -21,17 +21,16 @@ export const commonSlice = createSlice({
             const quizId = action.payload
             state.quizId = quizId
         },
-        setParticipant: (state, action: PayloadAction<IParticipant>) => {
-            const updatedParticipant = action.payload
-            _.remove(state.participants, x => x.userId === updatedParticipant.userId)
-            state.participants.push(updatedParticipant)
+        setLeaderboard: (state, action: PayloadAction<ILeaderboardItem[]>) => {
+            const updatedLeaderboard = action.payload
+            state.leaderboard = updatedLeaderboard
         }
     }
 })
 
-export const { setParticipant, setQuizId } = commonSlice.actions
+export const { setLeaderboard, setQuizId } = commonSlice.actions
 
 export const selectQuizId = (state: RootState) => state.common.quizId
-export const selectParticipants = (state: RootState) => state.common.participants
+export const selectLeaderboard = (state: RootState) => state.common.leaderboard
 
 export default commonSlice.reducer

@@ -57,7 +57,7 @@ class SpeedRunTest {
             configureRouting(datastore, subscriber, publisher)
         }) {
             val quizId = "12345"
-            handleWebSocketConversation("/speed-run/$quizId/ws") {incoming, outgoing ->
+            handleWebSocketConversation("/speed-run/$quizId/ws") {incoming, _ ->
                 val closeFrame = incoming.receive() as Frame.Close
                 assertEquals("Missing 'token' query parameter", closeFrame.readReason()!!.message)
             }
@@ -78,7 +78,7 @@ class SpeedRunTest {
         }) {
             val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
             val quizId = "12345"
-            handleWebSocketConversation("/speed-run/$quizId/ws?token=$invalidToken") {incoming, outgoing ->
+            handleWebSocketConversation("/speed-run/$quizId/ws?token=$invalidToken") {incoming, _ ->
                 val closeFrame = incoming.receive() as Frame.Close
                 assertEquals("Invalid token '${invalidToken}' received. Reason: The Token's Signature resulted invalid when verified using the Algorithm: HmacSHA256", closeFrame.readReason()!!.message)
             }
@@ -104,7 +104,7 @@ class SpeedRunTest {
             configureRouting(datastore, subscriber, publisher)
         }) {
             val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
-            handleWebSocketConversation("/speed-run/12345/ws?token=$invalidToken") {incoming, outgoing ->
+            handleWebSocketConversation("/speed-run/12345/ws?token=$invalidToken") {incoming, _ ->
                 // The first frame received should be a close due to an error
                 assertIs<Frame.Close>(incoming.receive())
             }

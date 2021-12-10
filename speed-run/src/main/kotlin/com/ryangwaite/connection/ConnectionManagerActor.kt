@@ -1,20 +1,18 @@
 package com.ryangwaite.connection
 
-import com.ryangwaite.protocol.Msg
 import com.ryangwaite.protocol.Packet
 import com.ryangwaite.protocol.ParticipantConfigMsg
 import com.ryangwaite.redis.IDataStore
+import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.util.*
-import java.util.logging.Logger
-import kotlin.collections.LinkedHashSet
 
-fun CoroutineScope.connectionManagerActor(datastore: IDataStore) = actor<ConnectionManagerMsg> {
+fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPublish) = actor<ConnectionManagerMsg> {
 
     /**
      * IMPORTANT: All operations on the 'connections' map itself must be performed
@@ -22,7 +20,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore) = actor<Connect
      * Connection data structures are thread-safe and so multiple coroutines can
      * access concurrently.
      */
-    val connections = mutableMapOf<String, MutableList<Connection>>()
+    val connections = mutableMapOf<String /*quizId*/, MutableList<Connection>>()
 
     /**
      * Adds the connection
@@ -50,6 +48,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore) = actor<Connect
                     setUsername(quizId, userId!!, payload.name)
                     addLeaderboardItem(quizId, userId, 0)
                 }
+                publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
             }
             else -> println("Unknown packet received: $packet")
         }
@@ -61,8 +60,6 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore) = actor<Connect
                 val connection = msg.connection
                 println("Received connection for ${connection.quizId}")
                 addConnection(connection)
-
-                connection.socketSession.outgoing.send(Frame.Text("Hello"))
 
                 val job = launch {
                     try {
@@ -97,12 +94,11 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore) = actor<Connect
                 }
                 println("Connections: $connections")
             }
-            is SubscriptionMsg -> {
-                // Let all clients know the content
-                connections.entries.forEach { (_, clients: MutableList<Connection>) ->
-                    clients.forEach {
-                        it.socketSession.outgoing.send(Frame.Text("Received this over the pubsub: '${msg.msg}'"))
-                    }
+            is ForwardMsg -> {
+                val serializedPacket = Json.encodeToString(Packet.encapsulate(msg.msgToForward))
+                // Let all clients (all participants and host) know the content
+                connections[msg.quizId]!!.forEach { connection ->
+                    connection.socketSession.outgoing.send(Frame.Text(serializedPacket))
                 }
             }
         }

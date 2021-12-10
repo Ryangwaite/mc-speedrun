@@ -3,6 +3,7 @@ import { Button, Box, TextField, ListItem, ListItemText, Container, Typography} 
 import ParticipantList from "../common/ParticipantList";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectUsername, setUsername } from "../../slices/participant";
+import { selectLeaderboard } from "../../slices/common";
 
 interface IJoinListItemProps {
     listItemKey: string,
@@ -74,12 +75,16 @@ function Lobby(props: ILobbyProps) {
 
     const dispatch = useAppDispatch()
 
+    const leaderboard = useAppSelector(state => selectLeaderboard(state))
+
+    // TODO: Exclude this user
+    const participants = leaderboard
+    
+    
     function onJoin(name: string) {
         setUserJoined(true)
         dispatch(setUsername(name))
     }
-
-    const participants: Set<string> = new Set(Array.from(Array(150).keys()).map(x => `participant ${x}`))
 
     let joinListItem = <JoinListItem
         userJoined={userJoined}

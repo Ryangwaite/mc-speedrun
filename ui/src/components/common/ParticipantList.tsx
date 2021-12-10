@@ -1,17 +1,18 @@
 import { List, ListItem, ListItemText } from "@mui/material";
+import { ILeaderboardItem } from "../../types";
 
 interface IParticipantListProps {
     thisParticipant: React.ReactElement | null,
-    otherParticipants: Set<string>
+    otherParticipants: ILeaderboardItem[],
 }
 
 export default function ParticipantList(props: IParticipantListProps) {
 
-    const otherParticipantItems = Array.from(props.otherParticipants.values(), participant => (
+    const otherParticipantItems = props.otherParticipants.map(participant => (
         <ListItem
-            key={participant}
+            key={participant.userId}
         >
-            <ListItemText primary={participant} />
+            <ListItemText primary={participant.name} />
         </ListItem>
     ));
 

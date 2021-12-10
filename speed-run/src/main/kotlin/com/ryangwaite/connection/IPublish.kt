@@ -1,5 +1,7 @@
 package com.ryangwaite.connection
 
-interface IPublish {
+import com.ryangwaite.subscribe.SubscriptionMessages
 
+interface IPublish {
+    suspend fun publishQuizEvent(quizId: String, msg: SubscriptionMessages)
 }

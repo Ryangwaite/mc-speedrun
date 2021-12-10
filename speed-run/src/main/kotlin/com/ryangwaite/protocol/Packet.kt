@@ -12,9 +12,35 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable(with = PacketSerializer::class)
 data class Packet(
-    val type: Msg.Type,
-    val payload: Msg,
-)
+    val type: ProtocolMsg.Type,
+    val payload: ProtocolMsg,
+) {
+    companion object {
+        /**
+         * Encapsulates the msg in a packet
+         */
+        fun encapsulate(msg: ProtocolMsg): Packet {
+            val type = when(msg) {
+                is HostConfigMsg -> ProtocolMsg.Type.`HOST-CONFIG`
+                is HostStartMsg -> ProtocolMsg.Type.`HOST-START`
+                is NotifyHostAnswerMsg -> ProtocolMsg.Type.`NOTIFY-HOST-ANSWER`
+                is RequestHostQuizSummaryMsg -> ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY`
+                is ResponseHostQuizSummaryMsg -> ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY`
+                is ParticipantConfigMsg -> ProtocolMsg.Type.`PARTICIPANT-CONFIG`
+                is ParticipantAnswerMsg -> ProtocolMsg.Type.`PARTICIPANT-ANSWER`
+                is ParticipantAnswerTimeoutMsg -> ProtocolMsg.Type.`PARTICIPANT-ANSWER-TIMEOUT`
+                is RequestParticipantQuestionMsg -> ProtocolMsg.Type.`REQUEST-PARTICIPANT-QUESTION`
+                is ResponseParticipantQuestionMsg -> ProtocolMsg.Type.`RESPONSE-PARTICIPANT-QUESTION`
+                is RequestParticipantResultsMsg -> ProtocolMsg.Type.`REQUEST-PARTICIPANT-RESULTS`
+                is ResponseParticipantResultsMsg -> ProtocolMsg.Type.`RESPONSE-PARTICIPANT-RESULTS`
+                is BroadcastParticipantConfigMsg -> ProtocolMsg.Type.`BROADCAST-PARTICIPANT-CONFIG`
+                is BroadcastStartMsg -> ProtocolMsg.Type.`BROADCAST-START`
+                is BroadcastLeaderboardMsg -> ProtocolMsg.Type.`BROADCAST-LEADERBOARD`
+            }
+            return Packet(type, msg)
+        }
+    }
+}
 
 object PacketSerializer: KSerializer<Packet> {
 
@@ -28,7 +54,7 @@ object PacketSerializer: KSerializer<Packet> {
         // Add opening '{'
         val compositeEnc = encoder.beginStructure(descriptor)
         // Add "type": ..., item
-        compositeEnc.encodeSerializableElement(descriptor, 0, Msg.Type.serializer(), value.type)
+        compositeEnc.encodeSerializableElement(descriptor, 0, ProtocolMsg.Type.serializer(), value.type)
 
         // Add "data": {...} item
         when(value.payload) {
@@ -57,25 +83,25 @@ object PacketSerializer: KSerializer<Packet> {
         val compositeDec = decoder.beginStructure(descriptor)
 
         var index = compositeDec.decodeElementIndex(descriptor)
-        val type: Msg.Type = compositeDec.decodeSerializableElement(descriptor, index, Msg.Type.serializer())
+        val type: ProtocolMsg.Type = compositeDec.decodeSerializableElement(descriptor, index, ProtocolMsg.Type.serializer())
 
         index = compositeDec.decodeElementIndex(descriptor)
         val msgSerializer = when(type) {
-            Msg.Type.`HOST-CONFIG` -> HostConfigMsg.serializer()
-            Msg.Type.`HOST-START` -> HostStartMsg.serializer()
-            Msg.Type.`NOTIFY-HOST-ANSWER` -> NotifyHostAnswerMsg.serializer()
-            Msg.Type.`REQUEST-HOST-QUIZ-SUMMARY` -> RequestHostQuizSummaryMsg.serializer()
-            Msg.Type.`RESPONSE-HOST-QUIZ-SUMMARY` -> ResponseHostQuizSummaryMsg.serializer()
-            Msg.Type.`PARTICIPANT-CONFIG` -> ParticipantConfigMsg.serializer()
-            Msg.Type.`PARTICIPANT-ANSWER` -> ParticipantAnswerMsg.serializer()
-            Msg.Type.`PARTICIPANT-ANSWER-TIMEOUT` -> ParticipantAnswerTimeoutMsg.serializer()
-            Msg.Type.`REQUEST-PARTICIPANT-QUESTION` -> RequestParticipantQuestionMsg.serializer()
-            Msg.Type.`RESPONSE-PARTICIPANT-QUESTION` -> ResponseParticipantQuestionMsg.serializer()
-            Msg.Type.`REQUEST-PARTICIPANT-RESULTS` -> RequestParticipantResultsMsg.serializer()
-            Msg.Type.`RESPONSE-PARTICIPANT-RESULTS` -> ResponseParticipantResultsMsg.serializer()
-            Msg.Type.`BROADCAST-PARTICIPANT-CONFIG` -> BroadcastParticipantConfigMsg.serializer()
-            Msg.Type.`BROADCAST-START` -> BroadcastStartMsg.serializer()
-            Msg.Type.`BROADCAST-LEADERBOARD` -> BroadcastLeaderboardMsg.serializer()
+            ProtocolMsg.Type.`HOST-CONFIG` -> HostConfigMsg.serializer()
+            ProtocolMsg.Type.`HOST-START` -> HostStartMsg.serializer()
+            ProtocolMsg.Type.`NOTIFY-HOST-ANSWER` -> NotifyHostAnswerMsg.serializer()
+            ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY` -> RequestHostQuizSummaryMsg.serializer()
+            ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY` -> ResponseHostQuizSummaryMsg.serializer()
+            ProtocolMsg.Type.`PARTICIPANT-CONFIG` -> ParticipantConfigMsg.serializer()
+            ProtocolMsg.Type.`PARTICIPANT-ANSWER` -> ParticipantAnswerMsg.serializer()
+            ProtocolMsg.Type.`PARTICIPANT-ANSWER-TIMEOUT` -> ParticipantAnswerTimeoutMsg.serializer()
+            ProtocolMsg.Type.`REQUEST-PARTICIPANT-QUESTION` -> RequestParticipantQuestionMsg.serializer()
+            ProtocolMsg.Type.`RESPONSE-PARTICIPANT-QUESTION` -> ResponseParticipantQuestionMsg.serializer()
+            ProtocolMsg.Type.`REQUEST-PARTICIPANT-RESULTS` -> RequestParticipantResultsMsg.serializer()
+            ProtocolMsg.Type.`RESPONSE-PARTICIPANT-RESULTS` -> ResponseParticipantResultsMsg.serializer()
+            ProtocolMsg.Type.`BROADCAST-PARTICIPANT-CONFIG` -> BroadcastParticipantConfigMsg.serializer()
+            ProtocolMsg.Type.`BROADCAST-START` -> BroadcastStartMsg.serializer()
+            ProtocolMsg.Type.`BROADCAST-LEADERBOARD` -> BroadcastLeaderboardMsg.serializer()
         }
         val payload = compositeDec.decodeSerializableElement(descriptor, index, msgSerializer)
 

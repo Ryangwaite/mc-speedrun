@@ -1,8 +1,10 @@
 import { PayloadAction } from "@reduxjs/toolkit";
 import jwtDecode from "jwt-decode";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
+import { BroadcastLeaderboardMsgType, BROADCAST_LEADERBOARD, ParticipantConfigMsgType, PARTICIPANT_CONFIG } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
+import { setLeaderboard } from "../slices/common";
 import { setUsername } from "../slices/participant";
 import { RootState } from "../store"
 
@@ -56,11 +58,15 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
      */
     const onMessage = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => (ev: MessageEvent<any>) => {
         console.log("Websocket message received:", ev.data)
-        const payload = JSON.parse(ev.data)
+        const packet: Packet<any> = JSON.parse(ev.data)
 
-        switch (payload.type) {
+        switch (packet.type) {
+            case BROADCAST_LEADERBOARD:
+                const msg = packet.payload as BroadcastLeaderboardMsgType
+                store.dispatch(setLeaderboard(msg.leaderboard))
+                break
             default:
-                console.warn("Unknown message received: ", payload)
+                console.warn("Unknown message received: ", packet)
         }
     }
 
