@@ -1,15 +1,104 @@
-import React, { useState } from "react";
-import { Button, Typography, Box, Link, FormGroup, FormControlLabel, Checkbox, TextField, Container} from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import { Box, Button, Checkbox, Container, FormControlLabel, FormGroup, Input, Link, Modal, Stack, TextField, Typography } from "@mui/material";
+import React, { useRef, useState } from "react";
+import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
-import { OptionMode, QuestionCard } from "../common/Question";
-import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
-import ParticipantList from "../common/ParticipantList";
-import { ILeaderboardItem } from "../../types";
 import { useAppSelector } from "../../hooks";
 import { selectLeaderboard, selectQuizId } from "../../slices/common";
+import { ILeaderboardItem } from "../../types";
+import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
+import ParticipantList from "../common/ParticipantList";
+import { OptionMode, QuestionCard } from "../common/Question";
 
 
 const COLUMN_WIDTH = "320px"
+
+interface IUploadModalProps {
+    open: boolean,
+    onUpload: (file: File) => Promise<void>,
+    // Show an error on the dialog. This will only arise if validation of the previously
+    // uploaded file failed.
+    uploadErrMsg?: string,
+}
+
+function UploadModal(props: IUploadModalProps): JSX.Element {
+
+    const fileInput = useRef<HTMLInputElement>(null)
+    const [fileSelected, setFileSelected] = useState(false)
+    const [isUploading, setIsUploading] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsUploading(true)
+        if (fileInput.current != null) {
+            const files = fileInput.current.files!
+            await props.onUpload(files[0])
+            setFileSelected(false)
+            if (fileInput.current) {
+                // clear the form element. This is needed in case of errors uploading which gets displayed
+                // via the uploadErrMsg prop
+                fileInput.current.value = ""
+            }
+        }
+        setIsUploading(false)
+    }
+
+    const handleFileSelected = () => {
+        setFileSelected(true)
+    }
+
+    const uploadErrMsgComponent = !fileSelected && props.uploadErrMsg
+        ? <Typography color="red" variant="caption">{props.uploadErrMsg}</Typography>
+        : undefined
+
+    return (
+        <Modal
+            open={props.open}
+        >
+            <Box
+                sx={{
+                    // Position in the centre of the window
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: 'translate(-50%, -50%)',
+                    width: "500px",
+                    backgroundColor: "whitesmoke",
+                    border: "1px solid black",
+                    borderRadius: "12px",
+                    padding: "24px"
+                }}
+            >
+                <Typography
+                    variant="h4"
+                    textAlign="center"
+                    marginBottom="24px"
+                >Upload Quiz</Typography>
+                <form onSubmit={handleSubmit}>
+                    <Stack
+                        justifyContent="center"
+                        alignItems="center"
+                    >
+                        <Input
+                            required
+                            disableUnderline
+                            type="file"
+                            inputRef={fileInput}
+                            margin="none"
+                            onInput={handleFileSelected}
+                        />
+                        {uploadErrMsgComponent}
+                        <LoadingButton
+                            type="submit"
+                            disabled={!fileSelected}
+                            loading={isUploading}
+                        >Upload</LoadingButton>
+                    </Stack>
+                </form>
+            </Box>
+        </Modal>
+    )
+}
 
 interface IQuizNameBlockProps {
     onQuizNameChange: (name: string) => void
@@ -75,6 +164,7 @@ function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
 
 interface IConfigColumnProps {
     inviteUrl?: string,
+    onUploadQuizClicked: () => void,
     onQuestionDurationChange: (duration: number) => void,
     onQuizNameChange: (name: string) => void,
 }
@@ -107,8 +197,15 @@ function ConfigColumn(props: IConfigColumnProps) {
         >
             {inviteLinkComponent}
             <QuizNameBlock onQuizNameChange={onQuizNameChange} />
+            <Button
+                variant="contained"
+                component="label"
+                onClick={props.onUploadQuizClicked}
+            >
+                Upload Quiz
+            </Button>
             <CategoriesBlock categories={categories} />
-            <QuestionDurationBlock onDurationChanged={onQuestionDurationChange}/>
+            <QuestionDurationBlock onDurationChanged={onQuestionDurationChange} />
         </Box>
     )
 }
@@ -121,7 +218,7 @@ function QuestionColumn(props: IQuestionColumnProps) {
 
     let renderedQuestions: React.ReactNode[] = []
     for (const questionAndAnswer of props.questionsAndAnswers) {
-        const {question, options, answers} = questionAndAnswer;
+        const { question, options, answers } = questionAndAnswer;
 
         const optionsAndMode = options.map((value, index) => ({
             text: value,
@@ -191,15 +288,35 @@ interface IConfigProps {
 
 function Config(props: IConfigProps) {
 
+    // Local state
     const [quizName, setQuizName] = useState("")
     const [questionDuration, setQuestionDuration] = useState(120)
+    const [uploadErrMsg, setUploadErrMsg] = useState<string>()
+    const [modalOpen, setModalOpen] = useState(false)
 
+    // App State
     const quizId = useAppSelector(state => selectQuizId(state))
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
 
     function onQuizNameChange(name: string) {
         console.debug(`Quiz name change to: ${name}`)
         setQuizName(name)
+    }
+
+    function onUploadQuizClicked() {
+        setModalOpen(true)
+    }
+
+    async function onModalUploadClicked(file: File) {
+        try {
+            await uploadQuiz(file, "REPLACE WITH TOKEN")
+            // If everything was a succcess
+            setUploadErrMsg(undefined)
+            setModalOpen(false)
+        } catch(e) {
+            console.log("Caught error")
+            setUploadErrMsg((e as Error).message)
+        }
     }
 
     function onQuestionDurationChange(duration: number) {
@@ -220,15 +337,20 @@ function Config(props: IConfigProps) {
                 minWidth: "100%",
             }}
         >
-            
+            <UploadModal
+                open={modalOpen}
+                onUpload={onModalUploadClicked}
+                uploadErrMsg={uploadErrMsg}
+            />
             <ConfigColumn
                 inviteUrl={`${window.location.origin}/join/${quizId}`}
                 onQuizNameChange={onQuizNameChange}
+                onUploadQuizClicked={onUploadQuizClicked}
                 onQuestionDurationChange={onQuestionDurationChange}
             />
-        
+
             <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
-        
+
             <ParticipantColumn
                 participants={leaderboard}
                 onStartClicked={onStartClicked}

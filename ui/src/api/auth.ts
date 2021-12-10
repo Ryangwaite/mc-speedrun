@@ -1,5 +1,27 @@
 import jwtDecode from "jwt-decode";
-import { fetchSignOn } from "../utilities";
+
+/**
+ * Gets the base URL from the evironment for contacting the sign-on service
+ * CORs will need to be enable so that any requests succeed.
+ * @returns 
+ */
+function getSignOnBaseUrl(): string {
+    return process.env.REACT_APP__SIGN_ON_URL ? process.env.REACT_APP__SIGN_ON_URL : ""
+}
+
+/**
+ * Wrapper around 'fetch' for all requests destined for the sign-on service
+ * @param route 
+ * @param init 
+ * @returns 
+ */
+function fetchSignOn(route: string, init?: RequestInit | undefined): Promise<Response> {
+    const url = getSignOnBaseUrl() + route
+    return fetch(url, {
+        cache: "no-cache",
+        ...init
+    })
+}
 
 interface IAuthorizationResponse {
     access_token: string,

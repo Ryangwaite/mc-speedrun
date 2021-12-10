@@ -1,4 +1,3 @@
-import { getSignOnBaseUrl } from "./const";
 
 /**
  * Gets the ordinal e.g. "st", "nd", "rd", "th"
@@ -11,18 +10,4 @@ export function getOrdinal(value: number): string {
     var s = ["th", "st", "nd", "rd"],
         v = value % 100;
     return s[(v - 20) % 10] || s[v] || s[0];
-}
-
-/**
- * Wrapper around 'fetch' for all requests destined for the sign-on service
- * @param route 
- * @param init 
- * @returns 
- */
-export function fetchSignOn(route: string, init?: RequestInit | undefined): Promise<Response> {
-    const url = getSignOnBaseUrl() + route
-    return fetch(url, {
-        cache: "no-cache",
-        ...init
-    })
 }
