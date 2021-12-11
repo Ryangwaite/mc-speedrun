@@ -1,7 +1,13 @@
 package com.ryangwaite.connection
 
+import com.ryangwaite.protocol.Packet
+import com.ryangwaite.protocol.ProtocolMsg
+import com.ryangwaite.protocol.ResponseHostQuizSummaryMsg
+import io.ktor.http.cio.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 sealed class Connection(
     open val socketSession: DefaultWebSocketServerSession,
@@ -9,7 +15,13 @@ sealed class Connection(
     // if the socketSession is detected as closed. This will alert
     // the producer to the fact.
     open val websocketCloseFuture: CompletableDeferred<Exception?>,
-    open val quizId: String)
+    open val quizId: String,
+) {
+    suspend fun send(msg: ProtocolMsg) {
+        val serializedPacket = Json.encodeToString(Packet.encapsulate(msg))
+        socketSession.outgoing.send(Frame.Text(serializedPacket))
+    }
+}
 
 data class HostConnection(
     override val socketSession: DefaultWebSocketServerSession,

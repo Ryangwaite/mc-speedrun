@@ -3,8 +3,9 @@ import { Box, Button, Checkbox, Container, FormControlLabel, FormGroup, Input, L
 import React, { useRef, useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
-import { useAppSelector } from "../../hooks";
+import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard, selectQuizId } from "../../slices/common";
+import { setRequestQuestions } from "../../slices/host";
 import { ILeaderboardItem } from "../../types";
 import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";
@@ -298,6 +299,8 @@ function Config(props: IConfigProps) {
     const quizId = useAppSelector(state => selectQuizId(state))
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
 
+    const dispatch = useAppDispatch()
+
     function onQuizNameChange(name: string) {
         console.debug(`Quiz name change to: ${name}`)
         setQuizName(name)
@@ -313,6 +316,9 @@ function Config(props: IConfigProps) {
             // If everything was a succcess
             setUploadErrMsg(undefined)
             setModalOpen(false)
+            
+            // Request the questions from the server to display on the page
+            dispatch(setRequestQuestions(true))
         } catch(e) {
             console.log("Caught error")
             setUploadErrMsg((e as Error).message)

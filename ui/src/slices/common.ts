@@ -8,7 +8,7 @@ interface ICommonState {
     leaderboard: ILeaderboardItem[]
 }
 
-// State consists of that which is the superset of participant and hosts
+// State consists of that which is the intersection of participant and hosts
 const initialState: ICommonState = {
     leaderboard: []
 }

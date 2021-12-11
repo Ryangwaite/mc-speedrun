@@ -1,9 +1,8 @@
-package protocol
+package com.ryangwaite.protocol
 
 import com.ryangwaite.models.Answerer
 import com.ryangwaite.models.HostQuestion
 import com.ryangwaite.models.LeaderboardItem
-import com.ryangwaite.protocol.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json

@@ -1,6 +1,7 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import commonReducer from './slices/common';
 import participantReducer from './slices/participant'
+import hostReducer from './slices/host'
 import { websocketMiddleware } from "./middleware/websocket";
 
 // Build rootReducer before pasing to `configureStore` so that
@@ -11,6 +12,7 @@ import { websocketMiddleware } from "./middleware/websocket";
 const rootReducer = combineReducers({
     common: commonReducer,
     participant: participantReducer,
+    host: hostReducer,
 })
 
 export const store = configureStore({

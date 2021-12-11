@@ -1,0 +1,28 @@
+[
+  {
+    "question": "What does 'www' stand for in a web browser?",
+    "category": "technology",
+    "options": [
+      "world wide web",
+      "worlds widest website",
+      "who what when",
+      "i dont know"
+    ],
+    "answers": [
+      0
+    ]
+  },
+  {
+    "question": "Which of these databases are relational?",
+    "category": "technology",
+    "options": [
+      "DynamoDB",
+      "Athena",
+      "Redshift",
+      "Redis"
+    ],
+    "answers": [
+      2
+    ]
+  }
+]

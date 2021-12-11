@@ -1,6 +1,5 @@
-package subscribe
+package com.ryangwaite.subscribe
 
-import com.ryangwaite.subscribe.SubscriptionMessages
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

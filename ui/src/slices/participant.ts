@@ -9,7 +9,6 @@ interface IParticipantState {
     username?: string,
 }
 
-// State consists of that which is the superset of participant and hosts
 const initialState: IParticipantState = {
 
 }

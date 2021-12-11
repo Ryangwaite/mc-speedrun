@@ -1,7 +1,11 @@
 package com.ryangwaite.connection
 
+import com.ryangwaite.loader.QuizLoader
+import com.ryangwaite.models.HostQuestion
 import com.ryangwaite.protocol.Packet
 import com.ryangwaite.protocol.ParticipantConfigMsg
+import com.ryangwaite.protocol.RequestHostQuizSummaryMsg
+import com.ryangwaite.protocol.ResponseHostQuizSummaryMsg
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.http.cio.websocket.*
@@ -40,15 +44,31 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
         this.channel.send(RemoveConnection(connection))
     }
 
-    suspend fun processInboundClientPacket(quizId: String, packet: String, userId: String? = null) {
+    suspend fun processInboundClientPacket(connection: Connection, packet: String) {
         val deserializedPacket = Json.decodeFromString<Packet>(packet)
         when (val payload = deserializedPacket.payload) {
             is ParticipantConfigMsg -> {
+                val (_, _, quizId, userId) = (connection as ParticipantConnection)
                 datastore.apply {
                     setUsername(quizId, userId!!, payload.name)
                     addLeaderboardItem(quizId, userId, 0)
                 }
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
+            }
+            is RequestHostQuizSummaryMsg -> {
+                val questionsAndAnswers = QuizLoader.load(connection.quizId)
+                val hostQuestions = questionsAndAnswers.map {
+                    val (question: String, category: String, options: List<String>, answers: List<Int>,) = it
+                    HostQuestion(
+                        question, options, correctOptions = answers,
+                        // TODO: store and retrieve all of these from redis
+                        correctAnswerers = listOf(), incorrectAnswerers = listOf(), timeExpiredAnswerers = listOf()
+                    )
+                }
+                connection.send(ResponseHostQuizSummaryMsg(
+                    0, // TODO: store and retrieve from redis
+                    hostQuestions
+                ))
             }
             else -> println("Unknown packet received: $packet")
         }
@@ -65,11 +85,8 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                     try {
                         for (frame in connection.socketSession.incoming) {
                             frame as? Frame.Text ?: continue
-                            val text = frame.readText()
-                            when (connection) {
-                                is HostConnection -> processInboundClientPacket(connection.quizId, text)
-                                is ParticipantConnection -> processInboundClientPacket(connection.quizId, text, userId = connection.userId)
-                            }
+                            val packet = frame.readText()
+                            processInboundClientPacket(connection, packet)
                         }
                     } finally {
                         sendRemoveConnection(connection)
@@ -95,6 +112,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 println("Connections: $connections")
             }
             is ForwardMsg -> {
+                // NOTE: Not using connection.send(...) here to avoid serializing the packet with every send
                 val serializedPacket = Json.encodeToString(Packet.encapsulate(msg.msgToForward))
                 // Let all clients (all participants and host) know the content
                 connections[msg.quizId]!!.forEach { connection ->
