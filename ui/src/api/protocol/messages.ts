@@ -22,11 +22,12 @@ export function requestHostQuizSummary() {
 export type RequestHostQuizSummaryMsgType = ReturnType<typeof requestHostQuizSummary>
 
 export const HOST_CONFIG = "HOST-CONFIG"
-export function hostConfig(quizName: string, categories: string[], duration: number) {
+export function hostConfig(quizName: string, categories: string[], duration: number, selectedQuestionIndexes: number[]) {
     return {
         quizName,
         categories,
         duration,
+        selectedQuestionIndexes,
     }
 }
 export type HostConfigMsgType = ReturnType<typeof hostConfig>

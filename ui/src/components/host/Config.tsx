@@ -5,12 +5,13 @@ import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers } from "../../types";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard, selectQuizId } from "../../slices/common";
-import { selectHostQuestions, selectSetRequestQuestions, setRequestQuestions } from "../../slices/host";
+import { selectHostQuestions, selectSetRequestQuestions, setHostConfig, setRequestQuestions } from "../../slices/host";
 import { ILeaderboardItem } from "../../types";
 import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";
 import { OptionMode, QuestionCard } from "../common/Question";
 import _ from "lodash";
+import { useNavigate } from "react-router-dom";
 
 
 const COLUMN_WIDTH = "320px"
@@ -349,6 +350,7 @@ function Config(props: IConfigProps) {
     const questionsAndAnswers = useAppSelector(state => selectHostQuestions(state))
 
     const dispatch = useAppDispatch()
+    let navigate = useNavigate();
 
     // Extract categories
     let categories = questionsAndAnswers
@@ -362,8 +364,14 @@ function Config(props: IConfigProps) {
     }
 
     let filteredQuestionsAndAnswers: IQuestionAndAnswers[] = []
+    let selectedQuestionIndexes: number[] = []
     if (questionsAndAnswers && selectedCategories) {
-        filteredQuestionsAndAnswers = questionsAndAnswers.filter(qAndA => selectedCategories.includes(qAndA.category))
+        filteredQuestionsAndAnswers = questionsAndAnswers.filter((qAndA, index) => {
+            if (selectedCategories.includes(qAndA.category)) {
+                selectedQuestionIndexes.push(index)
+                return qAndA
+            }
+        })
     }
 
     function onQuizNameChange(name: string) {
@@ -413,7 +421,15 @@ function Config(props: IConfigProps) {
     }
 
     function onStartClicked() {
-        alert("Start clicked")
+        dispatch(setHostConfig(
+            {
+                categories: selectedCategories!,
+                duration: questionDuration,
+                quizName: quizName,
+                selectedQuestionIndexes: selectedQuestionIndexes,
+            }
+        ))
+        navigate("/summary")
     }
 
     return (

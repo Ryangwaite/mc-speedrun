@@ -40,6 +40,7 @@ data class HostConfigMsg(
     val quizName: String,
     val categories: List<String>,
     val duration: Int,
+    val selectedQuestionIndexes: List<Int>,
 ): ProtocolMsg()
 
 @Serializable

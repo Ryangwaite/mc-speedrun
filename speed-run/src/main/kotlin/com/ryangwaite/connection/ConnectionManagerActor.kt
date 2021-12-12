@@ -71,6 +71,14 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                     hostQuestions
                 ))
             }
+            is HostConfigMsg -> {
+                val (quizName, categories, duration, selectedQuestionIndexes) = payload
+                val quizId = connection.quizId
+                datastore.setQuizName(quizId, quizName)
+                datastore.setSelectedCategories(quizId, categories)
+                datastore.setQuestionDuration(quizId, duration)
+                datastore.setSelectedQuestionIndexes(quizId, selectedQuestionIndexes)
+            }
             else -> println("Unknown packet received: $packet")
         }
     }

@@ -1,11 +1,11 @@
 import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BROADCAST_LEADERBOARD, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BROADCAST_LEADERBOARD, HostConfigMsgType, HOST_CONFIG, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
 import { setLeaderboard } from "../slices/common";
-import { setQuestions, setRequestQuestions, setTotalTimeElapsed } from "../slices/host";
+import { setHostConfig, setQuestions, setRequestQuestions, setTotalTimeElapsed } from "../slices/host";
 import { setUsername } from "../slices/participant";
 import { RootState } from "../store"
 
@@ -96,6 +96,10 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                     // Forward the request over the websocket
                     socket.send(Packet.RequestHostQuestions())
                 }
+                return next(action)
+            case setHostConfig.type:
+                const msg = (action as PayloadAction<HostConfigMsgType>).payload
+                socket.send(new Packet(HOST_CONFIG, msg))
                 return next(action)
             default:
                 console.debug("Passing the next action:", action)

@@ -42,6 +42,10 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     private fun usernameKey(quizId: String, userId: String) = "$quizId:$userId:username"
     private fun leaderboardKey(quizId: String) = "$quizId:leaderboard"
     private fun subscriptionKey(quizId: String) = "$quizId:subscribe"
+    private fun quizNameKey(quizId: String) = "$quizId:quizName"
+    private fun selectedCategoriesKey(quizId: String) = "$quizId:selectedCategories"
+    private fun questionDurationKey(quizId: String) = "$quizId:questionDuration"
+    private fun selectedQuestionIndexesKey(quizId: String) = "$quizId:selectedQuestionIndexes"
 
     /**
      * Get a Flow for the topic pointed to by topicKey
@@ -82,6 +86,26 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
             val score = leaderboard.getScore(userId).awaitSingle().toInt()
             LeaderboardItem(userId, userName, score)
         }
+    }
+
+    override suspend fun setQuizName(quizId: String, name: String) {
+        val bucket = this.redissonClient.getBucket<String>(quizNameKey(quizId))
+        bucket.set(name).await()
+    }
+
+    override suspend fun setSelectedCategories(quizId: String, categories: List<String>) {
+        val list = redissonClient.getList<String>(selectedCategoriesKey(quizId))
+        list.addAll(categories).await()
+    }
+
+    override suspend fun setQuestionDuration(quizId: String, duration: Int) {
+        val bucket = this.redissonClient.getBucket<Int>(questionDurationKey(quizId))
+        bucket.set(duration).await()
+    }
+
+    override suspend fun setSelectedQuestionIndexes(quizId: String, indexes: List<Int>) {
+        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId))
+        list.addAll(indexes).await()
     }
 
     override suspend fun publishQuizEvent(quizId: String, msg: SubscriptionMessages) {
