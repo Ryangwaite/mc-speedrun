@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import { BrowserRouter } from "react-router-dom";
+import { HistoryRouter as Router } from "redux-first-history/rr6";
 import App from './App';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Provider } from 'react-redux';
-import {store} from './store'
+import {history, store} from './store'
 
 // Use roboto font since material ui was designed with this
 import '@fontsource/roboto/300.css';
@@ -17,9 +17,9 @@ ReactDOM.render(
     <React.StrictMode>
         <CssBaseline />
         <Provider store={store}>
-            <BrowserRouter>
+            <Router history={history}>
                 <App />
-            </BrowserRouter>
+            </Router>
         </Provider>
     </React.StrictMode>,
     document.getElementById('root')

@@ -8,9 +8,6 @@ interface IHostState {
     totalTimeElapsed?: number,
     requestQuestions: boolean,
     questions?: IQuestionAndAnswers[],
-    quizName?: string,
-    selectedCategories?: string[],
-    questionDuration?: number,
 }
 
 const initialState: IHostState = {
@@ -34,12 +31,9 @@ export const hostSlice = createSlice({
             state.questions = updatedQuestions
         },
         setHostConfig: (state, action: PayloadAction<HostConfigMsgType>) => {
-            // NOTE: Probably don't need to store any of this in the frontend. We still need
-            // the reducer though to bootstrap the action that the websocket middleware intercepts
-            const { quizName, categories, duration,} = action.payload
-            state.quizName = quizName
-            state.selectedCategories = categories
-            state.questionDuration = duration
+            // NOTE: Don't need to store any of this in the frontend. We still need
+            // this reducer though to bootstrap the action that the websocket middleware
+            // intercepts
         },
     },
 })
@@ -49,8 +43,4 @@ export const { setTotalTimeElapsed, setRequestQuestions, setQuestions, setHostCo
 export const selectTotalTimeElapsed = (state: RootState) => state.host.totalTimeElapsed
 export const selectSetRequestQuestions = (state: RootState) => state.host.requestQuestions
 export const selectHostQuestions = (state: RootState) => state.host.questions
-export const selectQuizName = (state: RootState) => state.host.quizName
-export const selectSelectedCategories = (state: RootState) => state.host.selectedCategories
-export const selectQuestionDuration = (state: RootState) => state.host.questionDuration
-
 export default hostSlice.reducer

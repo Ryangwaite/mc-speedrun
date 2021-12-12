@@ -429,7 +429,6 @@ function Config(props: IConfigProps) {
                 selectedQuestionIndexes: selectedQuestionIndexes,
             }
         ))
-        navigate("/summary")
     }
 
     return (

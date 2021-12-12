@@ -78,6 +78,9 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 datastore.setSelectedCategories(quizId, categories)
                 datastore.setQuestionDuration(quizId, duration)
                 datastore.setSelectedQuestionIndexes(quizId, selectedQuestionIndexes)
+
+                // Start the quiz
+                channel.send(ForwardMsg(quizId, BroadcastStartMsg(duration)))
             }
             else -> println("Unknown packet received: $packet")
         }
@@ -121,6 +124,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 println("Connections: $connections")
             }
             is ForwardMsg -> {
+                println("Forwarding packet: ${msg.msgToForward}")
                 // NOTE: Not using connection.send(...) here to avoid serializing the packet with every send
                 val serializedPacket = Json.encodeToString(Packet.encapsulate(msg.msgToForward))
                 // Let all clients (all participants and host) know the content

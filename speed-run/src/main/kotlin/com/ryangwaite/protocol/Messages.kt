@@ -118,7 +118,9 @@ data class BroadcastParticipantConfigMsg(
 ): ProtocolMsg()
 
 @Serializable
-class BroadcastStartMsg(): ProtocolMsg()
+data class BroadcastStartMsg(
+    val questionDuration: Int,
+): ProtocolMsg()
 
 @Serializable
 data class BroadcastLeaderboardMsg(

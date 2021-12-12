@@ -1,3 +1,9 @@
+export enum ClientType {
+    HOST,
+    PARTICIPANT,
+    UNKNOWN,
+}
+
 export interface ILeaderboardItem {
     userId: string,
     name: string,

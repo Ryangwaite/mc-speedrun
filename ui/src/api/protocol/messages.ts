@@ -48,3 +48,8 @@ export interface ResponseHostQuizSummaryMsgType {
     totalTimeElapsed: number, // milliseconds
     questions: IHostQuestion[],
 }
+
+export const BROADCAST_START = "BROADCAST-START"
+export interface BroadcastStartMsgType {
+    questionDuration: number,
+}

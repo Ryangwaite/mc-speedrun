@@ -1,13 +1,15 @@
 import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
+import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BROADCAST_LEADERBOARD, HostConfigMsgType, HOST_CONFIG, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
-import { setLeaderboard } from "../slices/common";
+import { selectClientType, setLeaderboard } from "../slices/common";
 import { setHostConfig, setQuestions, setRequestQuestions, setTotalTimeElapsed } from "../slices/host";
-import { setUsername } from "../slices/participant";
+import { setQuestionDuration, setUsername } from "../slices/participant";
 import { RootState } from "../store"
+import { ClientType } from "../types";
 
 // Actions
 const WEBSOCKET_CONNECT = "WEBSOCKET_CONNECT"
@@ -63,6 +65,22 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                 msg = packet.payload as ResponseHostQuestionsMsgType
                 store.dispatch(setQuestions(msg.questions))
                 store.dispatch(setRequestQuestions(false))
+                break
+            case BROADCAST_START:
+                msg = packet.payload as BroadcastStartMsgType
+                const clientType = selectClientType(store.getState())
+                switch (clientType) {
+                    case ClientType.HOST:
+                        store.dispatch(push("/summary")) // Navigate to /summary
+                        break
+                    case ClientType.PARTICIPANT:
+                        store.dispatch(setQuestionDuration(msg.questionDuration))
+                        store.dispatch(push("/quiz")) // Navigate to /quiz
+                        break
+                    default:
+                        console.warn(`Unknown participant '${clientType}' when receiving '${BROADCAST_START}'`)
+                        break
+                }
                 break
             default:
                 console.warn("Unknown message received: ", packet)

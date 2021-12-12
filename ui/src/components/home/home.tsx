@@ -7,7 +7,8 @@ import { getJwtTokenClaims, getParticipantJwtTokenClaims, postHostQuiz, postJoin
 import { websocketConnect } from "../../middleware/websocket";
 import { useAppDispatch } from "../../hooks";
 import { setUserId } from "../../slices/participant";
-import { setQuizId } from "../../slices/common";
+import { setClientType, setQuizId } from "../../slices/common";
+import { ClientType } from "../../types";
 interface ITextButtonCardProps {
     title: string,
     label: string,
@@ -144,6 +145,7 @@ function Home(props: IHomeProps) {
             const token = authorizationResponse.access_token
             const {userId, quizId} = getParticipantJwtTokenClaims(token)
             
+            dispatch(setClientType(ClientType.PARTICIPANT))
             dispatch(setUserId(userId))
             dispatch(setQuizId(quizId))
             dispatch(websocketConnect(token))
@@ -161,6 +163,7 @@ function Home(props: IHomeProps) {
             const token = authorizationResponse.access_token
             const {quizId} = getJwtTokenClaims(token)
 
+            dispatch(setClientType(ClientType.HOST))
             dispatch(setQuizId(quizId))
             dispatch(websocketConnect(token))
 
