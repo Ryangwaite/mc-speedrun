@@ -1,7 +1,7 @@
 package com.ryangwaite.protocol
 
 import com.ryangwaite.models.Answerer
-import com.ryangwaite.models.HostQuestion
+import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.models.LeaderboardItem
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
@@ -53,7 +53,7 @@ class testPacket {
         val msg = Packet(ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY`, ResponseHostQuizSummaryMsg(
             1234,
             listOf(
-                HostQuestion(
+                HostQuestionSummary(
                     "question 1",
                     listOf("option1", "option2", "option3", "option4"),
                     listOf(1),
@@ -70,7 +70,7 @@ class testPacket {
                         Answerer("userid6", "participant6")
                     ),
                 ),
-                HostQuestion(
+                HostQuestionSummary(
                     "question 2",
                     listOf("optionA", "optionB", "optionC", "optionD"),
                     listOf(1,3),

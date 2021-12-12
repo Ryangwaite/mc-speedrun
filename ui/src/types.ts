@@ -17,3 +17,10 @@ export interface IHostQuestion {
     incorrectAnswerers: Answerer[],
     timeExpiredAnswerers: Answerer[],
 }
+
+export interface IQuestionAndAnswers {
+    readonly question: string,
+    readonly category: string,
+    readonly options: string[],
+    readonly answers: number[],
+}

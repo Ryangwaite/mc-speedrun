@@ -1,11 +1,6 @@
-export const APP_NAME: string = "Multiple Choice Speedrun"
+import { IQuestionAndAnswers } from "./types"
 
-export interface IQuestionAndAnswers {
-    readonly question: string,
-    readonly category: string,
-    readonly options: string[],
-    readonly answers: number[],
-}
+export const APP_NAME: string = "Multiple Choice Speedrun"
 
 export const SAMPLE_QUESTIONS_AND_ANSWERS: IQuestionAndAnswers[] = [
     {

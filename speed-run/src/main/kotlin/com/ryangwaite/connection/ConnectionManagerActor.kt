@@ -1,11 +1,8 @@
 package com.ryangwaite.connection
 
 import com.ryangwaite.loader.QuizLoader
-import com.ryangwaite.models.HostQuestion
-import com.ryangwaite.protocol.Packet
-import com.ryangwaite.protocol.ParticipantConfigMsg
-import com.ryangwaite.protocol.RequestHostQuizSummaryMsg
-import com.ryangwaite.protocol.ResponseHostQuizSummaryMsg
+import com.ryangwaite.models.HostQuestionSummary
+import com.ryangwaite.protocol.*
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.http.cio.websocket.*
@@ -55,11 +52,15 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 }
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
             }
+            is RequestHostQuestionsMsg -> {
+                val questionsAndAnswers = QuizLoader.load(connection.quizId)
+                connection.send(ResponseHostQuestionsMsg(questionsAndAnswers))
+            }
             is RequestHostQuizSummaryMsg -> {
                 val questionsAndAnswers = QuizLoader.load(connection.quizId)
                 val hostQuestions = questionsAndAnswers.map {
                     val (question: String, category: String, options: List<String>, answers: List<Int>,) = it
-                    HostQuestion(
+                    HostQuestionSummary(
                         question, options, correctOptions = answers,
                         // TODO: store and retrieve all of these from redis
                         correctAnswerers = listOf(), incorrectAnswerers = listOf(), timeExpiredAnswerers = listOf()

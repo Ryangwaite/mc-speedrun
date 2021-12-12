@@ -24,6 +24,8 @@ data class Packet(
                 is HostConfigMsg -> ProtocolMsg.Type.`HOST-CONFIG`
                 is HostStartMsg -> ProtocolMsg.Type.`HOST-START`
                 is NotifyHostAnswerMsg -> ProtocolMsg.Type.`NOTIFY-HOST-ANSWER`
+                is RequestHostQuestionsMsg -> ProtocolMsg.Type.`REQUEST-HOST-QUESTIONS`
+                is ResponseHostQuestionsMsg -> ProtocolMsg.Type.`RESPONSE-HOST-QUESTIONS`
                 is RequestHostQuizSummaryMsg -> ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY`
                 is ResponseHostQuizSummaryMsg -> ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY`
                 is ParticipantConfigMsg -> ProtocolMsg.Type.`PARTICIPANT-CONFIG`
@@ -61,6 +63,8 @@ object PacketSerializer: KSerializer<Packet> {
             is HostConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, HostConfigMsg.serializer(), value.payload)
             is HostStartMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, HostStartMsg.serializer(), value.payload)
             is NotifyHostAnswerMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, NotifyHostAnswerMsg.serializer(), value.payload)
+            is RequestHostQuestionsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, RequestHostQuestionsMsg.serializer(), value.payload)
+            is ResponseHostQuestionsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseHostQuestionsMsg.serializer(), value.payload)
             is RequestHostQuizSummaryMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, RequestHostQuizSummaryMsg.serializer(), value.payload)
             is ResponseHostQuizSummaryMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseHostQuizSummaryMsg.serializer(), value.payload)
             is ParticipantConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ParticipantConfigMsg.serializer(), value.payload)
@@ -90,6 +94,8 @@ object PacketSerializer: KSerializer<Packet> {
             ProtocolMsg.Type.`HOST-CONFIG` -> HostConfigMsg.serializer()
             ProtocolMsg.Type.`HOST-START` -> HostStartMsg.serializer()
             ProtocolMsg.Type.`NOTIFY-HOST-ANSWER` -> NotifyHostAnswerMsg.serializer()
+            ProtocolMsg.Type.`REQUEST-HOST-QUESTIONS` -> RequestHostQuestionsMsg.serializer()
+            ProtocolMsg.Type.`RESPONSE-HOST-QUESTIONS` -> ResponseHostQuestionsMsg.serializer()
             ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY` -> RequestHostQuizSummaryMsg.serializer()
             ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY` -> ResponseHostQuizSummaryMsg.serializer()
             ProtocolMsg.Type.`PARTICIPANT-CONFIG` -> ParticipantConfigMsg.serializer()

@@ -1,15 +1,16 @@
 import { LoadingButton } from "@mui/lab";
-import { Box, Button, Checkbox, Container, FormControlLabel, FormGroup, Input, Link, Modal, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, CircularProgress, Container, FormControlLabel, FormGroup, Input, Link, Modal, Stack, TextField, Typography } from "@mui/material";
 import React, { useRef, useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
-import { IQuestionAndAnswers, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
+import { IQuestionAndAnswers } from "../../types";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard, selectQuizId } from "../../slices/common";
-import { setRequestQuestions } from "../../slices/host";
+import { selectHostQuestions, selectSetRequestQuestions, setRequestQuestions } from "../../slices/host";
 import { ILeaderboardItem } from "../../types";
 import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";
 import { OptionMode, QuestionCard } from "../common/Question";
+import _ from "lodash";
 
 
 const COLUMN_WIDTH = "320px"
@@ -123,18 +124,46 @@ function QuizNameBlock(props: IQuizNameBlockProps): JSX.Element {
 }
 
 interface ICategoriesBlockProps {
-    categories: string[]
+    categories: string[],
+    selectedCategories: string[],
+    checkListener: (category: string, checked: boolean) => void
 }
 
 function CategoriesBlock(props: ICategoriesBlockProps): JSX.Element {
 
-    const { categories } = props
+    const { categories, selectedCategories, checkListener } = props
+
+    const handleCheckChange = (event: React.ChangeEvent<HTMLInputElement>, category: string) => {
+        const newCheckState = event.target.checked
+        console.log("Categories block handleCheckChange new check state:", newCheckState)
+        checkListener(category, newCheckState)
+    }
+
+    const items = categories.map(category => {
+        const isChecked = selectedCategories.includes(category)
+        return (
+            <FormControlLabel
+                key={category}
+                label={category}
+                checked={isChecked}
+                control={
+                    <Checkbox
+                        onChange={e => handleCheckChange(e, category)}
+                    />
+                }
+                sx={{
+                    // Dont highlight the text
+                    userSelect: "none"
+                }}
+            />
+        )
+    })
 
     return (
         <Box>
             <Typography variant="h4">Categories</Typography>
             <FormGroup>
-                {categories.map(category => <FormControlLabel key={category} control={<Checkbox />} label={category} />)}
+                {items}
             </FormGroup>
         </Box>
     )
@@ -168,18 +197,26 @@ interface IConfigColumnProps {
     onUploadQuizClicked: () => void,
     onQuestionDurationChange: (duration: number) => void,
     onQuizNameChange: (name: string) => void,
+    categories?: string[],
+    selectedCategories?: string[],
+    categoriesCheckListener: (category: string, checked: boolean) => void
 }
 
 function ConfigColumn(props: IConfigColumnProps) {
 
-    const { onQuestionDurationChange, onQuizNameChange } = props
+    const {onQuestionDurationChange, onQuizNameChange, categories, selectedCategories, categoriesCheckListener} = props
 
     // TODO: make it so the link can be copied but not followed 
     const inviteLinkComponent = props.inviteUrl ? <Typography variant={"body1"}>
         Invite participants with this link: <Link>{props.inviteUrl}</Link>
     </Typography> : null;
 
-    const categories = ["category1", "category2", "category3", "category4"]
+    // Only show these elements when the quiz has been uploaded to the backend, which is signalled
+    // by the categories being present
+    let categoryBlock = categories
+        ? (<CategoriesBlock categories={categories} selectedCategories={selectedCategories!} checkListener={categoriesCheckListener} />)
+         : undefined
+    let questionDurationBlock = categories ? <QuestionDurationBlock onDurationChanged={onQuestionDurationChange} /> : undefined
 
     return (
         <Box
@@ -205,34 +242,43 @@ function ConfigColumn(props: IConfigColumnProps) {
             >
                 Upload Quiz
             </Button>
-            <CategoriesBlock categories={categories} />
-            <QuestionDurationBlock onDurationChanged={onQuestionDurationChange} />
+            {categoryBlock}
+            {questionDurationBlock}
         </Box>
     )
 }
 
 interface IQuestionColumnProps {
-    questionsAndAnswers: IQuestionAndAnswers[]
+    questionsAndAnswers: IQuestionAndAnswers[],
+    loading: boolean,
 }
 
 function QuestionColumn(props: IQuestionColumnProps) {
 
-    let renderedQuestions: React.ReactNode[] = []
-    for (const questionAndAnswer of props.questionsAndAnswers) {
-        const { question, options, answers } = questionAndAnswer;
 
-        const optionsAndMode = options.map((value, index) => ({
-            text: value,
-            mode: answers.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
-        }))
+    let content = undefined
 
-        renderedQuestions.push(
-            <QuestionCard
-                question={question}
-                numCorrectOptions={answers.length}
-                options={optionsAndMode}
-            />
-        )
+    if (props.loading) {
+        content = <CircularProgress />
+    } else if (props.questionsAndAnswers) {
+        let renderedQuestions: React.ReactNode[] = []
+        for (const questionAndAnswer of props.questionsAndAnswers) {
+            const { question, options, answers } = questionAndAnswer;
+
+            const optionsAndMode = options.map((value, index) => ({
+                text: value,
+                mode: answers.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
+            }))
+
+            renderedQuestions.push(
+                <QuestionCard
+                    question={question}
+                    numCorrectOptions={answers.length}
+                    options={optionsAndMode}
+                />
+            )
+        }
+        content = renderedQuestions
     }
 
     return (
@@ -247,7 +293,7 @@ function QuestionColumn(props: IQuestionColumnProps) {
                 transform: "translateX(-50%)" // There's no direct prop for this, hence its here
             }}
         >
-            {renderedQuestions}
+            {content}
         </Box>
     )
 }
@@ -294,12 +340,31 @@ function Config(props: IConfigProps) {
     const [questionDuration, setQuestionDuration] = useState(120)
     const [uploadErrMsg, setUploadErrMsg] = useState<string>()
     const [modalOpen, setModalOpen] = useState(false)
+    const [selectedCategories, setSelectedCategories] = useState<string[]>()
 
     // App State
     const quizId = useAppSelector(state => selectQuizId(state))
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
+    const fetchingQuestions = useAppSelector(state => selectSetRequestQuestions(state))
+    const questionsAndAnswers = useAppSelector(state => selectHostQuestions(state))
 
     const dispatch = useAppDispatch()
+
+    // Extract categories
+    let categories = questionsAndAnswers
+        ? _.uniq(questionsAndAnswers.map(x => x.category))
+        : undefined
+
+    if (categories && !selectedCategories) {
+        // The quiz has just been loaded for the first time and the categories
+        // have been extracted. Initialize the selected categories to all of them
+        setSelectedCategories(categories)
+    }
+
+    let filteredQuestionsAndAnswers: IQuestionAndAnswers[] = []
+    if (questionsAndAnswers && selectedCategories) {
+        filteredQuestionsAndAnswers = questionsAndAnswers.filter(qAndA => selectedCategories.includes(qAndA.category))
+    }
 
     function onQuizNameChange(name: string) {
         console.debug(`Quiz name change to: ${name}`)
@@ -323,6 +388,23 @@ function Config(props: IConfigProps) {
             console.log("Caught error")
             setUploadErrMsg((e as Error).message)
         }
+    }
+
+    function categoriesCheckListener(category: string, checked: boolean) {
+
+        if (!selectedCategories) {
+            console.warn("Categories check listener fired without being initialized")
+            return
+        }
+
+        let newSelectedCategories = [...selectedCategories]
+        if (checked) {
+            newSelectedCategories.push(category)
+        } else {
+            _.remove(newSelectedCategories, x => x === category)
+        }
+        console.log("newSelectedCategories = ", newSelectedCategories)
+        setSelectedCategories(newSelectedCategories)
     }
 
     function onQuestionDurationChange(duration: number) {
@@ -353,9 +435,15 @@ function Config(props: IConfigProps) {
                 onQuizNameChange={onQuizNameChange}
                 onUploadQuizClicked={onUploadQuizClicked}
                 onQuestionDurationChange={onQuestionDurationChange}
+                categories={categories}
+                selectedCategories={selectedCategories}
+                categoriesCheckListener={categoriesCheckListener}
             />
 
-            <QuestionColumn questionsAndAnswers={SAMPLE_QUESTIONS_AND_ANSWERS} />
+            <QuestionColumn
+                loading={fetchingQuestions}
+                questionsAndAnswers={filteredQuestionsAndAnswers}
+            />
 
             <ParticipantColumn
                 participants={leaderboard}

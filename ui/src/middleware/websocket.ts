@@ -1,7 +1,7 @@
 import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BROADCAST_LEADERBOARD, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuizSummaryMsgType, RESPONSE_HOST_QUIZ_SUMMARY } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BROADCAST_LEADERBOARD, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
 import { setLeaderboard } from "../slices/common";
@@ -59,10 +59,9 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                 msg = packet.payload as BroadcastLeaderboardMsgType
                 store.dispatch(setLeaderboard(msg.leaderboard))
                 break
-            case RESPONSE_HOST_QUIZ_SUMMARY:
-                msg = packet.payload as ResponseHostQuizSummaryMsgType
+            case RESPONSE_HOST_QUESTIONS:
+                msg = packet.payload as ResponseHostQuestionsMsgType
                 store.dispatch(setQuestions(msg.questions))
-                store.dispatch(setTotalTimeElapsed(msg.totalTimeElapsed))
                 store.dispatch(setRequestQuestions(false))
                 break
             default:
@@ -95,7 +94,7 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                 const isRequesting = (action as PayloadAction<boolean>).payload
                 if (isRequesting) {
                     // Forward the request over the websocket
-                    socket.send(Packet.RequestHostQuizSummary())
+                    socket.send(Packet.RequestHostQuestions())
                 }
                 return next(action)
             default:

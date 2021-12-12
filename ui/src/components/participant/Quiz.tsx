@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Button, Typography, Box, Card, LinearProgress, Container} from "@mui/material";
 import { OptionMode, QuestionCard } from "../common/Question";
-import { IQuestionAndAnswers, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
+import { SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
 import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
+import { IQuestionAndAnswers } from "../../types";
 interface IQuestionNumberCardProps {
     questionNumber: number,
     totalQuestions: number,

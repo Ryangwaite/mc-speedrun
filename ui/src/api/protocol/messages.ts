@@ -1,4 +1,4 @@
-import { IHostQuestion, ILeaderboardItem } from "../../types"
+import { IHostQuestion, ILeaderboardItem, IQuestionAndAnswers } from "../../types"
 
 /********************* OUTBOUND *********************/
 export const PARTICIPANT_CONFIG = "PARTICIPANT-CONFIG"
@@ -8,6 +8,12 @@ export function participantConfigMsg(name: string) {
     }
 }
 export type ParticipantConfigMsgType = ReturnType<typeof participantConfigMsg>
+
+export const REQUEST_HOST_QUESTIONS = "REQUEST-HOST-QUESTIONS"
+export function requestHostQuestions() {
+    return {}
+}
+export type RequestHostQuestionsMsgType = ReturnType<typeof requestHostQuestions>
 
 export const REQUEST_HOST_QUIZ_SUMMARY = "REQUEST-HOST-QUIZ-SUMMARY"
 export function requestHostQuizSummary() {
@@ -29,6 +35,11 @@ export type HostConfigMsgType = ReturnType<typeof hostConfig>
 export const BROADCAST_LEADERBOARD = "BROADCAST-LEADERBOARD"
 export interface BroadcastLeaderboardMsgType {
     leaderboard: ILeaderboardItem[]
+}
+
+export const RESPONSE_HOST_QUESTIONS = "RESPONSE-HOST-QUESTIONS"
+export interface ResponseHostQuestionsMsgType {
+    questions: IQuestionAndAnswers[]
 }
 
 export const RESPONSE_HOST_QUIZ_SUMMARY = "RESPONSE-HOST-QUIZ-SUMMARY"

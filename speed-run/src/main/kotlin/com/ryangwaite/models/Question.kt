@@ -9,7 +9,7 @@ data class Answerer(
 )
 
 @Serializable
-data class ParticipantQuestion(
+data class ParticipantQuestionSummary(
     val question: String,
     val options: List<String>,
     val correctOptions: List<Int>,
@@ -20,7 +20,7 @@ data class ParticipantQuestion(
 )
 
 @Serializable
-data class HostQuestion(
+data class HostQuestionSummary(
     val question: String,
     val options: List<String>,
     val correctOptions: List<Int>,

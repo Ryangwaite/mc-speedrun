@@ -1,8 +1,9 @@
 package com.ryangwaite.protocol
 
-import com.ryangwaite.models.HostQuestion
+import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.models.LeaderboardItem
-import com.ryangwaite.models.ParticipantQuestion
+import com.ryangwaite.models.ParticipantQuestionSummary
+import com.ryangwaite.models.QuestionAndAnswers
 import kotlinx.serialization.Serializable
 
 sealed class ProtocolMsg {
@@ -14,6 +15,8 @@ sealed class ProtocolMsg {
         // Messsages sent from the server to the quiz which a response is not sent back for
         `NOTIFY-HOST-ANSWER`,
         // Request and response messages between quiz host and server
+        `REQUEST-HOST-QUESTIONS`,
+        `RESPONSE-HOST-QUESTIONS`,
         `REQUEST-HOST-QUIZ-SUMMARY`,
         `RESPONSE-HOST-QUIZ-SUMMARY`,
         // Messages from a participant to the server which a response is not sent back for
@@ -50,12 +53,20 @@ data class NotifyHostAnswerMsg(
 ): ProtocolMsg()
 
 @Serializable
+class RequestHostQuestionsMsg: ProtocolMsg()
+
+@Serializable
+data class ResponseHostQuestionsMsg(
+    val questions: List<QuestionAndAnswers>,
+): ProtocolMsg()
+
+@Serializable
 class RequestHostQuizSummaryMsg: ProtocolMsg()
 
 @Serializable
 data class ResponseHostQuizSummaryMsg(
     val totalTimeElapsed: Int, // milliseconds
-    val questions: List<HostQuestion>,
+    val questions: List<HostQuestionSummary>,
 ): ProtocolMsg()
 
 @Serializable
@@ -96,7 +107,7 @@ data class RequestParticipantResultsMsg(
 data class ResponseParticipantResultsMsg(
     val userId: String,
     val totalTimeElapsed: Int,
-    val questions: List<ParticipantQuestion>
+    val questions: List<ParticipantQuestionSummary>
 ): ProtocolMsg()
 
 @Serializable
