@@ -80,7 +80,21 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 datastore.setSelectedQuestionIndexes(quizId, selectedQuestionIndexes)
 
                 // Start the quiz
-                channel.send(ForwardMsg(quizId, BroadcastStartMsg(duration)))
+                channel.send(ForwardMsg(quizId, BroadcastStartMsg(duration, selectedQuestionIndexes.size)))
+            }
+            is RequestParticipantQuestionMsg -> {
+                val quizId = connection.quizId
+                val questionIndex = payload.questionIndex
+                val selectedQuestionIndexes = datastore.getSelectedQuestionIndexes(quizId)
+                val nextQuestionIndex = selectedQuestionIndexes[questionIndex]
+                val nextQuestion = QuizLoader.load(quizId)[nextQuestionIndex]
+
+                connection.send(ResponseParticipantQuestionMsg(
+                    questionIndex,
+                    nextQuestion.question,
+                    nextQuestion.options,
+                    nextQuestion.answers.size,
+                ))
             }
             else -> println("Unknown packet received: $packet")
         }

@@ -1,4 +1,4 @@
-import { hostConfig, HOST_CONFIG, participantConfigMsg, PARTICIPANT_CONFIG, requestHostQuestions, requestHostQuizSummary, REQUEST_HOST_QUESTIONS, REQUEST_HOST_QUIZ_SUMMARY } from "./messages"
+import { hostConfig, HOST_CONFIG, participantConfigMsg, PARTICIPANT_CONFIG, requestHostQuestions, requestHostQuizSummary, requestParticipantQuestion, REQUEST_HOST_QUESTIONS, REQUEST_HOST_QUIZ_SUMMARY, REQUEST_PARTICIPANT_QUESTION } from "./messages"
 
 export default class Packet<MsgType extends {}> {
     type: string
@@ -14,4 +14,5 @@ export default class Packet<MsgType extends {}> {
     static HostConfig = (quizName: string, categories: string[], duration: number, selectedQuestionIndexes: number[]) =>
             new this(HOST_CONFIG, hostConfig(quizName, categories, duration, selectedQuestionIndexes))
     static RequestHostQuizSummary = () => new this(REQUEST_HOST_QUIZ_SUMMARY, requestHostQuizSummary())
+    static RequestParticipantQuestion = (questionIndex: number) => new this(REQUEST_PARTICIPANT_QUESTION, requestParticipantQuestion(questionIndex))
 }

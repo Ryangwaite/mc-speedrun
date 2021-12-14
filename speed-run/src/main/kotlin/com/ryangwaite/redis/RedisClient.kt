@@ -12,7 +12,9 @@ import kotlinx.coroutines.rx3.awaitSingle
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.redisson.Redisson
+import org.redisson.api.RListRx
 import org.redisson.api.RedissonRxClient
+import org.redisson.client.codec.LongCodec
 import org.redisson.client.codec.StringCodec
 import org.redisson.config.Config
 
@@ -104,8 +106,13 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     }
 
     override suspend fun setSelectedQuestionIndexes(quizId: String, indexes: List<Int>) {
-        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId))
+        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId), LongCodec())
         list.addAll(indexes).await()
+    }
+
+    override suspend fun getSelectedQuestionIndexes(quizId: String): List<Int> {
+        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId), LongCodec())
+        return list.readAll().await()
     }
 
     override suspend fun publishQuizEvent(quizId: String, msg: SubscriptionMessages) {

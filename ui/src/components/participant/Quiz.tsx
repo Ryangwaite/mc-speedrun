@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { Button, Typography, Box, Card, LinearProgress, Container} from "@mui/material";
+import { Button, Typography, Box, Card, LinearProgress, Container, CircularProgress} from "@mui/material";
 import { OptionMode, QuestionCard } from "../common/Question";
-import { SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
+import { SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
 import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import { IQuestionAndAnswers } from "../../types";
+import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setRequestQuestion } from "../../slices/participant";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { selectLeaderboard } from "../../slices/common";
+import { useNavigate } from "react-router-dom";
 interface IQuestionNumberCardProps {
     questionNumber: number,
     totalQuestions: number,
@@ -149,8 +153,19 @@ interface IQuizProps {
 
 function Quiz(props: IQuizProps) {
 
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+    // Local State
     const [optionSelection, setOptionSelection] = useState<number[]>([])
+
+    // App State
+    const userId = useAppSelector(state => selectUserId(state))!
+    const leaderboard = useAppSelector(state => selectLeaderboard(state))
+    const questionDuration =  useAppSelector(state => selectQuestionDuration(state))!
+    const numberOfQuestions = useAppSelector(state => selectNumberOfQuestions(state))!
+    const requestQuestion = useAppSelector(state => selectRequestQuestion(state))
+    const currentQuestion = useAppSelector(state => selectCurrentQuestion(state))!
+
+    const dispatch = useAppDispatch()
+    let navigate = useNavigate();
 
     function clickOption(optionIndex: number) {
         let updatedSelection = [...optionSelection]
@@ -166,22 +181,40 @@ function Quiz(props: IQuizProps) {
 
     function onSubmit() {
         console.log(`Selected options were: ${optionSelection}`)
+        // TODO: Dispatch the answer selection
 
-        // Just move onto next question
-        setCurrentQuestionIndex((currentQuestionIndex + 1) % SAMPLE_QUESTIONS_AND_ANSWERS.length) // wrap around
-        setOptionSelection([]) // deselect options
+        const lastQuestion = currentQuestion.questionIndex + 1 === numberOfQuestions
+        if (lastQuestion) {
+            navigate("/summary")
+        } else {
+            // Request the next question
+            dispatch(setRequestQuestion({isRequesting: true, questionIndex: currentQuestion.questionIndex + 1 }))
+        }
     }
 
-    // Get some participants.
-    // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
-    const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
-    participants[10].selected = true // Make a "random" participant highlighted.
+    let content
+    if (requestQuestion) {
+        content = <CircularProgress />
+    } else {
+        const options = currentQuestion.options.map((value, index) => ({
+            text: value,
+            mode: optionSelection.includes(index) ? OptionMode.SELECTED_UNMARKED : OptionMode.PLAIN,
+        }))
 
-    const qAndA: IQuestionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS[currentQuestionIndex]
-    const options = qAndA.options.map((value, index) => ({
-        text: value,
-        mode: optionSelection.includes(index) ? OptionMode.SELECTED_UNMARKED : OptionMode.PLAIN,
-    }))
+        content = (
+            <PositionedQuizSection
+                questionNumber={currentQuestion.questionIndex + 1}
+                totalQuestions={numberOfQuestions}
+                secondsRemaining={questionDuration}
+                totalSeconds={questionDuration}
+                questionText={currentQuestion.question}
+                numCorrectOptions={currentQuestion.numberOfOptionsToSelect}
+                options={options}
+                onOptionClicked={clickOption}
+                onSubmit={onSubmit}
+            />
+        )
+    }
 
     return (
         <Box
@@ -193,18 +226,8 @@ function Quiz(props: IQuizProps) {
                 height: "100%"
             }}
         >
-            <PositionedQuizSection
-                questionNumber={currentQuestionIndex + 1}
-                totalQuestions={SAMPLE_QUESTIONS_AND_ANSWERS.length}
-                secondsRemaining={50}
-                totalSeconds={120}
-                questionText={qAndA.question}
-                numCorrectOptions={qAndA.answers.length}
-                options={options}
-                onOptionClicked={clickOption}
-                onSubmit={onSubmit}
-            />
-            <LeaderboardColumn participants={participants} />
+            {content}
+            <LeaderboardColumn items={leaderboard} selectedUserId={userId} />
         </Box>
         
     )

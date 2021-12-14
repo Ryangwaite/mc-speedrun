@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ResponseParticipantQuestionMsgType } from "../api/protocol/messages";
 import { RootState } from "../store";
 
 interface IParticipantState {
@@ -9,10 +10,13 @@ interface IParticipantState {
     username?: string,
     // This gets initially set by the host and then communicated the client in a start message
     questionDuration?: number,
+    numberOfQuestions?: number,
+    requestQuestion: boolean,
+    currentQuestion?: ResponseParticipantQuestionMsgType,
 }
 
 const initialState: IParticipantState = {
-
+    requestQuestion: false,
 }
 
 export const participantSlice = createSlice({
@@ -27,14 +31,30 @@ export const participantSlice = createSlice({
         },
         setQuestionDuration: (state, action: PayloadAction<number>) => {
             state.questionDuration = action.payload
-        }
+        },
+        setNumberOfQuestions: (state, action: PayloadAction<number>) => {
+            state.numberOfQuestions = action.payload
+        },
+        setRequestQuestion: (state, action: PayloadAction<{isRequesting: boolean, questionIndex?: number}>) => {
+            state.requestQuestion = action.payload.isRequesting
+        },
+        setCurrentQuestion: (state, action: PayloadAction<ResponseParticipantQuestionMsgType>) => {
+            state.currentQuestion = action.payload
+        },
     }
 })
 
-export const { setUserId, setUsername, setQuestionDuration } = participantSlice.actions
+export const {
+    setUserId, setUsername,
+    setQuestionDuration, setNumberOfQuestions,
+    setRequestQuestion, setCurrentQuestion
+} = participantSlice.actions
 
 export const selectUserId = (state: RootState) => state.participant.userId
 export const selectUsername = (state: RootState) => state.participant.username
 export const selectQuestionDuration = (state: RootState) => state.participant.questionDuration
+export const selectNumberOfQuestions = (state: RootState) => state.participant.numberOfQuestions
+export const selectRequestQuestion = (state: RootState) => state.participant.requestQuestion
+export const selectCurrentQuestion = (state: RootState) => state.participant.currentQuestion
 
 export default participantSlice.reducer

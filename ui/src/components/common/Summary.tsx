@@ -5,6 +5,9 @@ import { LeaderboardColumn } from "./Leaderboard";
 import { OptionMode, QuestionCardWithStats } from "./Question";
 import {IQuestionAnswerStats, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS, SAMPLE_QUESTION_STATS } from "../../const";
 import { IQuestionAndAnswers } from "../../types";
+import { useAppSelector } from "../../hooks";
+import { selectUserId } from "../../slices/participant";
+import { selectLeaderboard } from "../../slices/common";
 
 interface IProgressSectionProps {
     progressCurrent: number,        // i.e. how many participants have finished
@@ -157,10 +160,10 @@ function QuestionSection(props: IQuestionSectionProps) {
 interface ISummaryProps {}
 
 function Summary(props: ISummaryProps) {
-    // Get some participants.
-    // NOTE: if this isn't deep cloned, weird rendering things happen with multiple list items shown as selected
-    const participants = SAMPLE_PARTICIPANTS.map(participant => ({...participant}))
-    participants[10].selected = true // Make a "random" participant highlighted.
+    
+    // App State
+    const userId = useAppSelector(state => selectUserId(state))!
+    const leaderboard = useAppSelector(state => selectLeaderboard(state))
 
     const questionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS.map(qAndA => ({...qAndA}))
     const questionStats = SAMPLE_QUESTION_STATS.map(stats => ({...stats}))
@@ -186,7 +189,7 @@ function Summary(props: ISummaryProps) {
         >
             <SummaryColumn />
             <QuestionSection questionAndAnswersWithStats={qAndAWithStats}/>
-            <LeaderboardColumn participants={participants} />
+            <LeaderboardColumn items={leaderboard} selectedUserId={userId} />
         </Box>
     )
 }

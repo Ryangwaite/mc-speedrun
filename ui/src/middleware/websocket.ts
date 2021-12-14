@@ -2,12 +2,12 @@ import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, ParticipantConfigMsgType, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
 import { selectClientType, setLeaderboard } from "../slices/common";
-import { setHostConfig, setQuestions, setRequestQuestions, setTotalTimeElapsed } from "../slices/host";
-import { setQuestionDuration, setUsername } from "../slices/participant";
+import { setHostConfig, setQuestions, setRequestQuestions } from "../slices/host";
+import { setCurrentQuestion, setNumberOfQuestions, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
 import { RootState } from "../store"
 import { ClientType } from "../types";
 
@@ -75,6 +75,11 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                         break
                     case ClientType.PARTICIPANT:
                         store.dispatch(setQuestionDuration(msg.questionDuration))
+                        store.dispatch(setNumberOfQuestions(msg.numberOfQuestions))
+                        
+                        // Request the first question
+                        store.dispatch(setRequestQuestion({isRequesting: true, questionIndex: 0}))
+                        
                         store.dispatch(push("/quiz")) // Navigate to /quiz
                         break
                     default:
@@ -82,12 +87,19 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                         break
                 }
                 break
+            case RESPONSE_PARTICIPANT_QUESTION:
+                msg = packet.payload as ResponseParticipantQuestionMsgType
+                store.dispatch(setCurrentQuestion(msg))
+                store.dispatch(setRequestQuestion({isRequesting: false}))
+                break
             default:
                 console.warn("Unknown message received: ", packet)
         }
     }
 
     return store => next => action => {
+        let payload
+        let isRequesting
         switch (action.type) {
             case WEBSOCKET_CONNECT:
                 const {token} = (action as WebsocketConnectPayload).payload
@@ -109,7 +121,7 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                 socket.send(Packet.ParticipantConfig(name))
                 return next(action)
             case setRequestQuestions.type:
-                const isRequesting = (action as PayloadAction<boolean>).payload
+                isRequesting = (action as PayloadAction<boolean>).payload
                 if (isRequesting) {
                     // Forward the request over the websocket
                     socket.send(Packet.RequestHostQuestions())
@@ -118,6 +130,13 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
             case setHostConfig.type:
                 const msg = (action as PayloadAction<HostConfigMsgType>).payload
                 socket.send(new Packet(HOST_CONFIG, msg))
+                return next(action)
+            case setRequestQuestion.type:
+                payload = (action as PayloadAction<{isRequesting: boolean, questionIndex?: number}>).payload
+                if (payload.isRequesting) {
+                    // Forward the request over the websocket
+                    socket.send(Packet.RequestParticipantQuestion(payload.questionIndex!))
+                }
                 return next(action)
             default:
                 console.debug("Passing the next action:", action)

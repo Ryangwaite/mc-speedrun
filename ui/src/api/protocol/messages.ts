@@ -32,6 +32,14 @@ export function hostConfig(quizName: string, categories: string[], duration: num
 }
 export type HostConfigMsgType = ReturnType<typeof hostConfig>
 
+export const REQUEST_PARTICIPANT_QUESTION = "REQUEST-PARTICIPANT-QUESTION"
+export function requestParticipantQuestion(questionIndex: number) {
+    return {
+        questionIndex
+    }
+}
+export type RequestParticipantQuestionMsgType = ReturnType<typeof requestParticipantQuestion>
+
 /********************* INBOUND *********************/
 export const BROADCAST_LEADERBOARD = "BROADCAST-LEADERBOARD"
 export interface BroadcastLeaderboardMsgType {
@@ -52,4 +60,13 @@ export interface ResponseHostQuizSummaryMsgType {
 export const BROADCAST_START = "BROADCAST-START"
 export interface BroadcastStartMsgType {
     questionDuration: number,
+    numberOfQuestions: number,
+}
+
+export const RESPONSE_PARTICIPANT_QUESTION = "RESPONSE-PARTICIPANT-QUESTION"
+export interface ResponseParticipantQuestionMsgType {
+    questionIndex: number,
+    question: string,
+    options: string[],
+    numberOfOptionsToSelect: number,
 }

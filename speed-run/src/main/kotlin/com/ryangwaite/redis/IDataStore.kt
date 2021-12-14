@@ -10,4 +10,5 @@ interface IDataStore {
     suspend fun setSelectedCategories(quizId: String, categories: List<String>)
     suspend fun setQuestionDuration(quizId: String, duration: Int)
     suspend fun setSelectedQuestionIndexes(quizId: String, indexes: List<Int>)
+    suspend fun getSelectedQuestionIndexes(quizId: String): List<Int>
 }

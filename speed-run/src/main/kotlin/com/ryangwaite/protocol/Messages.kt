@@ -95,6 +95,7 @@ data class RequestParticipantQuestionMsg(
 @Serializable
 data class ResponseParticipantQuestionMsg(
     val questionIndex: Int,
+    val question: String,
     val options: List<String>,
     val numberOfOptionsToSelect: Int,
 ): ProtocolMsg()
@@ -120,6 +121,7 @@ data class BroadcastParticipantConfigMsg(
 @Serializable
 data class BroadcastStartMsg(
     val questionDuration: Int,
+    val numberOfQuestions: Int,
 ): ProtocolMsg()
 
 @Serializable
