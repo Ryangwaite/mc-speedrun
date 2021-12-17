@@ -4,6 +4,7 @@ import com.ryangwaite.loader.QuizLoader
 import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.protocol.*
 import com.ryangwaite.redis.IDataStore
+import com.ryangwaite.score.calculateAnswerScore
 import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CoroutineScope
@@ -43,21 +44,22 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
 
     suspend fun processInboundClientPacket(connection: Connection, packet: String) {
         val deserializedPacket = Json.decodeFromString<Packet>(packet)
+        val quizId = connection.quizId
         when (val payload = deserializedPacket.payload) {
             is ParticipantConfigMsg -> {
-                val (_, _, quizId, userId) = (connection as ParticipantConnection)
+                val userId = (connection as ParticipantConnection).userId
                 datastore.apply {
                     setUsername(quizId, userId!!, payload.name)
-                    addLeaderboardItem(quizId, userId, 0)
+                    setLeaderboardItem(quizId, userId, 0)
                 }
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
             }
             is RequestHostQuestionsMsg -> {
-                val questionsAndAnswers = QuizLoader.load(connection.quizId)
+                val questionsAndAnswers = QuizLoader.load(quizId)
                 connection.send(ResponseHostQuestionsMsg(questionsAndAnswers))
             }
             is RequestHostQuizSummaryMsg -> {
-                val questionsAndAnswers = QuizLoader.load(connection.quizId)
+                val questionsAndAnswers = QuizLoader.load(quizId)
                 val hostQuestions = questionsAndAnswers.map {
                     val (question: String, category: String, options: List<String>, answers: List<Int>,) = it
                     HostQuestionSummary(
@@ -73,7 +75,6 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
             }
             is HostConfigMsg -> {
                 val (quizName, categories, duration, selectedQuestionIndexes) = payload
-                val quizId = connection.quizId
                 datastore.setQuizName(quizId, quizName)
                 datastore.setSelectedCategories(quizId, categories)
                 datastore.setQuestionDuration(quizId, duration)
@@ -83,18 +84,41 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 channel.send(ForwardMsg(quizId, BroadcastStartMsg(duration, selectedQuestionIndexes.size)))
             }
             is RequestParticipantQuestionMsg -> {
-                val quizId = connection.quizId
-                val questionIndex = payload.questionIndex
+                val clientQuestionIndex = payload.questionIndex
                 val selectedQuestionIndexes = datastore.getSelectedQuestionIndexes(quizId)
-                val nextQuestionIndex = selectedQuestionIndexes[questionIndex]
-                val nextQuestion = QuizLoader.load(quizId)[nextQuestionIndex]
+                val nextSelectedQuestionIndex = selectedQuestionIndexes[clientQuestionIndex]
+                val nextQuestion = QuizLoader.load(quizId)[nextSelectedQuestionIndex]
 
                 connection.send(ResponseParticipantQuestionMsg(
-                    questionIndex,
+                    clientQuestionIndex,
                     nextQuestion.question,
                     nextQuestion.options,
                     nextQuestion.answers.size,
                 ))
+            }
+            is ParticipantAnswerMsg -> {
+                val userId = (connection as ParticipantConnection).userId
+                val (clientQuestionIndex, pariticipantOptionIndexes, answeredInDuration) = payload
+
+                // Map the index from the client to that in the original set
+                val selectedQuestionIndexes = datastore.getSelectedQuestionIndexes(quizId)
+                val selectedQuestionIndex = selectedQuestionIndexes[clientQuestionIndex]
+
+                datastore.setParticipantAnswer(quizId, userId, selectedQuestionIndex, pariticipantOptionIndexes, answeredInDuration)
+
+                // Calculate question score
+                val maxTimeToAnswer = datastore.getQuestionDuration(quizId)
+                val qAndAnswers = QuizLoader.load(quizId)[selectedQuestionIndex]
+                val questionScore = calculateAnswerScore(qAndAnswers.answers, pariticipantOptionIndexes, maxTimeToAnswer, answeredInDuration)
+                val currentScore = datastore.getUserScore(quizId, userId)
+
+                println("Updating '$userId' score. Question ${clientQuestionIndex + 1} scored $questionScore")
+
+                // Update score
+                datastore.setLeaderboardItem(quizId, userId, currentScore + questionScore)
+
+                // Broadcast the new leaderboard to everyone in the quiz
+                publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
             }
             else -> println("Unknown packet received: $packet")
         }

@@ -4,7 +4,7 @@ import { OptionMode, QuestionCard } from "../common/Question";
 import { SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
 import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import { IQuestionAndAnswers } from "../../types";
-import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setRequestQuestion } from "../../slices/participant";
+import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setRequestQuestion } from "../../slices/participant";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard } from "../../slices/common";
 import { useNavigate } from "react-router-dom";
@@ -181,7 +181,13 @@ function Quiz(props: IQuizProps) {
 
     function onSubmit() {
         console.log(`Selected options were: ${optionSelection}`)
-        // TODO: Dispatch the answer selection
+        dispatch(setQuestionAnswer({
+            questionIndex: currentQuestion.questionIndex,
+            selectedOptionIndexes: optionSelection,
+            answerDuration: 50, // TODO: Add timer to determine this
+        }))
+        // Clear the option selection ready for the next question
+        setOptionSelection([])
 
         const lastQuestion = currentQuestion.questionIndex + 1 === numberOfQuestions
         if (lastQuestion) {

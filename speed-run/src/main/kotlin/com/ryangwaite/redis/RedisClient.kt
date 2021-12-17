@@ -9,14 +9,23 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.rx3.await
 import kotlinx.coroutines.rx3.awaitSingle
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.redisson.Redisson
 import org.redisson.api.RListRx
 import org.redisson.api.RedissonRxClient
+import org.redisson.client.codec.IntegerCodec
 import org.redisson.client.codec.LongCodec
 import org.redisson.client.codec.StringCodec
 import org.redisson.config.Config
+
+
+@Serializable
+internal data class ParticipantAnswer(
+    val selectedOptionIndexes: List<Int>,
+    val answeredInDuration: Int
+)
 
 class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
 
@@ -48,6 +57,7 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     private fun selectedCategoriesKey(quizId: String) = "$quizId:selectedCategories"
     private fun questionDurationKey(quizId: String) = "$quizId:questionDuration"
     private fun selectedQuestionIndexesKey(quizId: String) = "$quizId:selectedQuestionIndexes"
+    private fun participantAnswerKey(quizId: String, userId: String, questionIndex: Int) = "$quizId:$userId:answer:$questionIndex"
 
     /**
      * Get a Flow for the topic pointed to by topicKey
@@ -74,7 +84,7 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
      * Adds the item to the leaderboard if it doesn't yet exist for this userId,
      * else updates the score
      */
-    override suspend fun addLeaderboardItem(quizId: String, userId: String, score: Int) {
+    override suspend fun setLeaderboardItem(quizId: String, userId: String, score: Int) {
         val leaderboard = this.redissonClient.getScoredSortedSet<String>(leaderboardKey(quizId))
         leaderboard.add(score.toDouble(), userId).await()
     }
@@ -90,6 +100,12 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
         }
     }
 
+    override suspend fun getUserScore(quizId: String, userId: String): Int {
+        val leaderboard = this.redissonClient.getScoredSortedSet<String>(leaderboardKey(quizId))
+        val score = leaderboard.getScore(userId).awaitSingle().toInt()
+        return score
+    }
+
     override suspend fun setQuizName(quizId: String, name: String) {
         val bucket = this.redissonClient.getBucket<String>(quizNameKey(quizId))
         bucket.set(name).await()
@@ -100,19 +116,36 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
         list.addAll(categories).await()
     }
 
+    override suspend fun getQuestionDuration(quizId: String): Int {
+        val bucket = this.redissonClient.getBucket<Int>(questionDurationKey(quizId), IntegerCodec())
+        return bucket.get().awaitSingle()
+    }
+
     override suspend fun setQuestionDuration(quizId: String, duration: Int) {
-        val bucket = this.redissonClient.getBucket<Int>(questionDurationKey(quizId))
+        val bucket = this.redissonClient.getBucket<Int>(questionDurationKey(quizId), IntegerCodec())
         bucket.set(duration).await()
     }
 
     override suspend fun setSelectedQuestionIndexes(quizId: String, indexes: List<Int>) {
-        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId), LongCodec())
+        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId), IntegerCodec())
         list.addAll(indexes).await()
     }
 
     override suspend fun getSelectedQuestionIndexes(quizId: String): List<Int> {
-        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId), LongCodec())
+        val list = redissonClient.getList<Int>(selectedQuestionIndexesKey(quizId), IntegerCodec())
         return list.readAll().await()
+    }
+
+    override suspend fun setParticipantAnswer(
+        quizId: String,
+        userId: String,
+        questionIndex: Int,                         // This is the index in the original non-filtered question set
+        selectedOptionIndexes: List<Int>,
+        answeredInDuration: Int
+    ) {
+        val bucket = redissonClient.getBucket<String>(participantAnswerKey(quizId, userId, questionIndex))
+        val content = Json.encodeToString(ParticipantAnswer(selectedOptionIndexes, answeredInDuration))
+        bucket.set(content).await()
     }
 
     override suspend fun publishQuizEvent(quizId: String, msg: SubscriptionMessages) {

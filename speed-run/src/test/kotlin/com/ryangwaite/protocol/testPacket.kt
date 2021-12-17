@@ -14,17 +14,17 @@ class testPacket {
     @Test
     fun `test serialize HOST-CONFIG packet`() {
 
-        val msg = Packet(ProtocolMsg.Type.`HOST-CONFIG`, HostConfigMsg("quizName", mutableListOf("category1", "category2"), 1000))
+        val msg = Packet(ProtocolMsg.Type.`HOST-CONFIG`, HostConfigMsg("quizName", mutableListOf("category1", "category2"), 1000, listOf(1, 2)))
         val serializedMsg = Json.encodeToString(msg)
         assertEquals(
-            """{"type":"HOST-CONFIG","payload":{"quizName":"quizName","categories":["category1","category2"],"duration":1000}}""",
+            """{"type":"HOST-CONFIG","payload":{"quizName":"quizName","categories":["category1","category2"],"duration":1000,"selectedQuestionIndexes":[1,2]}}""",
             serializedMsg
         )
     }
 
     @Test
     fun `test deserialize HOST-CONFIG packet`() {
-        val json = """{"type":"HOST-CONFIG","payload":{"quizName":"quizName","categories":["category1","category2"],"duration":1000}}"""
+        val json = """{"type":"HOST-CONFIG","payload":{"quizName":"quizName","categories":["category1","category2"],"duration":1000,"selectedQuestionIndexes":[1,2]}}"""
         val deserializedPacket = Json.decodeFromString<Packet>(json)
         assertIs<HostConfigMsg>(deserializedPacket.payload)
         assertEquals(ProtocolMsg.Type.`HOST-CONFIG`, deserializedPacket.type)

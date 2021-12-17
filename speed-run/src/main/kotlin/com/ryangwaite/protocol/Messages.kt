@@ -79,7 +79,7 @@ data class ParticipantConfigMsg(
 data class ParticipantAnswerMsg(
     val questionIndex: Int,
     val selectedOptionIndexes: List<Int>,
-    val answeredInDuration: Int, // milliseconds
+    val answerDuration: Int, // milliseconds
 ): ProtocolMsg()
 
 @Serializable

@@ -2,6 +2,7 @@ import { Box, Card, Container, Divider, List, ListItem, ListItemAvatar, ListItem
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { getOrdinal } from "../../utilities";
 import { ILeaderboardItem } from "../../types";
+import _ from "lodash";
 
 interface ILeaderBoardItemScoreProps {
     score: number,
@@ -112,8 +113,11 @@ export function LeaderBoard(props: ILeaderBoardProps) {
      * position +/-1. Gaps are rendered with a "...". There's 9 slots total. No omitting
      * will be done if there's <= 9 items.
      */
-    const { items, selectedUserId } = props
-    items.sort((a: ILeaderboardItem, b: ILeaderboardItem) => b.score - a.score) // sort highest to lowest
+    const selectedUserId = props.selectedUserId
+
+    // 
+    const items = _.sortBy(props.items, x => x.score).reverse()
+    // items.sort((a: ILeaderboardItem, b: ILeaderboardItem) => b.score - a.score) // sort highest to lowest
 
     let renderInstructions: ({item: ILeaderboardItem, position: number}|LeaderBoardOmissionToken)[] = []
     if (items.length <= 9) {

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ResponseParticipantQuestionMsgType } from "../api/protocol/messages";
+import { ParticipantAnswerMsgType, ResponseParticipantQuestionMsgType } from "../api/protocol/messages";
 import { RootState } from "../store";
 
 interface IParticipantState {
@@ -41,13 +41,17 @@ export const participantSlice = createSlice({
         setCurrentQuestion: (state, action: PayloadAction<ResponseParticipantQuestionMsgType>) => {
             state.currentQuestion = action.payload
         },
+        setQuestionAnswer: (state, action: PayloadAction<ParticipantAnswerMsgType>) => {
+            // NOTE: Dont need to store state from this, just bootstrap the action for websocket middleware
+        }
     }
 })
 
 export const {
     setUserId, setUsername,
     setQuestionDuration, setNumberOfQuestions,
-    setRequestQuestion, setCurrentQuestion
+    setRequestQuestion, setCurrentQuestion,
+    setQuestionAnswer,
 } = participantSlice.actions
 
 export const selectUserId = (state: RootState) => state.participant.userId

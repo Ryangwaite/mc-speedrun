@@ -40,6 +40,16 @@ export function requestParticipantQuestion(questionIndex: number) {
 }
 export type RequestParticipantQuestionMsgType = ReturnType<typeof requestParticipantQuestion>
 
+export const PARTICIPANT_ANSWER = "PARTICIPANT-ANSWER"
+export function participantAnswer(questionIndex: number, selectedOptionIndexes: number[], answerDuration: number) {
+    return {
+        questionIndex,
+        selectedOptionIndexes,
+        answerDuration
+    }
+}
+export type ParticipantAnswerMsgType = ReturnType<typeof participantAnswer>
+
 /********************* INBOUND *********************/
 export const BROADCAST_LEADERBOARD = "BROADCAST-LEADERBOARD"
 export interface BroadcastLeaderboardMsgType {
