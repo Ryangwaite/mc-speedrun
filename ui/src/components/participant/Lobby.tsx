@@ -13,6 +13,8 @@ interface IJoinListItemProps {
 
 function JoinListItem(props: IJoinListItemProps) {
 
+    const { listItemKey, userJoined, onJoin } = props;
+
     const [nameField, setNameField] = useState("");
 
     function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -21,12 +23,12 @@ function JoinListItem(props: IJoinListItemProps) {
         console.debug(`Name field changed to '${value}'`)
     }
 
-    function onJoinClicked() {
-        props.onJoin(nameField);
-        console.debug(`Join clicked with '${nameField}'`)
+    function onKeyDown(event: React.KeyboardEvent) {
+        if ((event.code === "Enter" || event.code === "NumpadEnter") && nameField) {
+            event.preventDefault()
+            onJoin(nameField)
+        }
     }
-
-    const { listItemKey, userJoined } = props;
 
     const content = userJoined ?
         <ListItemText primary={nameField} /> :
@@ -41,10 +43,11 @@ function JoinListItem(props: IJoinListItemProps) {
                 id="outlined-basic"
                 label="name"
                 onChange={onFieldChange}
+                onKeyDown={onKeyDown}
             />
             <Button
                 disabled={!nameField}
-                onClick={onJoinClicked}
+                onClick={() => onJoin(nameField)}
                 variant="contained"
                 sx={{
                     margin: 2

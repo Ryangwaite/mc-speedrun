@@ -18,6 +18,8 @@ interface ITextButtonCardProps {
 
 function TextButtonCard(props: ITextButtonCardProps) {
 
+    const { title, label, buttonLabel, onSubmit} = props
+
     const [fieldContent, setFieldContent] = useState("")
 
     function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -25,8 +27,14 @@ function TextButtonCard(props: ITextButtonCardProps) {
         console.debug(`Field has updated to '${value}'`)
         setFieldContent(value)
     }
+
+    function onKeyDown(event: React.KeyboardEvent) {
+        if ((event.code === "Enter" || event.code === "NumpadEnter") && fieldContent) {
+            event.preventDefault()
+            onSubmit(fieldContent)
+        }
+    }
     
-    const { title, label, buttonLabel, onSubmit} = props
     return (
         <Card sx={{
             marginLeft: "auto",
@@ -43,6 +51,7 @@ function TextButtonCard(props: ITextButtonCardProps) {
                     id="outlined-basic"
                     label={label}
                     onChange={onFieldChange}
+                    onKeyDown={onKeyDown}
                     sx={{
                         marginRight: 1
                     }}

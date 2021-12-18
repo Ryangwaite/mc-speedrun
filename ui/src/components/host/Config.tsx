@@ -301,12 +301,13 @@ function QuestionColumn(props: IQuestionColumnProps) {
 
 interface IParticipantColumnProps {
     participants: ILeaderboardItem[],
-    onStartClicked: () => void
+    onStartClicked: () => void,
+    startDisabled: boolean,
 }
 
 function ParticipantColumn(props: IParticipantColumnProps) {
 
-    const { participants, onStartClicked } = props
+    const { participants, onStartClicked, startDisabled } = props
 
     return (
         <Box
@@ -326,7 +327,7 @@ function ParticipantColumn(props: IParticipantColumnProps) {
                 thisParticipant={null}
                 otherParticipants={participants}
             />
-            <Button variant="contained" onClick={() => onStartClicked()}>Start</Button>
+            <Button disabled={startDisabled} variant="contained" onClick={() => onStartClicked()}>Start</Button>
         </Box>
     )
 }
@@ -431,6 +432,12 @@ function Config(props: IConfigProps) {
         ))
     }
 
+    const startButtonEnabled = quizName &&
+            categories && selectedCategories!.length > 0 &&
+            questionDuration > 0 &&
+            questionsAndAnswers && selectedQuestionIndexes.length > 0 &&
+            leaderboard.length > 0
+
     return (
         <Container
             sx={{
@@ -463,6 +470,7 @@ function Config(props: IConfigProps) {
             <ParticipantColumn
                 participants={leaderboard}
                 onStartClicked={onStartClicked}
+                startDisabled={!startButtonEnabled}
             />
         </Container>
     )
