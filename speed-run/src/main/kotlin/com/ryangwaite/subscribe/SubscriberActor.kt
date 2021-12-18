@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
 
 data class Subscription(
     var numberOfClients: Int, // Count of how many clients depend on this subscription
@@ -21,15 +22,16 @@ data class Subscription(
 
 fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe, connectionManager: SendChannel<ConnectionManagerMsg>) = actor<SubscriptionActorMsg> {
 
+    val LOG = LoggerFactory.getLogger("SubscriberActor")
+
     // key = quizId, value = Subscription
     val subscriptions = mutableMapOf<String, Subscription>()
 
     suspend fun processNotification(quizId: String, payload: String) {
-        println("Received '$payload' for quizId '$quizId' from redis pub/sub")
         val msg = Json.decodeFromString<SubscriptionMessages>(payload)
+        LOG.info("Received '${msg.name}' for quizId '$quizId' from redis pub/sub")
         when (msg) {
             SubscriptionMessages.`LEADERBOARD-UPDATED` -> {
-                println("Received LEADERBOARD-UPDATED from redis")
                 val leaderboard = datastore.getLeaderboard(quizId)
                 connectionManager.send(ForwardMsg(quizId, BroadcastLeaderboardMsg(leaderboard)))
             }
@@ -40,7 +42,7 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
         when (msg) {
             is AddSubscription -> {
                 val quizId = msg.quizId
-                println("Adding subscription for $quizId")
+                LOG.info("Adding subscription for quiz '$quizId'")
                 if (!subscriptions.containsKey(quizId)) {
                     val flowProcessorJob = launch {
                         val flow = subscriber.subscribeToQuizEvents(quizId)
@@ -51,13 +53,12 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                     subscriptions[quizId] = Subscription(0, flowProcessorJob)
                 }
                 subscriptions[quizId]!!.numberOfClients++
-                println("Finished adding subscription")
             }
             is RemoveSubscription -> {
                 val quizId = msg.quizId
-                println("Removing subscription for $quizId")
+                LOG.info("Removing subscription for quiz $quizId")
                 if (!subscriptions.containsKey(quizId)) {
-                    println("Failed to remove subscription. There's no subscriptions to remove from") // todo log an error instead
+                    LOG.error("Failed to remove subscription for quiz '$quizId'. There's no subscriptions to remove from.")
                     continue
                 }
                 subscriptions[quizId]!!.numberOfClients--
@@ -65,7 +66,6 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                     subscriptions[quizId]!!.flowProcessor.cancelAndJoin()
                     subscriptions.remove(quizId)
                 }
-                println("Finished removing subscription")
             }
         }
     }
