@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Typography, Box, Card, LinearProgress, Container, CircularProgress} from "@mui/material";
 import { OptionMode, QuestionCard } from "../common/Question";
 import { SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
 import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import { IQuestionAndAnswers } from "../../types";
-import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setRequestQuestion } from "../../slices/participant";
+import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard } from "../../slices/common";
 import { useNavigate } from "react-router-dom";
+import { cleanup } from "@testing-library/react";
 interface IQuestionNumberCardProps {
     questionNumber: number,
     totalQuestions: number,
@@ -124,7 +125,6 @@ function QuizSection(props: IQuizSectionProps) {
     )
 }
 
-
 function PositionedQuizSection(props: IQuizSectionProps) {
     return (
         <Container
@@ -153,9 +153,6 @@ interface IQuizProps {
 
 function Quiz(props: IQuizProps) {
 
-    // Local State
-    const [optionSelection, setOptionSelection] = useState<number[]>([])
-
     // App State
     const userId = useAppSelector(state => selectUserId(state))!
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
@@ -164,8 +161,30 @@ function Quiz(props: IQuizProps) {
     const requestQuestion = useAppSelector(state => selectRequestQuestion(state))
     const currentQuestion = useAppSelector(state => selectCurrentQuestion(state))!
 
+    // Local State
+    const [optionSelection, setOptionSelection] = useState<number[]>([])
+    const [timeRemaining, setTimeRemaining] = useState<number>(questionDuration)
+
     const dispatch = useAppDispatch()
     let navigate = useNavigate();
+
+    // Make the countdown functional
+    useEffect(() => {
+        console.debug("Initialized new timeout")
+        const timeout = setTimeout(() => {
+            console.debug("Timeout fired")
+            setTimeRemaining(timeRemaining - 1)
+            console.log(`Time remaining is: ${timeRemaining}`)
+            if (timeRemaining === 0) {
+                dispatch(setQuestionAnswerTimeout({questionIndex: currentQuestion.questionIndex}))
+                transitionToNextQuestion()
+            } // else continue counting down
+        }, 1000)
+        return function cleanup() {
+            clearTimeout(timeout)
+            console.debug("Cleaned up countdown timer")
+        }
+    })
 
     function clickOption(optionIndex: number) {
         let updatedSelection = [...optionSelection]
@@ -184,17 +203,24 @@ function Quiz(props: IQuizProps) {
         dispatch(setQuestionAnswer({
             questionIndex: currentQuestion.questionIndex,
             selectedOptionIndexes: optionSelection,
-            answerDuration: 50, // TODO: Add timer to determine this
+            answerDuration: questionDuration - timeRemaining,
         }))
-        // Clear the option selection ready for the next question
-        setOptionSelection([])
+        transitionToNextQuestion()
+    }
 
+    function transitionToNextQuestion() {
         const lastQuestion = currentQuestion.questionIndex + 1 === numberOfQuestions
         if (lastQuestion) {
             navigate("/summary")
         } else {
+            // Clear the option selection ready for the next question
+            setOptionSelection([])
+
             // Request the next question
             dispatch(setRequestQuestion({isRequesting: true, questionIndex: currentQuestion.questionIndex + 1 }))
+            
+            // Restart the timer
+            setTimeRemaining(questionDuration)
         }
     }
 
@@ -211,7 +237,7 @@ function Quiz(props: IQuizProps) {
             <PositionedQuizSection
                 questionNumber={currentQuestion.questionIndex + 1}
                 totalQuestions={numberOfQuestions}
-                secondsRemaining={questionDuration}
+                secondsRemaining={timeRemaining}
                 totalSeconds={questionDuration}
                 questionText={currentQuestion.question}
                 numCorrectOptions={currentQuestion.numberOfOptionsToSelect}

@@ -50,6 +50,14 @@ export function participantAnswer(questionIndex: number, selectedOptionIndexes: 
 }
 export type ParticipantAnswerMsgType = ReturnType<typeof participantAnswer>
 
+export const PARTICIPANT_ANSWER_TIMEOUT = "PARTICIPANT-ANSWER-TIMEOUT"
+export function participantAnswerTimeout(questionIndex: number) {
+    return {
+        questionIndex
+    }
+}
+export type ParticipantAnswerTimeoutMsgType = ReturnType<typeof participantAnswerTimeout>
+
 /********************* INBOUND *********************/
 export const BROADCAST_LEADERBOARD = "BROADCAST-LEADERBOARD"
 export interface BroadcastLeaderboardMsgType {

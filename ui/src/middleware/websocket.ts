@@ -2,12 +2,12 @@ import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, ParticipantAnswerMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
 import { selectClientType, setLeaderboard } from "../slices/common";
 import { setHostConfig, setQuestions, setRequestQuestions } from "../slices/host";
-import { setCurrentQuestion, setNumberOfQuestions, setQuestionAnswer, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
+import { setCurrentQuestion, setNumberOfQuestions, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
 import { RootState } from "../store"
 import { ClientType } from "../types";
 
@@ -141,6 +141,10 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
             case setQuestionAnswer.type:
                 payload = (action as PayloadAction<ParticipantAnswerMsgType>).payload
                 socket.send(new Packet(PARTICIPANT_ANSWER, payload))
+                return next(action)
+            case setQuestionAnswerTimeout.type:
+                payload = (action as PayloadAction<ParticipantAnswerTimeoutMsgType>).payload
+                socket.send(new Packet(PARTICIPANT_ANSWER_TIMEOUT, payload))
                 return next(action)
             default:
                 console.debug("Passing the next action:", action)

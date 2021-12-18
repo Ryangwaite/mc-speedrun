@@ -120,6 +120,20 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 // Broadcast the new leaderboard to everyone in the quiz
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
             }
+            is ParticipantAnswerTimeoutMsg -> {
+                val userId = (connection as ParticipantConnection).userId
+                val (clientQuestionIndex) = payload
+
+                // Map the index from the client to that in the original set
+                val selectedQuestionIndexes = datastore.getSelectedQuestionIndexes(quizId)
+                val selectedQuestionIndex = selectedQuestionIndexes[clientQuestionIndex]
+
+                // Store the answer with a duration outside the valid range for an answer. This is the indication that it was overtime.
+                val maxTimeToAnswer = datastore.getQuestionDuration(quizId)
+                datastore.setParticipantAnswer(quizId, userId, selectedQuestionIndex, listOf(), maxTimeToAnswer + 1)
+
+                println("Marked user '$userId' response to question ${clientQuestionIndex + 1} as timeout")
+            }
             else -> println("Unknown packet received: $packet")
         }
     }

@@ -5,6 +5,7 @@ import {
     requestHostQuizSummary, REQUEST_HOST_QUIZ_SUMMARY,
     requestParticipantQuestion, REQUEST_PARTICIPANT_QUESTION,
     participantAnswer, PARTICIPANT_ANSWER,
+    participantAnswerTimeout, PARTICIPANT_ANSWER_TIMEOUT,
 } from "./messages"
 
 export default class Packet<MsgType extends {}> {
@@ -24,4 +25,5 @@ export default class Packet<MsgType extends {}> {
     static RequestParticipantQuestion = (questionIndex: number) => new this(REQUEST_PARTICIPANT_QUESTION, requestParticipantQuestion(questionIndex))
     static ParticipantAnswer = (questionIndex: number, selectedOptionIndexes: number[], answerDuration: number) =>
             new this(PARTICIPANT_ANSWER, participantAnswer(questionIndex, selectedOptionIndexes, answerDuration))
+    static ParticipantAnswerTimeout = (questionIndex: number) => new this(PARTICIPANT_ANSWER_TIMEOUT, participantAnswerTimeout(questionIndex))
 }
