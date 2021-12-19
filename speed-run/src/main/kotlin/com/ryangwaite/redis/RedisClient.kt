@@ -1,15 +1,25 @@
 package com.ryangwaite.redis
 
 import com.ryangwaite.connection.IPublish
+import com.ryangwaite.loader.QuizLoader
+import com.ryangwaite.models.Answerer
+import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.models.LeaderboardItem
+import com.ryangwaite.models.QuestionAndAnswers
 import com.ryangwaite.subscribe.ISubscribe
 import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.config.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toCollection
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.rx3.await
 import kotlinx.coroutines.rx3.awaitSingle
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.redisson.Redisson
@@ -26,6 +36,15 @@ internal data class ParticipantAnswer(
     val selectedOptionIndexes: List<Int>,
     val answeredInDuration: Int
 )
+
+private enum class Mark {
+    CORRECT, INCORRECT, `TIME-EXPIRED`
+}
+
+/**
+ * Container for holding 4 elements
+ */
+private data class Quad<T1, T2, T3, T4>(val t1: T1, val t2: T2,val t3: T3, val t4: T4)
 
 class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
 
@@ -49,7 +68,7 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
         println("Configured redis client for instance '$address'") // todo replace with proper log
     }
 
-    // Redis key builders
+    // Redis individual key builders
     private fun usernameKey(quizId: String, userId: String) = "$quizId:$userId:username"
     private fun leaderboardKey(quizId: String) = "$quizId:leaderboard"
     private fun subscriptionKey(quizId: String) = "$quizId:subscribe"
@@ -58,6 +77,9 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     private fun questionDurationKey(quizId: String) = "$quizId:questionDuration"
     private fun selectedQuestionIndexesKey(quizId: String) = "$quizId:selectedQuestionIndexes"
     private fun participantAnswerKey(quizId: String, userId: String, questionIndex: Int) = "$quizId:$userId:answer:$questionIndex"
+
+    // Redis key patterns
+    private fun allQuizAnswersKeyPattern(quizId: String) = "$quizId:*:answer:*"
 
     /**
      * Get a Flow for the topic pointed to by topicKey
@@ -146,6 +168,78 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
         val bucket = redissonClient.getBucket<String>(participantAnswerKey(quizId, userId, questionIndex))
         val content = Json.encodeToString(ParticipantAnswer(selectedOptionIndexes, answeredInDuration))
         bucket.set(content).await()
+    }
+
+    /**
+     * Gets the quiz summary
+     *
+     * TODO: split into multiple methods
+     */
+    override suspend fun getHostQuizSummary(quizId: String): List<HostQuestionSummary> {
+        // Get the list of participants in the quiz
+        val answerKeys = this.redissonClient.keys.getKeysByPattern(allQuizAnswersKeyPattern(quizId))
+            .collectInto(mutableListOf()) { state: MutableList<String>, value: String -> state.add(value) }.await()
+
+        val originalQuestions = QuizLoader.load(quizId)
+        val questionDuration = getQuestionDuration(quizId)
+
+        val participantAnswers = coroutineScope {
+            answerKeys.map { key ->
+                async {
+                    // Fetch and decode the answer from Redis
+                    val bucket = this@RedisClient.redissonClient.getBucket<String>(key)
+                    val serializedAnswer = bucket.get().awaitSingle()
+                    val participantAnswer = Json.decodeFromString<ParticipantAnswer>(serializedAnswer)
+
+                    val keyParts = key.split(":") // key is of the form ""$quizId:$userId:answer:$questionIndex""
+                    val userId = keyParts[1]
+                    val questionIndex = keyParts.last().toInt()
+                    val username = getUsername(quizId, userId)
+
+                    // See if time expired
+                    if (participantAnswer.answeredInDuration > questionDuration) {
+                        return@async Quad(key, username, participantAnswer, Mark.`TIME-EXPIRED`)
+                    }
+
+                    // Find the corresponding question
+                    val correctAnswers = originalQuestions[questionIndex].answers
+
+                    // Mark it
+                    val mark = if (participantAnswer.selectedOptionIndexes.containsAll(correctAnswers) && correctAnswers.containsAll(participantAnswer.selectedOptionIndexes)) {
+                        Mark.CORRECT
+                    } else {
+                        Mark.INCORRECT
+                    }
+                    return@async Quad(key, username, participantAnswer, mark)
+                }
+            }.awaitAll()
+        }
+
+        val selectedOptionIndexes = getSelectedQuestionIndexes(quizId)
+
+        val questionSummaries = selectedOptionIndexes.map { questionIndex ->
+            val qAndA = originalQuestions[questionIndex]
+            val correctAnswerers = mutableListOf<Answerer>()
+            val incorrectAnswerers = mutableListOf<Answerer>()
+            val timeExpiredAnswerers = mutableListOf<Answerer>()
+
+            participantAnswers.forEach { (key, username, participantAnswer, mark) ->
+                if (!key.endsWith(":$questionIndex")) {
+                    // Not an answer for this summary
+                    return@forEach
+                }
+                val userId = key.split(":")[1]
+                val answerer = Answerer(userId, username)
+                when (mark) {
+                    Mark.CORRECT -> correctAnswerers.add(answerer)
+                    Mark.INCORRECT -> incorrectAnswerers.add(answerer)
+                    Mark.`TIME-EXPIRED` -> timeExpiredAnswerers.add(answerer)
+                }
+            }
+            return@map HostQuestionSummary(qAndA.question, qAndA.options, qAndA.answers, correctAnswerers, incorrectAnswerers, timeExpiredAnswerers)
+        }
+
+        return questionSummaries
     }
 
     override suspend fun publishQuizEvent(quizId: String, msg: SubscriptionMessages) {

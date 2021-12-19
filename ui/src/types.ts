@@ -30,3 +30,17 @@ export interface IQuestionAndAnswers {
     readonly options: string[],
     readonly answers: number[],
 }
+
+export interface IAnswerer {
+    userId: string,
+    name: string,
+}
+
+export interface IHostQuestionSummary {
+    question: string,
+    options: string[],
+    correctOptions: number[],
+    correctAnswerers: IAnswerer[],
+    incorrectAnswerers: IAnswerer[],
+    timeExpiredAnswerers: IAnswerer[],
+}

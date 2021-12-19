@@ -13,12 +13,10 @@ sealed class ProtocolMsg {
         `HOST-CONFIG`,
         `HOST-START`,
         // Messsages sent from the server to the quiz which a response is not sent back for
-        `NOTIFY-HOST-ANSWER`,
+        `NOTIFY-HOST-QUIZ-SUMMARY`,
         // Request and response messages between quiz host and server
         `REQUEST-HOST-QUESTIONS`,
         `RESPONSE-HOST-QUESTIONS`,
-        `REQUEST-HOST-QUIZ-SUMMARY`,
-        `RESPONSE-HOST-QUIZ-SUMMARY`,
         // Messages from a participant to the server which a response is not sent back for
         `PARTICIPANT-CONFIG`,
         `PARTICIPANT-ANSWER`,
@@ -47,13 +45,6 @@ data class HostConfigMsg(
 class HostStartMsg: ProtocolMsg()
 
 @Serializable
-data class NotifyHostAnswerMsg(
-    val userId: String,
-    val questionIndex: Int,
-    val answerResult: String,
-): ProtocolMsg()
-
-@Serializable
 class RequestHostQuestionsMsg: ProtocolMsg()
 
 @Serializable
@@ -62,10 +53,7 @@ data class ResponseHostQuestionsMsg(
 ): ProtocolMsg()
 
 @Serializable
-class RequestHostQuizSummaryMsg: ProtocolMsg()
-
-@Serializable
-data class ResponseHostQuizSummaryMsg(
+data class NotifyHostQuizSummaryMsg(
     val totalTimeElapsed: Int, // milliseconds
     val questions: List<HostQuestionSummary>,
 ): ProtocolMsg()

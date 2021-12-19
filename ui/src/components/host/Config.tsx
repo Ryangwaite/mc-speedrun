@@ -433,7 +433,7 @@ function Config(props: IConfigProps) {
     }
 
     const startButtonEnabled = quizName &&
-            categories && selectedCategories!.length > 0 &&
+            selectedCategories && selectedCategories!.length > 0 &&
             questionDuration > 0 &&
             questionsAndAnswers && selectedQuestionIndexes.length > 0 &&
             leaderboard.length > 0

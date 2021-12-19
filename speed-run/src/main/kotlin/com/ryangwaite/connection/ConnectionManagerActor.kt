@@ -1,7 +1,6 @@
 package com.ryangwaite.connection
 
 import com.ryangwaite.loader.QuizLoader
-import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.protocol.*
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.score.calculateAnswerScore
@@ -68,23 +67,6 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 connection.send(ResponseHostQuestionsMsg(questionsAndAnswers))
                 LOG.info("Responded to host with questions for quiz '$quizId'")
             }
-            is RequestHostQuizSummaryMsg -> {
-                LOG.info("Received request for quiz summary from host for quiz '$quizId'")
-                val questionsAndAnswers = QuizLoader.load(quizId)
-                val hostQuestions = questionsAndAnswers.map {
-                    val (question: String, category: String, options: List<String>, answers: List<Int>,) = it
-                    HostQuestionSummary(
-                        question, options, correctOptions = answers,
-                        // TODO: store and retrieve all of these from redis
-                        correctAnswerers = listOf(), incorrectAnswerers = listOf(), timeExpiredAnswerers = listOf()
-                    )
-                }
-                connection.send(ResponseHostQuizSummaryMsg(
-                    0, // TODO: store and retrieve from redis
-                    hostQuestions
-                ))
-                LOG.info("Responded to host with summary for quiz '$quizId'")
-            }
             is HostConfigMsg -> {
                 LOG.info("Received host configuration for quiz '$quizId'")
                 val (quizName, categories, duration, selectedQuestionIndexes) = payload
@@ -94,7 +76,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 datastore.setSelectedQuestionIndexes(quizId, selectedQuestionIndexes)
 
                 LOG.info("Starting quiz '$quizId'")
-                channel.send(ForwardMsg(quizId, BroadcastStartMsg(duration, selectedQuestionIndexes.size)))
+                channel.send(ForwardMsgToAll(quizId, BroadcastStartMsg(duration, selectedQuestionIndexes.size)))
             }
             is RequestParticipantQuestionMsg -> {
                 val userId = (connection as ParticipantConnection).userId
@@ -137,6 +119,8 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
 
                 // Broadcast the new leaderboard to everyone in the quiz
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
+                publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
+
             }
             is ParticipantAnswerTimeoutMsg -> {
                 val userId = (connection as ParticipantConnection).userId
@@ -151,6 +135,9 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 // Store the answer with a duration outside the valid range for an answer. This is the indication that it was overtime.
                 val maxTimeToAnswer = datastore.getQuestionDuration(quizId)
                 datastore.setParticipantAnswer(quizId, userId, selectedQuestionIndex, listOf(), maxTimeToAnswer + 1)
+
+                // Let the host know the result
+                publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
             }
             else -> LOG.error("Unknown packet received: $packet")
         }
@@ -193,13 +180,22 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 }
                 LOG.debug("Connections: $connections")
             }
-            is ForwardMsg -> {
+            is ForwardMsgToAll -> {
                 LOG.info("Forwarding packet '${msg.msgToForward::class.simpleName}' to all clients of quiz '${msg.quizId}'")
                 // NOTE: Not using connection.send(...) here to avoid serializing the packet with every send
                 val serializedPacket = Json.encodeToString(Packet.encapsulate(msg.msgToForward))
                 // Let all clients (all participants and host) know the content
                 connections[msg.quizId]!!.forEach { connection ->
                     connection.socketSession.outgoing.send(Frame.Text(serializedPacket))
+                }
+            }
+            is ForwardMsgToHost -> {
+                LOG.info("Forwarding packet '${msg.msgToForward::class.simpleName}' to host of quiz '${msg.quizId}'")
+                for (connection in connections[msg.quizId]!!) { // NOTE: This is fine while there's only one instance of the service
+                    if (connection is HostConnection) {
+                        connection.send(msg.msgToForward)
+                        break
+                    }
                 }
             }
         }

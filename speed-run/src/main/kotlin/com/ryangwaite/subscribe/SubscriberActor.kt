@@ -1,8 +1,12 @@
 package com.ryangwaite.subscribe
 
 import com.ryangwaite.connection.ConnectionManagerMsg
-import com.ryangwaite.connection.ForwardMsg
+import com.ryangwaite.connection.ForwardMsgToAll
+import com.ryangwaite.connection.ForwardMsgToHost
+import com.ryangwaite.loader.QuizLoader
+import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.protocol.BroadcastLeaderboardMsg
+import com.ryangwaite.protocol.NotifyHostQuizSummaryMsg
 import com.ryangwaite.redis.IDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -14,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import kotlin.system.measureTimeMillis
 
 data class Subscription(
     var numberOfClients: Int, // Count of how many clients depend on this subscription
@@ -33,7 +38,18 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
         when (msg) {
             SubscriptionMessages.`LEADERBOARD-UPDATED` -> {
                 val leaderboard = datastore.getLeaderboard(quizId)
-                connectionManager.send(ForwardMsg(quizId, BroadcastLeaderboardMsg(leaderboard)))
+                connectionManager.send(ForwardMsgToAll(quizId, BroadcastLeaderboardMsg(leaderboard)))
+            }
+            SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY` -> {
+                var hostSummary: List<HostQuestionSummary>
+                val summaryBuildTime = measureTimeMillis {
+                    hostSummary = datastore.getHostQuizSummary(quizId)
+                }
+                LOG.debug("Computed host summary in $summaryBuildTime ms")
+                connectionManager.send(ForwardMsgToHost(quizId, NotifyHostQuizSummaryMsg(
+                    10, // Todo: calculate this from start time
+                    hostSummary
+                )))
             }
         }
     }

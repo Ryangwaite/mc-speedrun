@@ -4,10 +4,11 @@ import React from "react";
 import { LeaderboardColumn } from "./Leaderboard";
 import { OptionMode, QuestionCardWithStats } from "./Question";
 import {IQuestionAnswerStats, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS, SAMPLE_QUESTION_STATS } from "../../const";
-import { IQuestionAndAnswers } from "../../types";
+import { IHostQuestionSummary, IQuestionAndAnswers } from "../../types";
 import { useAppSelector } from "../../hooks";
 import { selectUserId } from "../../slices/participant";
-import { selectLeaderboard } from "../../slices/common";
+import { selectClientType, selectLeaderboard } from "../../slices/common";
+import { selectHostQuizSummary } from "../../slices/host";
 
 interface IProgressSectionProps {
     progressCurrent: number,        // i.e. how many participants have finished
@@ -115,27 +116,28 @@ function SummaryColumn(props: ISummaryColumnProps) {
 }
 
 interface IQuestionSectionProps {
-    questionAndAnswersWithStats: {
-        question: IQuestionAndAnswers,
-        stats: IQuestionAnswerStats,
-    }[]
+    questionSummary: IHostQuestionSummary[]
 }
 
 function QuestionSection(props: IQuestionSectionProps) {
     let renderedQuestions: React.ReactNode[] = []
-    for (const {question, stats} of props.questionAndAnswersWithStats) {
+    for (const questionSummary of props.questionSummary) {
 
-        const optionsAndMode = question.options.map((value, index) => ({
+        const optionsAndMode = questionSummary.options.map((value, index) => ({
             text: value,
-            mode: question.answers.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
+            mode: questionSummary.correctOptions.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
         }))
 
         renderedQuestions.push(
             <QuestionCardWithStats
-                question={question.question}
-                numCorrectOptions={question.answers.length}
+                question={questionSummary.question}
+                numCorrectOptions={questionSummary.correctOptions.length}
                 options={optionsAndMode}
-                answerStats={stats}
+                answerStats={{
+                    correctAnswerers: questionSummary.correctAnswerers.map(x => x.name),
+                    incorrectAnswerers: questionSummary.incorrectAnswerers.map(x => x.name),
+                    timeExpiredAnswerers: questionSummary.timeExpiredAnswerers.map(x => x.name),
+                }}
             />
         )
     }
@@ -164,18 +166,10 @@ function Summary(props: ISummaryProps) {
     // App State
     const userId = useAppSelector(state => selectUserId(state))!
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
-
-    const questionAndAnswers = SAMPLE_QUESTIONS_AND_ANSWERS.map(qAndA => ({...qAndA}))
-    const questionStats = SAMPLE_QUESTION_STATS.map(stats => ({...stats}))
-    const qAndAWithStats: {
-        question: IQuestionAndAnswers,
-        stats: IQuestionAnswerStats,
-    }[] = _.zipWith(questionAndAnswers, questionStats, (qAndA, stats) => {
-        return {
-            question: qAndA,
-            stats: stats,
-        }
-    })
+    const clientType = useAppSelector(state => selectClientType(state))
+    const hostQuizSummary = useAppSelector(state => selectHostQuizSummary(state))
+    // TODO: Add participant host quiz summary
+    
 
     return (
         <Box
@@ -188,7 +182,7 @@ function Summary(props: ISummaryProps) {
             }}
         >
             <SummaryColumn />
-            <QuestionSection questionAndAnswersWithStats={qAndAWithStats}/>
+            <QuestionSection questionSummary={hostQuizSummary || []}/>
             <LeaderboardColumn items={leaderboard} selectedUserId={userId} />
         </Box>
     )

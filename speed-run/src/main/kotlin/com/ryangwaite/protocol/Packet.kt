@@ -23,11 +23,9 @@ data class Packet(
             val type = when(msg) {
                 is HostConfigMsg -> ProtocolMsg.Type.`HOST-CONFIG`
                 is HostStartMsg -> ProtocolMsg.Type.`HOST-START`
-                is NotifyHostAnswerMsg -> ProtocolMsg.Type.`NOTIFY-HOST-ANSWER`
                 is RequestHostQuestionsMsg -> ProtocolMsg.Type.`REQUEST-HOST-QUESTIONS`
                 is ResponseHostQuestionsMsg -> ProtocolMsg.Type.`RESPONSE-HOST-QUESTIONS`
-                is RequestHostQuizSummaryMsg -> ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY`
-                is ResponseHostQuizSummaryMsg -> ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY`
+                is NotifyHostQuizSummaryMsg -> ProtocolMsg.Type.`NOTIFY-HOST-QUIZ-SUMMARY`
                 is ParticipantConfigMsg -> ProtocolMsg.Type.`PARTICIPANT-CONFIG`
                 is ParticipantAnswerMsg -> ProtocolMsg.Type.`PARTICIPANT-ANSWER`
                 is ParticipantAnswerTimeoutMsg -> ProtocolMsg.Type.`PARTICIPANT-ANSWER-TIMEOUT`
@@ -62,11 +60,9 @@ object PacketSerializer: KSerializer<Packet> {
         when(value.payload) {
             is HostConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, HostConfigMsg.serializer(), value.payload)
             is HostStartMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, HostStartMsg.serializer(), value.payload)
-            is NotifyHostAnswerMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, NotifyHostAnswerMsg.serializer(), value.payload)
+            is NotifyHostQuizSummaryMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, NotifyHostQuizSummaryMsg.serializer(), value.payload)
             is RequestHostQuestionsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, RequestHostQuestionsMsg.serializer(), value.payload)
             is ResponseHostQuestionsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseHostQuestionsMsg.serializer(), value.payload)
-            is RequestHostQuizSummaryMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, RequestHostQuizSummaryMsg.serializer(), value.payload)
-            is ResponseHostQuizSummaryMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseHostQuizSummaryMsg.serializer(), value.payload)
             is ParticipantConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ParticipantConfigMsg.serializer(), value.payload)
             is ParticipantAnswerMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ParticipantAnswerMsg.serializer(), value.payload)
             is ParticipantAnswerTimeoutMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ParticipantAnswerTimeoutMsg.serializer(), value.payload)
@@ -93,11 +89,9 @@ object PacketSerializer: KSerializer<Packet> {
         val msgSerializer = when(type) {
             ProtocolMsg.Type.`HOST-CONFIG` -> HostConfigMsg.serializer()
             ProtocolMsg.Type.`HOST-START` -> HostStartMsg.serializer()
-            ProtocolMsg.Type.`NOTIFY-HOST-ANSWER` -> NotifyHostAnswerMsg.serializer()
+            ProtocolMsg.Type.`NOTIFY-HOST-QUIZ-SUMMARY` -> NotifyHostQuizSummaryMsg.serializer()
             ProtocolMsg.Type.`REQUEST-HOST-QUESTIONS` -> RequestHostQuestionsMsg.serializer()
             ProtocolMsg.Type.`RESPONSE-HOST-QUESTIONS` -> ResponseHostQuestionsMsg.serializer()
-            ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY` -> RequestHostQuizSummaryMsg.serializer()
-            ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY` -> ResponseHostQuizSummaryMsg.serializer()
             ProtocolMsg.Type.`PARTICIPANT-CONFIG` -> ParticipantConfigMsg.serializer()
             ProtocolMsg.Type.`PARTICIPANT-ANSWER` -> ParticipantAnswerMsg.serializer()
             ProtocolMsg.Type.`PARTICIPANT-ANSWER-TIMEOUT` -> ParticipantAnswerTimeoutMsg.serializer()

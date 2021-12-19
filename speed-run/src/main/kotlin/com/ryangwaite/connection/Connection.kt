@@ -2,7 +2,6 @@ package com.ryangwaite.connection
 
 import com.ryangwaite.protocol.Packet
 import com.ryangwaite.protocol.ProtocolMsg
-import com.ryangwaite.protocol.ResponseHostQuizSummaryMsg
 import io.ktor.http.cio.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CompletableDeferred

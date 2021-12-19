@@ -12,7 +12,12 @@ class RemoveConnection(
     val connection: Connection,
 ): ConnectionManagerMsg()
 
-class ForwardMsg(
+class ForwardMsgToAll(
+    val quizId: String,
+    val msgToForward: ProtocolMsg,
+): ConnectionManagerMsg()
+
+class ForwardMsgToHost(
     val quizId: String,
     val msgToForward: ProtocolMsg,
 ): ConnectionManagerMsg()

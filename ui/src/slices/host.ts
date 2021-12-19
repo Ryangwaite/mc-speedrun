@@ -1,13 +1,14 @@
 import _ from "lodash";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { IQuestionAndAnswers } from "../types";
-import { HostConfigMsgType } from "../api/protocol/messages";
+import { IHostQuestionSummary, IQuestionAndAnswers } from "../types";
+import { HostConfigMsgType, NotifyHostQuizSummaryMsgType } from "../api/protocol/messages";
 
 interface IHostState {
     totalTimeElapsed?: number,
     requestQuestions: boolean,
     questions?: IQuestionAndAnswers[],
+    quizSummary?: IHostQuestionSummary[],
 }
 
 const initialState: IHostState = {
@@ -35,12 +36,18 @@ export const hostSlice = createSlice({
             // this reducer though to bootstrap the action that the websocket middleware
             // intercepts
         },
+        setHostQuizSummary: (state, action: PayloadAction<IHostQuestionSummary[]>) => {
+            const quizSummary = action.payload
+            state.quizSummary = quizSummary
+        }
     },
 })
 
-export const { setTotalTimeElapsed, setRequestQuestions, setQuestions, setHostConfig } = hostSlice.actions
+export const { setTotalTimeElapsed, setRequestQuestions, setQuestions, setHostConfig, setHostQuizSummary } = hostSlice.actions
 
 export const selectTotalTimeElapsed = (state: RootState) => state.host.totalTimeElapsed
 export const selectSetRequestQuestions = (state: RootState) => state.host.requestQuestions
 export const selectHostQuestions = (state: RootState) => state.host.questions
+export const selectHostQuizSummary = (state: RootState) => state.host.quizSummary
+
 export default hostSlice.reducer
