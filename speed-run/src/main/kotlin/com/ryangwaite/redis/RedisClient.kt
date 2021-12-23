@@ -2,10 +2,7 @@ package com.ryangwaite.redis
 
 import com.ryangwaite.connection.IPublish
 import com.ryangwaite.loader.QuizLoader
-import com.ryangwaite.models.Answerer
-import com.ryangwaite.models.HostQuestionSummary
-import com.ryangwaite.models.LeaderboardItem
-import com.ryangwaite.models.QuestionAndAnswers
+import com.ryangwaite.models.*
 import com.ryangwaite.subscribe.ISubscribe
 import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.config.*
@@ -29,6 +26,7 @@ import org.redisson.client.codec.IntegerCodec
 import org.redisson.client.codec.LongCodec
 import org.redisson.client.codec.StringCodec
 import org.redisson.config.Config
+import kotlin.math.exp
 
 
 @Serializable
@@ -69,6 +67,7 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     }
 
     // Redis individual key builders
+    private fun userIdsKey(quizId: String) = "$quizId:userIds"
     private fun usernameKey(quizId: String, userId: String) = "$quizId:$userId:username"
     private fun leaderboardKey(quizId: String) = "$quizId:leaderboard"
     private fun subscriptionKey(quizId: String) = "$quizId:subscribe"
@@ -78,8 +77,15 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     private fun selectedQuestionIndexesKey(quizId: String) = "$quizId:selectedQuestionIndexes"
     private fun participantAnswerKey(quizId: String, userId: String, questionIndex: Int) = "$quizId:$userId:answer:$questionIndex"
 
-    // Redis key patterns
-    private fun allQuizAnswersKeyPattern(quizId: String) = "$quizId:*:answer:*"
+    override suspend fun addUserId(quizId: String, userId: String) {
+        val userIds = this.redissonClient.getList<String>(userIdsKey(quizId))
+        userIds.add(userId).await()
+    }
+
+    override suspend fun getUserIds(quizId: String): List<String> {
+        val userIds = this.redissonClient.getList<String>(userIdsKey(quizId))
+        return userIds.readAll().await()
+    }
 
     /**
      * Get a Flow for the topic pointed to by topicKey
@@ -175,10 +181,14 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
      *
      * TODO: split into multiple methods
      */
-    override suspend fun getHostQuizSummary(quizId: String): List<HostQuestionSummary> {
-        // Get the list of participants in the quiz
-        val answerKeys = this.redissonClient.keys.getKeysByPattern(allQuizAnswersKeyPattern(quizId))
-            .collectInto(mutableListOf()) { state: MutableList<String>, value: String -> state.add(value) }.await()
+    override suspend fun getQuizSummary(quizId: String): List<VerboseQuestionSummary> {
+        val userIds = getUserIds(quizId)
+        val selectedQuestionIndexes = getSelectedQuestionIndexes(quizId)
+        val answerKeys = userIds.flatMap { userId ->
+            selectedQuestionIndexes.map { questionIndex ->
+                participantAnswerKey(quizId, userId, questionIndex)
+            }
+        }
 
         val originalQuestions = QuizLoader.load(quizId)
         val questionDuration = getQuestionDuration(quizId)
@@ -188,6 +198,11 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
                 async {
                     // Fetch and decode the answer from Redis
                     val bucket = this@RedisClient.redissonClient.getBucket<String>(key)
+                    if (!bucket.isExists.await()) {
+                        // Question hasn't been answered yet
+                        return@async null
+                    }
+
                     val serializedAnswer = bucket.get().awaitSingle()
                     val participantAnswer = Json.decodeFromString<ParticipantAnswer>(serializedAnswer)
 
@@ -212,16 +227,16 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
                     }
                     return@async Quad(key, username, participantAnswer, mark)
                 }
-            }.awaitAll()
+            }.awaitAll().filterNotNull()
         }
 
         val selectedOptionIndexes = getSelectedQuestionIndexes(quizId)
 
         val questionSummaries = selectedOptionIndexes.map { questionIndex ->
             val qAndA = originalQuestions[questionIndex]
-            val correctAnswerers = mutableListOf<Answerer>()
-            val incorrectAnswerers = mutableListOf<Answerer>()
-            val timeExpiredAnswerers = mutableListOf<Answerer>()
+            val correctAnswerers = mutableListOf<AnswererWithOptions>()
+            val incorrectAnswerers = mutableListOf<AnswererWithOptions>()
+            val timeExpiredAnswerers = mutableListOf<AnswererWithOptions>()
 
             participantAnswers.forEach { (key, username, participantAnswer, mark) ->
                 if (!key.endsWith(":$questionIndex")) {
@@ -229,17 +244,40 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
                     return@forEach
                 }
                 val userId = key.split(":")[1]
-                val answerer = Answerer(userId, username)
+                val answerer = AnswererWithOptions(userId, username, participantAnswer.selectedOptionIndexes)
                 when (mark) {
                     Mark.CORRECT -> correctAnswerers.add(answerer)
                     Mark.INCORRECT -> incorrectAnswerers.add(answerer)
                     Mark.`TIME-EXPIRED` -> timeExpiredAnswerers.add(answerer)
                 }
             }
-            return@map HostQuestionSummary(qAndA.question, qAndA.options, qAndA.answers, correctAnswerers, incorrectAnswerers, timeExpiredAnswerers)
+            return@map VerboseQuestionSummary(qAndA.question, qAndA.options, qAndA.answers, correctAnswerers, incorrectAnswerers, timeExpiredAnswerers)
+        }
+        return questionSummaries
+    }
+
+    override suspend fun isQuizFinished(quizId: String): Boolean {
+        // Get the list of participants in the quiz
+        val userIds = getUserIds(quizId) // TODO: Fix this. It is returning an empty list
+        val questionIndexes = getSelectedQuestionIndexes(quizId)
+
+        val expectedQuestionAnswerKeys = userIds.flatMap { userId ->
+            questionIndexes.map { questionIndex ->
+                participantAnswerKey(quizId, userId, questionIndex)
+            }
         }
 
-        return questionSummaries
+        print("userIds = ${userIds}, questionIndexes = ${questionIndexes}, expectedQuestionAnswerKeys = ${expectedQuestionAnswerKeys}")
+
+        // If all questions have an answer then the quiz is finished
+        val quizFinished = coroutineScope {
+            expectedQuestionAnswerKeys.map {
+                async {
+                    this@RedisClient.redissonClient.getBucket<String>(it).isExists.await()
+                }
+            }.awaitAll().all { it }
+        }
+        return quizFinished
     }
 
     override suspend fun publishQuizEvent(quizId: String, msg: SubscriptionMessages) {

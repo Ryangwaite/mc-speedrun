@@ -2,12 +2,12 @@ import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket from "../api/websocket";
 import { selectClientType, setLeaderboard } from "../slices/common";
 import { setHostConfig, setHostQuizSummary, setQuestions, setRequestQuestions } from "../slices/host";
-import { setCurrentQuestion, setNumberOfQuestions, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
+import { setCurrentQuestion, setNumberOfQuestions, setParticipantQuizSummary, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
 import { RootState } from "../store"
 import { ClientType, IHostQuestionSummary } from "../types";
 
@@ -95,6 +95,10 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
             case NOTIFY_HOST_QUIZ_SUMMARY:
                 msg = packet.payload as NotifyHostQuizSummaryMsgType
                 store.dispatch(setHostQuizSummary(msg.questions))
+                break
+            case NOTIFY_PARTICIPANT_QUIZ_SUMMARY:
+                msg = packet.payload as NotifyParticipantQuizSummaryMsgType
+                store.dispatch(setParticipantQuizSummary(msg.questions))
                 break
             default:
                 console.warn("Unknown message received: ", packet)

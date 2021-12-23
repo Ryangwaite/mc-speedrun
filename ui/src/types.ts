@@ -44,3 +44,13 @@ export interface IHostQuestionSummary {
     incorrectAnswerers: IAnswerer[],
     timeExpiredAnswerers: IAnswerer[],
 }
+
+export interface IParticipantQuestionSummary {
+    question: string,
+    options: string[],
+    correctOptions: number[],
+    participantOptions: number[],
+    correctAnswerers: IAnswerer[],
+    incorrectAnswerers: IAnswerer[],
+    timeExpiredAnswerers: IAnswerer[],
+}

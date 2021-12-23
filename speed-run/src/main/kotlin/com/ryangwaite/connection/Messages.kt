@@ -21,3 +21,9 @@ class ForwardMsgToHost(
     val quizId: String,
     val msgToForward: ProtocolMsg,
 ): ConnectionManagerMsg()
+
+class ForwardMsgToParticipant(
+    val quizId: String,
+    val userId: String,
+    val msgToForward: ProtocolMsg,
+): ConnectionManagerMsg()

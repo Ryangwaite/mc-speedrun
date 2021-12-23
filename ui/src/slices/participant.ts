@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ResponseParticipantQuestionMsgType } from "../api/protocol/messages";
 import { RootState } from "../store";
+import { IParticipantQuestionSummary } from "../types";
 
 interface IParticipantState {
     userId?: string,
@@ -13,6 +14,7 @@ interface IParticipantState {
     numberOfQuestions?: number,
     requestQuestion: boolean,
     currentQuestion?: ResponseParticipantQuestionMsgType,
+    quizSummary?: IParticipantQuestionSummary[],
 }
 
 const initialState: IParticipantState = {
@@ -46,6 +48,9 @@ export const participantSlice = createSlice({
         },
         setQuestionAnswerTimeout: (state, action: PayloadAction<ParticipantAnswerTimeoutMsgType>) => {
             // NOTE: Dont need to store state from this, just bootstrap the action for websocket middleware
+        },
+        setParticipantQuizSummary: (state, action: PayloadAction<IParticipantQuestionSummary[]>) => {
+            state.quizSummary = action.payload
         }
     }
 })
@@ -54,7 +59,8 @@ export const {
     setUserId, setUsername,
     setQuestionDuration, setNumberOfQuestions,
     setRequestQuestion, setCurrentQuestion,
-    setQuestionAnswer, setQuestionAnswerTimeout
+    setQuestionAnswer, setQuestionAnswerTimeout,
+    setParticipantQuizSummary,
 } = participantSlice.actions
 
 export const selectUserId = (state: RootState) => state.participant.userId
@@ -63,5 +69,6 @@ export const selectQuestionDuration = (state: RootState) => state.participant.qu
 export const selectNumberOfQuestions = (state: RootState) => state.participant.numberOfQuestions
 export const selectRequestQuestion = (state: RootState) => state.participant.requestQuestion
 export const selectCurrentQuestion = (state: RootState) => state.participant.currentQuestion
+export const selectParticipantQuizSummary = (state: RootState) => state.participant.quizSummary
 
 export default participantSlice.reducer

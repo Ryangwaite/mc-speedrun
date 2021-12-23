@@ -1,12 +1,11 @@
-import { Box, Typography, Card, LinearProgress, Button, } from "@mui/material";
+import { Box, Typography, Card, LinearProgress, Button, Container, Stack, CircularProgress, } from "@mui/material";
 import _ from "lodash";
 import React from "react";
 import { LeaderboardColumn } from "./Leaderboard";
 import { OptionMode, QuestionCardWithStats } from "./Question";
-import {IQuestionAnswerStats, SAMPLE_PARTICIPANTS, SAMPLE_QUESTIONS_AND_ANSWERS, SAMPLE_QUESTION_STATS } from "../../const";
-import { IHostQuestionSummary, IQuestionAndAnswers } from "../../types";
+import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary,} from "../../types";
 import { useAppSelector } from "../../hooks";
-import { selectUserId } from "../../slices/participant";
+import { selectParticipantQuizSummary, selectUserId } from "../../slices/participant";
 import { selectClientType, selectLeaderboard } from "../../slices/common";
 import { selectHostQuizSummary } from "../../slices/host";
 
@@ -116,27 +115,78 @@ function SummaryColumn(props: ISummaryColumnProps) {
 }
 
 interface IQuestionSectionProps {
-    questionSummary: IHostQuestionSummary[]
+    questionSummary: IHostQuestionSummary[] | IParticipantQuestionSummary[],
+    loadingMessage: string,
 }
 
-function QuestionSection(props: IQuestionSectionProps) {
-    let renderedQuestions: React.ReactNode[] = []
-    for (const questionSummary of props.questionSummary) {
+function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProps) {
 
-        const optionsAndMode = questionSummary.options.map((value, index) => ({
-            text: value,
-            mode: questionSummary.correctOptions.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
-        }))
+    if (questionSummary.length === 0) {
+        return (
+            <Stack
+                alignContent="center"
+                justifyContent="center"
+                // Position
+                position="absolute"
+                top="0"
+                bottom="0"
+                left="50%" // NOTE: the translateX(-50%) to position in centre
+                sx={{
+                    transform: "translateX(-50%)" // There's no direct prop for this, hence its here
+                }}
+            >
+                <CircularProgress
+                    sx={{
+                        marginLeft: "auto",
+                        marginRight: "auto",
+                        marginBottom: "4px"
+                    }}
+                />
+                <Typography>{loadingMessage}</Typography>
+            </Stack>
+        )
+    }
+
+    let renderedQuestions: React.ReactNode[] = []
+    for (const qs of questionSummary) {
+
+        let optionsAndMode
+        if ("participantOptions" in qs) {
+            // PartipantQuestionSummary
+            const participantOptions = qs.participantOptions
+            const correctOptions = qs.correctOptions
+            optionsAndMode = qs.options.map((value, index) => {
+                let mode
+                if (participantOptions.includes(index) && correctOptions.includes(index)) {
+                    mode = OptionMode.SELECTED_AND_MARKED_CORRECT
+                } else if (participantOptions.includes(index) && !correctOptions.includes(index)) {
+                    mode = OptionMode.SELECTED_AND_MARKED_INCORRECT
+                } else if (!participantOptions.includes(index) && !correctOptions.includes(index)) {
+                    mode = OptionMode.PLAIN
+                } else if (!participantOptions.includes(index) && correctOptions.includes(index)) {
+                    mode = OptionMode.UNSELECTED_AND_MARKED_CORRECT
+                } else {
+                    throw Error("Unexpected OptionMode state")
+                }
+                return {text: value, mode}
+            })
+        } else {
+            // HostQuestionSummary
+            optionsAndMode = qs.options.map((value, index) => ({
+                text: value,
+                mode: qs.correctOptions.includes(index) ? OptionMode.SELECTED_AND_MARKED_CORRECT : OptionMode.PLAIN,
+            }))
+        }
 
         renderedQuestions.push(
             <QuestionCardWithStats
-                question={questionSummary.question}
-                numCorrectOptions={questionSummary.correctOptions.length}
+                question={qs.question}
+                numCorrectOptions={qs.correctOptions.length}
                 options={optionsAndMode}
                 answerStats={{
-                    correctAnswerers: questionSummary.correctAnswerers.map(x => x.name),
-                    incorrectAnswerers: questionSummary.incorrectAnswerers.map(x => x.name),
-                    timeExpiredAnswerers: questionSummary.timeExpiredAnswerers.map(x => x.name),
+                    correctAnswerers: qs.correctAnswerers.map(x => x.name),
+                    incorrectAnswerers: qs.incorrectAnswerers.map(x => x.name),
+                    timeExpiredAnswerers: qs.timeExpiredAnswerers.map(x => x.name),
                 }}
             />
         )
@@ -167,9 +217,21 @@ function Summary(props: ISummaryProps) {
     const userId = useAppSelector(state => selectUserId(state))!
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
     const clientType = useAppSelector(state => selectClientType(state))
+    // Note: the following are undefined before the first quizSummary has been received when arriving on this page
     const hostQuizSummary = useAppSelector(state => selectHostQuizSummary(state))
-    // TODO: Add participant host quiz summary
+    const participantQuizSummary = useAppSelector(state => selectParticipantQuizSummary(state))
     
+    let questionSummary: IParticipantQuestionSummary[] | IHostQuestionSummary[]
+    let loadingMessage: string
+    if (clientType === ClientType.HOST) {
+        questionSummary = hostQuizSummary || []
+        loadingMessage = "Awaiting participant answers..."
+    } else if (clientType === ClientType.PARTICIPANT) {
+        questionSummary = participantQuizSummary || []
+        loadingMessage = "Waiting for other participants to finish..."
+    } else {
+        throw Error(`Unexpected clientType '${clientType}'`)
+    }
 
     return (
         <Box
@@ -182,7 +244,10 @@ function Summary(props: ISummaryProps) {
             }}
         >
             <SummaryColumn />
-            <QuestionSection questionSummary={hostQuizSummary || []}/>
+            <QuestionSection
+                questionSummary={questionSummary}
+                loadingMessage={loadingMessage}
+            />
             <LeaderboardColumn items={leaderboard} selectedUserId={userId} />
         </Box>
     )

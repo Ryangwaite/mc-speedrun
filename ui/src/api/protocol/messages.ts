@@ -1,4 +1,4 @@
-import { IHostQuestion, IHostQuestionSummary, ILeaderboardItem, IQuestionAndAnswers } from "../../types"
+import { IHostQuestion, IHostQuestionSummary, ILeaderboardItem, IParticipantQuestionSummary, IQuestionAndAnswers } from "../../types"
 
 /********************* OUTBOUND *********************/
 export const PARTICIPANT_CONFIG = "PARTICIPANT-CONFIG"
@@ -90,8 +90,14 @@ export interface ResponseParticipantQuestionMsgType {
 }
 
 export const NOTIFY_HOST_QUIZ_SUMMARY = "NOTIFY-HOST-QUIZ-SUMMARY"
-
 export interface NotifyHostQuizSummaryMsgType {
     totalTimeElapsed: number,
     questions: IHostQuestionSummary[],
+}
+
+export const NOTIFY_PARTICIPANT_QUIZ_SUMMARY = "NOTIFY-PARTICIPANT-QUIZ-SUMMARY"
+export interface NotifyParticipantQuizSummaryMsgType {
+    totalTimeElapsed: number,  //milliseconds
+    avgAnswerTime: number,  // milliseconds
+    questions: IParticipantQuestionSummary[],
 }

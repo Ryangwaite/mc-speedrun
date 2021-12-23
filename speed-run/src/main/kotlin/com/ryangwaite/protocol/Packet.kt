@@ -26,16 +26,16 @@ data class Packet(
                 is RequestHostQuestionsMsg -> ProtocolMsg.Type.`REQUEST-HOST-QUESTIONS`
                 is ResponseHostQuestionsMsg -> ProtocolMsg.Type.`RESPONSE-HOST-QUESTIONS`
                 is NotifyHostQuizSummaryMsg -> ProtocolMsg.Type.`NOTIFY-HOST-QUIZ-SUMMARY`
+                is NotifyParticipantQuizSummaryMsg -> ProtocolMsg.Type.`NOTIFY-PARTICIPANT-QUIZ-SUMMARY`
                 is ParticipantConfigMsg -> ProtocolMsg.Type.`PARTICIPANT-CONFIG`
                 is ParticipantAnswerMsg -> ProtocolMsg.Type.`PARTICIPANT-ANSWER`
                 is ParticipantAnswerTimeoutMsg -> ProtocolMsg.Type.`PARTICIPANT-ANSWER-TIMEOUT`
                 is RequestParticipantQuestionMsg -> ProtocolMsg.Type.`REQUEST-PARTICIPANT-QUESTION`
                 is ResponseParticipantQuestionMsg -> ProtocolMsg.Type.`RESPONSE-PARTICIPANT-QUESTION`
-                is RequestParticipantResultsMsg -> ProtocolMsg.Type.`REQUEST-PARTICIPANT-RESULTS`
-                is ResponseParticipantResultsMsg -> ProtocolMsg.Type.`RESPONSE-PARTICIPANT-RESULTS`
                 is BroadcastParticipantConfigMsg -> ProtocolMsg.Type.`BROADCAST-PARTICIPANT-CONFIG`
                 is BroadcastStartMsg -> ProtocolMsg.Type.`BROADCAST-START`
                 is BroadcastLeaderboardMsg -> ProtocolMsg.Type.`BROADCAST-LEADERBOARD`
+                is BroadcastQuizFinishedMsg -> ProtocolMsg.Type.`BROADCAST-QUIZ-FINISHED`
             }
             return Packet(type, msg)
         }
@@ -61,6 +61,7 @@ object PacketSerializer: KSerializer<Packet> {
             is HostConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, HostConfigMsg.serializer(), value.payload)
             is HostStartMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, HostStartMsg.serializer(), value.payload)
             is NotifyHostQuizSummaryMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, NotifyHostQuizSummaryMsg.serializer(), value.payload)
+            is NotifyParticipantQuizSummaryMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, NotifyParticipantQuizSummaryMsg.serializer(), value.payload)
             is RequestHostQuestionsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, RequestHostQuestionsMsg.serializer(), value.payload)
             is ResponseHostQuestionsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseHostQuestionsMsg.serializer(), value.payload)
             is ParticipantConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ParticipantConfigMsg.serializer(), value.payload)
@@ -68,11 +69,10 @@ object PacketSerializer: KSerializer<Packet> {
             is ParticipantAnswerTimeoutMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ParticipantAnswerTimeoutMsg.serializer(), value.payload)
             is RequestParticipantQuestionMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, RequestParticipantQuestionMsg.serializer(), value.payload)
             is ResponseParticipantQuestionMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseParticipantQuestionMsg.serializer(), value.payload)
-            is RequestParticipantResultsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, RequestParticipantResultsMsg.serializer(), value.payload)
-            is ResponseParticipantResultsMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseParticipantResultsMsg.serializer(), value.payload)
             is BroadcastParticipantConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastParticipantConfigMsg.serializer(), value.payload)
             is BroadcastStartMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastStartMsg.serializer(), value.payload)
             is BroadcastLeaderboardMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastLeaderboardMsg.serializer(), value.payload)
+            is BroadcastQuizFinishedMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastQuizFinishedMsg.serializer(), value.payload)
         }
 
         // Add closing '}'
@@ -90,6 +90,7 @@ object PacketSerializer: KSerializer<Packet> {
             ProtocolMsg.Type.`HOST-CONFIG` -> HostConfigMsg.serializer()
             ProtocolMsg.Type.`HOST-START` -> HostStartMsg.serializer()
             ProtocolMsg.Type.`NOTIFY-HOST-QUIZ-SUMMARY` -> NotifyHostQuizSummaryMsg.serializer()
+            ProtocolMsg.Type.`NOTIFY-PARTICIPANT-QUIZ-SUMMARY` -> NotifyParticipantQuizSummaryMsg.serializer()
             ProtocolMsg.Type.`REQUEST-HOST-QUESTIONS` -> RequestHostQuestionsMsg.serializer()
             ProtocolMsg.Type.`RESPONSE-HOST-QUESTIONS` -> ResponseHostQuestionsMsg.serializer()
             ProtocolMsg.Type.`PARTICIPANT-CONFIG` -> ParticipantConfigMsg.serializer()
@@ -97,11 +98,10 @@ object PacketSerializer: KSerializer<Packet> {
             ProtocolMsg.Type.`PARTICIPANT-ANSWER-TIMEOUT` -> ParticipantAnswerTimeoutMsg.serializer()
             ProtocolMsg.Type.`REQUEST-PARTICIPANT-QUESTION` -> RequestParticipantQuestionMsg.serializer()
             ProtocolMsg.Type.`RESPONSE-PARTICIPANT-QUESTION` -> ResponseParticipantQuestionMsg.serializer()
-            ProtocolMsg.Type.`REQUEST-PARTICIPANT-RESULTS` -> RequestParticipantResultsMsg.serializer()
-            ProtocolMsg.Type.`RESPONSE-PARTICIPANT-RESULTS` -> ResponseParticipantResultsMsg.serializer()
             ProtocolMsg.Type.`BROADCAST-PARTICIPANT-CONFIG` -> BroadcastParticipantConfigMsg.serializer()
             ProtocolMsg.Type.`BROADCAST-START` -> BroadcastStartMsg.serializer()
             ProtocolMsg.Type.`BROADCAST-LEADERBOARD` -> BroadcastLeaderboardMsg.serializer()
+            ProtocolMsg.Type.`BROADCAST-QUIZ-FINISHED` -> BroadcastQuizFinishedMsg.serializer()
         }
         val payload = compositeDec.decodeSerializableElement(descriptor, index, msgSerializer)
 

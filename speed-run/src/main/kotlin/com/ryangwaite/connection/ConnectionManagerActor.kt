@@ -56,7 +56,8 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 val userId = (connection as ParticipantConnection).userId
                 LOG.info("Received configuration message from user '$userId'")
                 datastore.apply {
-                    setUsername(quizId, userId!!, payload.name)
+                    addUserId(quizId, userId)
+                    setUsername(quizId, userId, payload.name)
                     setLeaderboardItem(quizId, userId, 0)
                 }
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
@@ -121,6 +122,9 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
 
+                if (datastore.isQuizFinished(quizId)) {
+                    publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
+                }
             }
             is ParticipantAnswerTimeoutMsg -> {
                 val userId = (connection as ParticipantConnection).userId
@@ -136,8 +140,12 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 val maxTimeToAnswer = datastore.getQuestionDuration(quizId)
                 datastore.setParticipantAnswer(quizId, userId, selectedQuestionIndex, listOf(), maxTimeToAnswer + 1)
 
-                // Let the host know the result
+                // Let the host know the result - this doesn't affect the leaderboard scores
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
+
+                if (datastore.isQuizFinished(quizId)) {
+                    publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
+                }
             }
             else -> LOG.error("Unknown packet received: $packet")
         }
@@ -196,6 +204,24 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                         connection.send(msg.msgToForward)
                         break
                     }
+                }
+            }
+            is ForwardMsgToParticipant -> {
+                val userId = msg.userId
+                val packetName = msg.msgToForward::class.simpleName
+                LOG.info("Forwarding packet '$packetName' to participant '${userId}' of quiz '${msg.quizId}'")
+                var msgForwarded = false
+                for (connection in connections[msg.quizId]!!) {
+                    if (connection is ParticipantConnection && connection.userId == userId) {
+                        connection.send(msg.msgToForward)
+                        msgForwarded = true
+                        break
+                    }
+                }
+                if (msgForwarded) {
+                    LOG.info("Successfully forwarded packet '$packetName' to participant '$userId'")
+                } else {
+                    LOG.warn("Couldn't find connection for userId '$userId'. Assuming another speed-run instance has the connection and forwarded packet '$packetName'")
                 }
             }
         }

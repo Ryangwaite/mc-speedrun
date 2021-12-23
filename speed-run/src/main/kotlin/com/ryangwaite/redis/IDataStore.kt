@@ -1,10 +1,11 @@
 package com.ryangwaite.redis
 
-import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.models.LeaderboardItem
-import com.ryangwaite.models.QuestionAndAnswers
+import com.ryangwaite.models.VerboseQuestionSummary
 
 interface IDataStore {
+    suspend fun addUserId(quizId: String, userId: String)
+    suspend fun getUserIds(quizId: String): List<String>
     suspend fun setUsername(quizId: String, userId: String, name: String)
     suspend fun setLeaderboardItem(quizId: String, userId: String, score: Int)
     suspend fun getLeaderboard(quizId: String): List<LeaderboardItem>
@@ -16,5 +17,6 @@ interface IDataStore {
     suspend fun setSelectedQuestionIndexes(quizId: String, indexes: List<Int>)
     suspend fun getSelectedQuestionIndexes(quizId: String): List<Int>
     suspend fun setParticipantAnswer(quizId: String, userId: String, questionIndex: Int, selectedOptionIndexes: List<Int>, answeredInDuration: Int)
-    suspend fun getHostQuizSummary(quizId: String): List<HostQuestionSummary>
+    suspend fun getQuizSummary(quizId: String): List<VerboseQuestionSummary>
+    suspend fun isQuizFinished(quizId: String): Boolean
 }

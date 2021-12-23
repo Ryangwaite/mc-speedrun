@@ -3,18 +3,21 @@ package com.ryangwaite.subscribe
 import com.ryangwaite.connection.ConnectionManagerMsg
 import com.ryangwaite.connection.ForwardMsgToAll
 import com.ryangwaite.connection.ForwardMsgToHost
+import com.ryangwaite.connection.ForwardMsgToParticipant
 import com.ryangwaite.loader.QuizLoader
+import com.ryangwaite.models.Answerer
 import com.ryangwaite.models.HostQuestionSummary
+import com.ryangwaite.models.ParticipantQuestionSummary
+import com.ryangwaite.models.VerboseQuestionSummary
 import com.ryangwaite.protocol.BroadcastLeaderboardMsg
+import com.ryangwaite.protocol.BroadcastQuizFinishedMsg
 import com.ryangwaite.protocol.NotifyHostQuizSummaryMsg
+import com.ryangwaite.protocol.NotifyParticipantQuizSummaryMsg
 import com.ryangwaite.redis.IDataStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
@@ -41,15 +44,59 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                 connectionManager.send(ForwardMsgToAll(quizId, BroadcastLeaderboardMsg(leaderboard)))
             }
             SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY` -> {
-                var hostSummary: List<HostQuestionSummary>
+                var questionSummary: List<VerboseQuestionSummary>
                 val summaryBuildTime = measureTimeMillis {
-                    hostSummary = datastore.getHostQuizSummary(quizId)
+                    questionSummary = datastore.getQuizSummary(quizId)
                 }
-                LOG.debug("Computed host summary in $summaryBuildTime ms")
+                LOG.debug("Computed quiz summary in $summaryBuildTime ms")
+
+                val hostQuestionSummary = questionSummary.map {
+                    HostQuestionSummary(
+                        it.question,
+                        it.options,
+                        it.correctOptions,
+                        it.correctAnswerers.map { Answerer(it.userId, it.name) },
+                        it.incorrectAnswerers.map { Answerer(it.userId, it.name) },
+                        it.timeExpiredAnswerers.map { Answerer(it.userId, it.name) },
+                    )
+                }
                 connectionManager.send(ForwardMsgToHost(quizId, NotifyHostQuizSummaryMsg(
                     10, // Todo: calculate this from start time
-                    hostSummary
+                    hostQuestionSummary
                 )))
+            }
+            SubscriptionMessages.`QUIZ-FINISHED` -> {
+                val questionSummary = datastore.getQuizSummary(quizId)
+                val userIds = datastore.getUserIds(quizId)
+                // Formulate and send a unique quiz summary message to the connection manager for each userId in the quiz
+                val jobs = userIds.map { userId ->
+                    launch {
+                        val participantQuestionSummary = questionSummary.map {
+                            val participantOptions = (it.correctAnswerers + it.incorrectAnswerers + it.timeExpiredAnswerers).first {
+                                it.userId == userId
+                            }.participantOptions
+
+                            ParticipantQuestionSummary(
+                                it.question,
+                                it.options,
+                                it.correctOptions,
+                                participantOptions,
+                                it.correctAnswerers.map { Answerer(it.userId, it.name) },
+                                it.incorrectAnswerers.map { Answerer(it.userId, it.name) },
+                                it.timeExpiredAnswerers.map { Answerer(it.userId, it.name) },
+                            )
+                        }
+                        connectionManager.send(ForwardMsgToParticipant(quizId, userId, NotifyParticipantQuizSummaryMsg(
+                            100,
+                            100,
+                            participantQuestionSummary
+                        )))
+                    }
+                }
+                jobs.joinAll()
+
+                // Let everyone know that the quiz has ended
+                connectionManager.send(ForwardMsgToAll(quizId, BroadcastQuizFinishedMsg()))
             }
         }
     }

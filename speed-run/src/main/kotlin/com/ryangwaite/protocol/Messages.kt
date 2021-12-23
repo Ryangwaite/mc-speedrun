@@ -12,8 +12,10 @@ sealed class ProtocolMsg {
         // Messages from the quiz host to the server which a response is not sent back for
         `HOST-CONFIG`,
         `HOST-START`,
-        // Messsages sent from the server to the quiz which a response is not sent back for
+        // Messsages sent from the server to the quiz host which a response is not sent back for
         `NOTIFY-HOST-QUIZ-SUMMARY`,
+        // Messages sent from the server to a single quiz participant which a response is not sent back for
+        `NOTIFY-PARTICIPANT-QUIZ-SUMMARY`,
         // Request and response messages between quiz host and server
         `REQUEST-HOST-QUESTIONS`,
         `RESPONSE-HOST-QUESTIONS`,
@@ -24,12 +26,11 @@ sealed class ProtocolMsg {
         // Request and response messages between a quiz participant and server
         `REQUEST-PARTICIPANT-QUESTION`,
         `RESPONSE-PARTICIPANT-QUESTION`,
-        `REQUEST-PARTICIPANT-RESULTS`,
-        `RESPONSE-PARTICIPANT-RESULTS`,
         // Messages which are sent from the server to the host and all participants which a response is not sent back for
         `BROADCAST-PARTICIPANT-CONFIG`,
         `BROADCAST-START`,
         `BROADCAST-LEADERBOARD`,
+        `BROADCAST-QUIZ-FINISHED`,
     }
 }
 
@@ -56,6 +57,14 @@ data class ResponseHostQuestionsMsg(
 data class NotifyHostQuizSummaryMsg(
     val totalTimeElapsed: Int, // milliseconds
     val questions: List<HostQuestionSummary>,
+): ProtocolMsg()
+
+@Serializable
+data class NotifyParticipantQuizSummaryMsg(
+    // These metrics are just for this participant
+    val totalTimeElapsed: Int, // milliseconds
+    val avgAnswerTime: Int, // milliseconds
+    val questions: List<ParticipantQuestionSummary>,
 ): ProtocolMsg()
 
 @Serializable
@@ -89,18 +98,6 @@ data class ResponseParticipantQuestionMsg(
 ): ProtocolMsg()
 
 @Serializable
-data class RequestParticipantResultsMsg(
-    val userId: String,
-): ProtocolMsg()
-
-@Serializable
-data class ResponseParticipantResultsMsg(
-    val userId: String,
-    val totalTimeElapsed: Int,
-    val questions: List<ParticipantQuestionSummary>
-): ProtocolMsg()
-
-@Serializable
 data class BroadcastParticipantConfigMsg(
     val userId: String,
     val name: String,
@@ -116,3 +113,6 @@ data class BroadcastStartMsg(
 data class BroadcastLeaderboardMsg(
     val leaderboard: List<LeaderboardItem>
 ): ProtocolMsg()
+
+@Serializable
+class BroadcastQuizFinishedMsg(): ProtocolMsg()
