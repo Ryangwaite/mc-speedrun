@@ -1,12 +1,14 @@
 import {AppBar, Toolbar, Typography} from '@mui/material';
+import { WebsocketConnectionStateType } from '../../api/websocket';
 import { APP_NAME } from '../../const';
+import { ConnectionIndicator } from './ConnectionIndicator';
 
 export const APP_BAR_HEIGHT = "48px"//"64px"
 interface ITopBarProps {
-
+    connectionState: WebsocketConnectionStateType,
 }
 
-export function TopBar(props: ITopBarProps) {
+export function TopBar({connectionState}: ITopBarProps) {
     return (
         <AppBar
             sx={{
@@ -27,9 +29,11 @@ export function TopBar(props: ITopBarProps) {
                         fontSize: {
                             xs: "1.5rem",
                             sm: "2.0rem"
-                        }
+                        },
+                        flexGrow: 1, // push the connection state to the right
                     }}
                 >{APP_NAME}</Typography>
+                <ConnectionIndicator connectionState={connectionState} />
             </Toolbar>
         </AppBar>
     )

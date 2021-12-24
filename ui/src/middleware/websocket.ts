@@ -4,12 +4,12 @@ import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
 import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
-import WrappedWebsocket from "../api/websocket";
-import { selectClientType, setLeaderboard } from "../slices/common";
+import WrappedWebsocket, { WebsocketConnectionStateType } from "../api/websocket";
+import { selectClientType, setLeaderboard, setWebscoketConnectionState } from "../slices/common";
 import { setHostConfig, setHostQuizSummary, setQuestions, setRequestQuestions } from "../slices/host";
 import { setCurrentQuestion, setNumberOfQuestions, setParticipantQuizSummary, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
 import { RootState } from "../store"
-import { ClientType, IHostQuestionSummary } from "../types";
+import { ClientType, } from "../types";
 
 // Actions
 const WEBSOCKET_CONNECT = "WEBSOCKET_CONNECT"
@@ -38,14 +38,31 @@ export const websocketDisconnect = function() {
  */
 function buildWebsocketMiddleware(): Middleware<{}, RootState> {
 
-    const socket = new WrappedWebsocket()
+    const socket = new WrappedWebsocket(true)
 
-    const onOpen = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => (ev: Event) => {
-        console.log("Websocket connected")
+    const onOpen = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
+        console.log("middleware websocket onOpen called")
+        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.CONNECTED))
     }
 
-    const onClose = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => (ev: CloseEvent) => {
-        console.log("Websocket disconnected")
+    const onClose = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
+        console.log("middleware websocket onClose called")
+        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.UNINITIALIZED))
+    }
+
+    const onDisconnect = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
+        console.log("middleware websocket onClose called")
+        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.DISCONNECTED))
+    }
+
+    const onTryReconnect = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
+        console.log("middleware websocket onTryReconnect called")
+        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.RECONNECTING))
+    }
+
+    const onReconnected = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
+        console.log("middleware websocket onReconnected called")
+        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.CONNECTED))
     }
 
     /**
@@ -116,6 +133,9 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                 // Bind our listeners before connecting
                 socket.onOpen = onOpen(store)
                 socket.onClose = onClose(store)
+                socket.onDisconnect = onDisconnect(store)
+                socket.onTryReconnect = onTryReconnect(store)
+                socket.onReconnected = onReconnected(store)
                 socket.onMessage = onMessage(store)
 
                 socket.connect(claims.quizId, token)

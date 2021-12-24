@@ -101,3 +101,6 @@ export interface NotifyParticipantQuizSummaryMsgType {
     avgAnswerTime: number,  // milliseconds
     questions: IParticipantQuestionSummary[],
 }
+
+export const BROADCAST_QUIZ_FINISHED = "BROADCAST-QUIZ-FINISHED"
+export interface BroadcastQuizFinishedMsgType {}

@@ -7,10 +7,12 @@ import Summary from './components/common/Summary';
 import Lobby from './components/participant/Lobby';
 import Quiz from './components/participant/Quiz';
 import { Route, Routes } from 'react-router-dom';
+import { selectWebsocketConnectionState } from './slices/common';
+import { useAppSelector } from './hooks';
 
 function App() {
 
-    // Todo initialize websocket connection here passing in the dispatch method above
+    const connectionState = useAppSelector(state => selectWebsocketConnectionState(state))
 
     return (
         <Box
@@ -23,7 +25,7 @@ function App() {
                 border: "1px solid blue"
             }}
         >
-            <TopBar />
+            <TopBar connectionState={connectionState}/>
             <Routes>
                 <Route path="/" element={<Home />} />
                 {/* Participants Screens */}

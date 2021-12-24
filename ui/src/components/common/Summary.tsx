@@ -200,7 +200,7 @@ function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProp
             bottom="0"
             left="50%" // NOTE: the translateX(-50%) to position in centre
             sx={{
-                overflowY: "scroll",
+                overflowY: "auto",
                 transform: "translateX(-50%)" // There's no direct prop for this, hence its here
             }}
         >
