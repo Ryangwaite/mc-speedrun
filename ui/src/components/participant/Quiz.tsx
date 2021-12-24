@@ -69,7 +69,8 @@ interface IQuizSectionProps {
     options: {
         text: string,
         mode: OptionMode,
-    }[]
+    }[],
+    submitDisabled: boolean,
     onSubmit: () => void,
     onOptionClicked: (option: number) => void
 }
@@ -78,7 +79,7 @@ function QuizSection(props: IQuizSectionProps) {
 
     const {
         questionNumber, totalQuestions, secondsRemaining, totalSeconds,
-        questionText, numCorrectOptions, options,
+        questionText, numCorrectOptions, options, submitDisabled
     } = props
 
     return (
@@ -113,6 +114,7 @@ function QuizSection(props: IQuizSectionProps) {
             </Container>
                 <Button
                     variant="contained"
+                    disabled={submitDisabled}
                     onClick={props.onSubmit}
                     sx={{
                         marginLeft: "auto",
@@ -192,7 +194,12 @@ function Quiz(props: IQuizProps) {
             // Remove it from selection
             updatedSelection = updatedSelection.filter(x => x !== optionIndex)
         } else {
-            // Add it to selection
+            if (updatedSelection.length === currentQuestion.numberOfOptionsToSelect) {
+                // Deselect the last option
+                updatedSelection.pop()
+            }
+
+            // Add the freshly clicked one to the selection
             updatedSelection.push(optionIndex)
         }
         setOptionSelection(updatedSelection)
@@ -233,6 +240,8 @@ function Quiz(props: IQuizProps) {
             mode: optionSelection.includes(index) ? OptionMode.SELECTED_UNMARKED : OptionMode.PLAIN,
         }))
 
+        const submitDisabled = currentQuestion.numberOfOptionsToSelect !== optionSelection.length
+
         content = (
             <PositionedQuizSection
                 questionNumber={currentQuestion.questionIndex + 1}
@@ -243,6 +252,7 @@ function Quiz(props: IQuizProps) {
                 numCorrectOptions={currentQuestion.numberOfOptionsToSelect}
                 options={options}
                 onOptionClicked={clickOption}
+                submitDisabled={submitDisabled}
                 onSubmit={onSubmit}
             />
         )
