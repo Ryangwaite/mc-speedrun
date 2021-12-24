@@ -4,18 +4,20 @@ import React from "react";
 import { LeaderboardColumn } from "./Leaderboard";
 import { OptionMode, QuestionCardWithStats } from "./Question";
 import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary,} from "../../types";
-import { useAppSelector } from "../../hooks";
-import { selectParticipantQuizSummary, selectUserId } from "../../slices/participant";
-import { selectClientType, selectLeaderboard } from "../../slices/common";
-import { selectHostQuizSummary } from "../../slices/host";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { resetParticipantState, selectParticipantQuizSummary, selectUserId } from "../../slices/participant";
+import { resetCommonState, selectClientType, selectLeaderboard } from "../../slices/common";
+import { resetHostState, selectHostQuizSummary } from "../../slices/host";
+import { useNavigate } from "react-router-dom";
 
 interface IProgressSectionProps {
     progressCurrent: number,        // i.e. how many participants have finished
     progressTotal: number,          // i.e. how many total participants
+    onReturnToHomeClicked: () => void
 }
 
 function ProgressSection(props: IProgressSectionProps) {
-    const {progressCurrent, progressTotal} = props
+    const {progressCurrent, progressTotal, onReturnToHomeClicked} = props
     
     if (progressCurrent === progressTotal) {
         // All Participants have finished
@@ -31,6 +33,7 @@ function ProgressSection(props: IProgressSectionProps) {
                 <Button
                     variant="outlined"
                     color="error"       // Not actually an error but its an easy way to make it red
+                    onClick={onReturnToHomeClicked}
                     sx={{
                         margin: "4px"
                     }}
@@ -89,7 +92,9 @@ function StatCard(props: IStatCardProps) {
     )
 }
 
-interface ISummaryColumnProps {}
+interface ISummaryColumnProps {
+    onReturnToHomeClicked: () => void
+}
 
 function SummaryColumn(props: ISummaryColumnProps) {
     return (
@@ -107,7 +112,7 @@ function SummaryColumn(props: ISummaryColumnProps) {
                 overflowY: "auto",
             }}
         >
-            <ProgressSection progressCurrent={15} progressTotal={15} />
+            <ProgressSection onReturnToHomeClicked={props.onReturnToHomeClicked} progressCurrent={15} progressTotal={15} />
             <StatCard value="5:21" label="Time elapsed" />
             <StatCard value="20s" label="Avg. answer time" />
         </Box>
@@ -212,6 +217,9 @@ function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProp
 interface ISummaryProps {}
 
 function Summary(props: ISummaryProps) {
+
+    let navigate = useNavigate();
+    const dispatch = useAppDispatch()
     
     // App State
     const userId = useAppSelector(state => selectUserId(state))!
@@ -233,6 +241,13 @@ function Summary(props: ISummaryProps) {
         throw Error(`Unexpected clientType '${clientType}'`)
     }
 
+    function onReturnToHomeClicked() {
+        navigate("/")
+        dispatch(resetCommonState())
+        dispatch(resetHostState())
+        dispatch(resetParticipantState())
+    }
+
     return (
         <Box
             // Position the container so the LeaderBoard and QuizSection can be positioned relative to it
@@ -243,7 +258,7 @@ function Summary(props: ISummaryProps) {
                 height: "100%",
             }}
         >
-            <SummaryColumn />
+            <SummaryColumn onReturnToHomeClicked={onReturnToHomeClicked} />
             <QuestionSection
                 questionSummary={questionSummary}
                 loadingMessage={loadingMessage}

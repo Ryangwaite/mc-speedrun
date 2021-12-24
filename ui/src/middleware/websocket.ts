@@ -2,10 +2,10 @@ import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_QUIZ_FINISHED, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket, { WebsocketConnectionStateType } from "../api/websocket";
-import { selectClientType, setLeaderboard, setWebscoketConnectionState } from "../slices/common";
+import { selectClientType, setLeaderboard, setWebsocketConnectionState } from "../slices/common";
 import { setHostConfig, setHostQuizSummary, setQuestions, setRequestQuestions } from "../slices/host";
 import { setCurrentQuestion, setNumberOfQuestions, setParticipantQuizSummary, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
 import { RootState } from "../store"
@@ -42,27 +42,27 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
 
     const onOpen = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
         console.log("middleware websocket onOpen called")
-        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.CONNECTED))
+        store.dispatch(setWebsocketConnectionState(WebsocketConnectionStateType.CONNECTED))
     }
 
     const onClose = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
         console.log("middleware websocket onClose called")
-        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.UNINITIALIZED))
+        store.dispatch(setWebsocketConnectionState(WebsocketConnectionStateType.UNINITIALIZED))
     }
 
     const onDisconnect = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
         console.log("middleware websocket onClose called")
-        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.DISCONNECTED))
+        store.dispatch(setWebsocketConnectionState(WebsocketConnectionStateType.DISCONNECTED))
     }
 
     const onTryReconnect = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
         console.log("middleware websocket onTryReconnect called")
-        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.RECONNECTING))
+        store.dispatch(setWebsocketConnectionState(WebsocketConnectionStateType.RECONNECTING))
     }
 
     const onReconnected = (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => () => {
         console.log("middleware websocket onReconnected called")
-        store.dispatch(setWebscoketConnectionState(WebsocketConnectionStateType.CONNECTED))
+        store.dispatch(setWebsocketConnectionState(WebsocketConnectionStateType.CONNECTED))
     }
 
     /**
@@ -116,6 +116,9 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
             case NOTIFY_PARTICIPANT_QUIZ_SUMMARY:
                 msg = packet.payload as NotifyParticipantQuizSummaryMsgType
                 store.dispatch(setParticipantQuizSummary(msg.questions))
+                break
+            case BROADCAST_QUIZ_FINISHED:
+                store.dispatch(websocketDisconnect())
                 break
             default:
                 console.warn("Unknown message received: ", packet)

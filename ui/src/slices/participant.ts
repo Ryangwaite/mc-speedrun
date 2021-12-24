@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Action, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ResponseParticipantQuestionMsgType } from "../api/protocol/messages";
 import { RootState } from "../store";
 import { IParticipantQuestionSummary } from "../types";
@@ -25,6 +25,9 @@ export const participantSlice = createSlice({
     name: "participant",
     initialState,
     reducers: {
+        resetParticipantState: (state, action: Action) => {
+            return initialState
+        },
         setUserId: (state, action: PayloadAction<string>) => {
             state.userId = action.payload
         },
@@ -56,6 +59,7 @@ export const participantSlice = createSlice({
 })
 
 export const {
+    resetParticipantState,
     setUserId, setUsername,
     setQuestionDuration, setNumberOfQuestions,
     setRequestQuestion, setCurrentQuestion,

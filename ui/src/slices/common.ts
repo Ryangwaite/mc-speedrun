@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction, Action } from "@reduxjs/toolkit";
 import { ClientType, ILeaderboardItem } from "../types";
 import { RootState } from "../store";
 import { WebsocketConnectionStateType } from "../api/websocket";
@@ -22,6 +22,9 @@ export const commonSlice = createSlice({
     name: "common",
     initialState,
     reducers: {
+        resetCommonState: (state, action: Action) => {
+            return initialState
+        },
         setClientType: (state, action: PayloadAction<ClientType>) => {
             const clientType = action.payload
             state.clientType = clientType
@@ -41,7 +44,7 @@ export const commonSlice = createSlice({
     }
 })
 
-export const { setClientType, setWebsocketConnectionState: setWebscoketConnectionState, setLeaderboard, setQuizId } = commonSlice.actions
+export const { resetCommonState, setClientType, setWebsocketConnectionState, setLeaderboard, setQuizId } = commonSlice.actions
 
 export const selectClientType = (state: RootState) => state.common.clientType
 export const selectWebsocketConnectionState = (state: RootState) => state.common.connection

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Action, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { IHostQuestionSummary, IQuestionAndAnswers } from "../types";
 import { HostConfigMsgType, NotifyHostQuizSummaryMsgType } from "../api/protocol/messages";
@@ -19,6 +19,9 @@ export const hostSlice = createSlice({
     name: "host",
     initialState,
     reducers: {
+        resetHostState: (state, action: Action) => {
+            return initialState
+        },
         setTotalTimeElapsed: (state, action: PayloadAction<number>) => {
             const timeElapsed = action.payload
             state.totalTimeElapsed = timeElapsed
@@ -43,7 +46,7 @@ export const hostSlice = createSlice({
     },
 })
 
-export const { setTotalTimeElapsed, setRequestQuestions, setQuestions, setHostConfig, setHostQuizSummary } = hostSlice.actions
+export const { resetHostState, setTotalTimeElapsed, setRequestQuestions, setQuestions, setHostConfig, setHostQuizSummary } = hostSlice.actions
 
 export const selectTotalTimeElapsed = (state: RootState) => state.host.totalTimeElapsed
 export const selectSetRequestQuestions = (state: RootState) => state.host.requestQuestions
