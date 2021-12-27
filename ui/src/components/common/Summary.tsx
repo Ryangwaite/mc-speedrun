@@ -1,6 +1,6 @@
 import { Box, Typography, Card, LinearProgress, Button, Container, Stack, CircularProgress, } from "@mui/material";
 import _ from "lodash";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { LeaderboardColumn } from "./Leaderboard";
 import { OptionMode, QuestionCardWithStats } from "./Question";
 import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary,} from "../../types";
@@ -235,11 +235,42 @@ function Summary(props: ISummaryProps) {
     // Note: the following are undefined before the first quizSummary has been received when arriving on this page
     const hostQuizSummary = useAppSelector(state => selectHostQuizSummary(state))
     const hostAvgAnswerTime = useAppSelector(state => selectHostAvgAnswerTime(state))
-    const hostTotalTimeElapsed = useAppSelector(state => selectHostTotalTimeElapsed(state))
+    const serverHostTotalTimeElapsed = useAppSelector(state => selectHostTotalTimeElapsed(state))
     const participantQuizSummary = useAppSelector(state => selectParticipantQuizSummary(state))
     const participantAvgAnswerTime = useAppSelector(state => selectParticipantAvgAnswerTime(state))
     const participantTotalTimeElapsed = useAppSelector(state => selectParticipantTotalTimeElapsed(state))
     
+    // Local state
+    const [hostTotalTimeElapsed, setHostTotalTimeElapsed] = useState(0)
+    const [lastServerHostTotalTimeElapsed, setLastHostTotalTimeElaped] = useState(0)
+
+    // Resync logic for local timer
+    useEffect(() => {
+        console.debug("Checking server total time elapsed")
+        if (serverHostTotalTimeElapsed && serverHostTotalTimeElapsed > lastServerHostTotalTimeElapsed) {
+            console.debug("Resyncing the local total time elapsed to that received from the server")
+            setHostTotalTimeElapsed(serverHostTotalTimeElapsed)
+            setLastHostTotalTimeElaped(serverHostTotalTimeElapsed)
+        }
+    }, [serverHostTotalTimeElapsed, lastServerHostTotalTimeElapsed])
+
+    // Local timer
+    useEffect(() => {
+        if (totalFinishedParticipants === leaderboard.length) {
+            // Gameover - stop incrementing timer
+            return
+        }
+
+        const timeout = setTimeout(() => {
+            console.debug("Timeout fired")
+            setHostTotalTimeElapsed(hostTotalTimeElapsed + 1)
+        }, 1000) // in 1 second
+        return function cleanup() {
+            clearTimeout(timeout)
+            console.debug("Cleaned up timeout")
+        }
+    }, [hostTotalTimeElapsed, totalFinishedParticipants, leaderboard])
+
     let questionSummary: IParticipantQuestionSummary[] | IHostQuestionSummary[]
     let avgAnswerTime: string
     let totalTimeElapsed: string
