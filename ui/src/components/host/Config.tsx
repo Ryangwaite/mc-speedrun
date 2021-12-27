@@ -1,5 +1,6 @@
 import { LoadingButton } from "@mui/lab";
-import { Box, Button, Checkbox, CircularProgress, Container, FormControlLabel, FormGroup, Input, Link, Modal, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, CircularProgress, Container, FormControlLabel, FormGroup, IconButton, Input, Link, Modal, Snackbar, Stack, TextField, Typography } from "@mui/material";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import React, { useRef, useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers } from "../../types";
@@ -103,6 +104,58 @@ function UploadModal(props: IUploadModalProps): JSX.Element {
     )
 }
 
+interface IQuizAccessCodeBlockProps {
+    accessCode: string,
+}
+
+function QuizAccessCodeBlock(props: IQuizAccessCodeBlockProps) {
+    
+    const [snackbarVisible, setSnackbarVisible] = useState(false)
+    const accessCodeRef = useRef(null)
+
+    /**
+     * Copies the code to clipboard
+     */
+    function onCopyIconClicked() {
+        const element: HTMLInputElement = accessCodeRef.current!
+        element.select()
+        document.execCommand("copy")
+
+        // Display the copy snackbar
+        setSnackbarVisible(true)
+    }
+
+    return (
+        <Stack
+            direction="row"
+            margin="12px"
+        >
+            <TextField
+                inputRef={accessCodeRef}
+                id="access-code-field"
+                label="Access Code"
+                defaultValue={props.accessCode}
+                InputProps={{
+                    readOnly: true,
+                }}
+            />
+            <IconButton aria-label="copy" onClick={onCopyIconClicked}>
+                <ContentCopyIcon />
+            </IconButton>
+            <Snackbar
+                open={snackbarVisible}
+                autoHideDuration={1000}
+                onClose={() => setSnackbarVisible(false)}
+                message="Access code copied!"
+                anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                }}
+            />
+        </Stack>
+    )
+}
+
 interface IQuizNameBlockProps {
     onQuizNameChange: (name: string) => void
 }
@@ -194,7 +247,7 @@ function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
 }
 
 interface IConfigColumnProps {
-    inviteUrl?: string,
+    accessCode: string,
     onUploadQuizClicked: () => void,
     onQuestionDurationChange: (duration: number) => void,
     onQuizNameChange: (name: string) => void,
@@ -205,18 +258,13 @@ interface IConfigColumnProps {
 
 function ConfigColumn(props: IConfigColumnProps) {
 
-    const {onQuestionDurationChange, onQuizNameChange, categories, selectedCategories, categoriesCheckListener} = props
-
-    // TODO: make it so the link can be copied but not followed 
-    const inviteLinkComponent = props.inviteUrl ? <Typography variant={"body1"}>
-        Invite participants with this link: <Link>{props.inviteUrl}</Link>
-    </Typography> : null;
+    const { onQuestionDurationChange, onQuizNameChange, categories, selectedCategories, categoriesCheckListener } = props
 
     // Only show these elements when the quiz has been uploaded to the backend, which is signalled
     // by the categories being present
     let categoryBlock = categories
         ? (<CategoriesBlock categories={categories} selectedCategories={selectedCategories!} checkListener={categoriesCheckListener} />)
-         : undefined
+        : undefined
     let questionDurationBlock = categories ? <QuestionDurationBlock onDurationChanged={onQuestionDurationChange} /> : undefined
 
     return (
@@ -234,7 +282,7 @@ function ConfigColumn(props: IConfigColumnProps) {
                 overflowY: "auto",
             }}
         >
-            {inviteLinkComponent}
+            <QuizAccessCodeBlock accessCode={props.accessCode} />
             <QuizNameBlock onQuizNameChange={onQuizNameChange} />
             <Button
                 variant="contained"
@@ -390,10 +438,10 @@ function Config(props: IConfigProps) {
             // If everything was a succcess
             setUploadErrMsg(undefined)
             setModalOpen(false)
-            
+
             // Request the questions from the server to display on the page
             dispatch(setRequestQuestions(true))
-        } catch(e) {
+        } catch (e) {
             console.log("Caught error")
             setUploadErrMsg((e as Error).message)
         }
@@ -433,10 +481,10 @@ function Config(props: IConfigProps) {
     }
 
     const startButtonEnabled = quizName &&
-            selectedCategories && selectedCategories!.length > 0 &&
-            questionDuration > 0 &&
-            questionsAndAnswers && selectedQuestionIndexes.length > 0 &&
-            leaderboard.length > 0
+        selectedCategories && selectedCategories!.length > 0 &&
+        questionDuration > 0 &&
+        questionsAndAnswers && selectedQuestionIndexes.length > 0 &&
+        leaderboard.length > 0
 
     return (
         <Container
@@ -453,7 +501,7 @@ function Config(props: IConfigProps) {
                 uploadErrMsg={uploadErrMsg}
             />
             <ConfigColumn
-                inviteUrl={`${window.location.origin}/join/${quizId}`}
+                accessCode={quizId!}
                 onQuizNameChange={onQuizNameChange}
                 onUploadQuizClicked={onUploadQuizClicked}
                 onQuestionDurationChange={onQuestionDurationChange}
