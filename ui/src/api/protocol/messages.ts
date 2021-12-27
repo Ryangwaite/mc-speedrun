@@ -104,5 +104,10 @@ export interface NotifyParticipantQuizSummaryMsgType {
     questions: IParticipantQuestionSummary[],
 }
 
+export const BROADCAST_PARTICIPANT_FINISHED = "BROADCAST-PARTICIPANT-FINISHED"
+export interface BroadcastParticipantFinishedMsgType {
+    totalFinishedParticipants: number,
+}
+
 export const BROADCAST_QUIZ_FINISHED = "BROADCAST-QUIZ-FINISHED"
 export interface BroadcastQuizFinishedMsgType {}

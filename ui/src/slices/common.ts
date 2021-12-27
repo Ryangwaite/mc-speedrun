@@ -8,6 +8,7 @@ interface ICommonState {
     clientType: ClientType,
     connection: WebsocketConnectionStateType,
     leaderboard: ILeaderboardItem[],
+    totalFinishedParticipants: number,
     quizId?: string,
     startTime?: number,
 }
@@ -17,6 +18,7 @@ const initialState: ICommonState = {
     clientType: ClientType.UNKNOWN,
     connection: WebsocketConnectionStateType.UNINITIALIZED,
     leaderboard: [],
+    totalFinishedParticipants: 0,
 }
 
 export const commonSlice = createSlice({
@@ -42,6 +44,10 @@ export const commonSlice = createSlice({
             const updatedLeaderboard = action.payload
             state.leaderboard = updatedLeaderboard
         },
+        setTotalFinishedParticipants: (state, action: PayloadAction<number>) => {
+            const finishedParticipants = action.payload
+            state.totalFinishedParticipants = finishedParticipants
+        },
         setStartTime: (state, action: PayloadAction<number>) => {
             const startTime = action.payload
             state.startTime = startTime
@@ -49,12 +55,18 @@ export const commonSlice = createSlice({
     }
 })
 
-export const { resetCommonState, setClientType, setWebsocketConnectionState, setLeaderboard, setQuizId, setStartTime } = commonSlice.actions
+export const {
+    resetCommonState, setClientType,
+    setWebsocketConnectionState, setLeaderboard,
+    setQuizId, setTotalFinishedParticipants,
+    setStartTime
+} = commonSlice.actions
 
 export const selectClientType = (state: RootState) => state.common.clientType
 export const selectWebsocketConnectionState = (state: RootState) => state.common.connection
 export const selectQuizId = (state: RootState) => state.common.quizId
 export const selectLeaderboard = (state: RootState) => state.common.leaderboard
+export const selectTotalFinishedParticipants = (state: RootState) => state.common.totalFinishedParticipants
 export const selectStartTime = (state: RootState) => state.common.startTime
 
 export default commonSlice.reducer

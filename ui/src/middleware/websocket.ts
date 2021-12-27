@@ -2,10 +2,10 @@ import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_QUIZ_FINISHED, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
+import { BroadcastLeaderboardMsgType, BroadcastParticipantFinishedMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_PARTICIPANT_FINISHED, BROADCAST_QUIZ_FINISHED, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket, { WebsocketConnectionStateType } from "../api/websocket";
-import { selectClientType, setLeaderboard, setStartTime, setWebsocketConnectionState } from "../slices/common";
+import { selectClientType, setLeaderboard, setStartTime, setTotalFinishedParticipants, setWebsocketConnectionState } from "../slices/common";
 import { setHostAvgAnswerTime, setHostConfig, setHostQuizSummary, setQuestions, setRequestQuestions, setHostTotalTimeElapsed } from "../slices/host";
 import { setCurrentQuestion, setNumberOfQuestions, setParticipantAvgAnswerTime, setParticipantQuizSummary, setParticipantTotalTimeElapsed, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
 import { RootState } from "../store"
@@ -121,6 +121,10 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                 store.dispatch(setParticipantQuizSummary(msg.questions))
                 store.dispatch(setParticipantAvgAnswerTime(msg.avgAnswerTime))
                 store.dispatch(setParticipantTotalTimeElapsed(msg.totalTimeElapsed))
+                break
+            case BROADCAST_PARTICIPANT_FINISHED:
+                msg = packet.payload as BroadcastParticipantFinishedMsgType
+                store.dispatch(setTotalFinishedParticipants(msg.totalFinishedParticipants))
                 break
             case BROADCAST_QUIZ_FINISHED:
                 store.dispatch(websocketDisconnect())

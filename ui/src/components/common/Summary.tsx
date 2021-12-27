@@ -6,7 +6,7 @@ import { OptionMode, QuestionCardWithStats } from "./Question";
 import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary,} from "../../types";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../slices/participant";
-import { resetCommonState, selectClientType, selectLeaderboard } from "../../slices/common";
+import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../../slices/common";
 import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../../slices/host";
 import { useNavigate } from "react-router-dom";
 
@@ -93,12 +93,16 @@ function StatCard(props: IStatCardProps) {
 }
 
 interface ISummaryColumnProps {
+    numberParticipantsComplete: number,
+    totalParticipants: number,
     onReturnToHomeClicked: () => void
     totalTimeElapsed: string,
     avgAnswerTime: string,
 }
 
 function SummaryColumn(props: ISummaryColumnProps) {
+    const {numberParticipantsComplete, totalParticipants, onReturnToHomeClicked} = props
+    const {totalTimeElapsed, avgAnswerTime} = props
     return (
         <Box
             // Position
@@ -114,9 +118,9 @@ function SummaryColumn(props: ISummaryColumnProps) {
                 overflowY: "auto",
             }}
         >
-            <ProgressSection onReturnToHomeClicked={props.onReturnToHomeClicked} progressCurrent={15} progressTotal={15} />
-            <StatCard value={props.totalTimeElapsed} label="Time elapsed" />
-            <StatCard value={props.avgAnswerTime} label="Avg. answer time" />
+            <ProgressSection progressCurrent={numberParticipantsComplete} progressTotal={totalParticipants} onReturnToHomeClicked={onReturnToHomeClicked} />
+            <StatCard value={totalTimeElapsed} label="Time elapsed" />
+            <StatCard value={avgAnswerTime} label="Avg. answer time" />
         </Box>
     )
 }
@@ -226,6 +230,7 @@ function Summary(props: ISummaryProps) {
     // App State
     const userId = useAppSelector(state => selectUserId(state))!
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
+    const totalFinishedParticipants = useAppSelector(state => selectTotalFinishedParticipants(state))
     const clientType = useAppSelector(state => selectClientType(state))
     // Note: the following are undefined before the first quizSummary has been received when arriving on this page
     const hostQuizSummary = useAppSelector(state => selectHostQuizSummary(state))
@@ -271,9 +276,12 @@ function Summary(props: ISummaryProps) {
             }}
         >
             <SummaryColumn
+                numberParticipantsComplete={totalFinishedParticipants}
+                totalParticipants={leaderboard.length}
+                onReturnToHomeClicked={onReturnToHomeClicked}
                 totalTimeElapsed={totalTimeElapsed}
                 avgAnswerTime={avgAnswerTime}
-                onReturnToHomeClicked={onReturnToHomeClicked}
+                
             />
             <QuestionSection
                 questionSummary={questionSummary}
