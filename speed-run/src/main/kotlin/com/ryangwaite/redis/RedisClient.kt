@@ -26,6 +26,7 @@ import org.redisson.client.codec.IntegerCodec
 import org.redisson.client.codec.LongCodec
 import org.redisson.client.codec.StringCodec
 import org.redisson.config.Config
+import java.time.*
 import kotlin.math.exp
 
 
@@ -75,6 +76,9 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     private fun selectedCategoriesKey(quizId: String) = "$quizId:selectedCategories"
     private fun questionDurationKey(quizId: String) = "$quizId:questionDuration"
     private fun selectedQuestionIndexesKey(quizId: String) = "$quizId:selectedQuestionIndexes"
+    private fun quizStartTimeKey(quizId: String) = "$quizId:startTime"
+    private fun quizStopTimeKey(quizId: String) = "$quizId:stopTime"
+    private fun participantStopTimeKey(quizId: String, userId: String) = "$quizId:$userId:stopTime"
     private fun participantAnswerKey(quizId: String, userId: String, questionIndex: Int) = "$quizId:$userId:answer:$questionIndex"
 
     override suspend fun addUserId(quizId: String, userId: String) {
@@ -164,6 +168,40 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
         return list.readAll().await()
     }
 
+    override suspend fun setQuizStartTime(quizId: String, time: Instant) {
+        val bucket = redissonClient.getBucket<Long>(quizStartTimeKey(quizId), LongCodec())
+        bucket.set(time.epochSecond).await()
+    }
+
+    override suspend fun getQuizStartTime(quizId: String): Instant {
+        val bucket = redissonClient.getBucket<Long>(quizStartTimeKey(quizId), LongCodec())
+        val epochSeconds = bucket.get().awaitSingle()
+        return Instant.ofEpochSecond(epochSeconds)
+    }
+
+    override suspend fun setQuizStopTime(quizId: String, time: Instant) {
+        val bucket = redissonClient.getBucket<Long>(quizStopTimeKey(quizId), LongCodec())
+        bucket.set(time.epochSecond).await()
+    }
+
+    override suspend fun getQuizStopTime(quizId: String): Instant {
+        val bucket = redissonClient.getBucket<Long>(quizStopTimeKey(quizId), LongCodec())
+        val epochSeconds = bucket.get().awaitSingle()
+        return Instant.ofEpochSecond(epochSeconds)
+    }
+
+    override suspend fun setParticipantStopTime(quizId: String, userId: String, time: Instant) {
+        val bucket = redissonClient.getBucket<Long>(participantStopTimeKey(quizId, userId), LongCodec())
+        val epochSeconds = time.epochSecond
+        bucket.set(epochSeconds).await()
+    }
+
+    override suspend fun getParticipantStopTime(quizId: String, userId: String): Instant {
+        val bucket = redissonClient.getBucket<Long>(participantStopTimeKey(quizId, userId), LongCodec())
+        val epochSeconds = bucket.get().awaitSingle()
+        return Instant.ofEpochSecond(epochSeconds)
+    }
+
     override suspend fun setParticipantAnswer(
         quizId: String,
         userId: String,
@@ -244,7 +282,7 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
                     return@forEach
                 }
                 val userId = key.split(":")[1]
-                val answerer = AnswererWithOptions(userId, username, participantAnswer.selectedOptionIndexes)
+                val answerer = AnswererWithOptions(userId, username, participantAnswer.selectedOptionIndexes, participantAnswer.answeredInDuration)
                 when (mark) {
                     Mark.CORRECT -> correctAnswerers.add(answerer)
                     Mark.INCORRECT -> incorrectAnswerers.add(answerer)
@@ -256,24 +294,26 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
         return questionSummaries
     }
 
-    override suspend fun isQuizFinished(quizId: String): Boolean {
-        // Get the list of participants in the quiz
-        val userIds = getUserIds(quizId) // TODO: Fix this. It is returning an empty list
+    override suspend fun isParticipantFinished(quizId: String, userId: String): Boolean {
         val questionIndexes = getSelectedQuestionIndexes(quizId)
+        val expectedQuestionAnswerKeys = questionIndexes.map { participantAnswerKey(quizId, userId, it) }
 
-        val expectedQuestionAnswerKeys = userIds.flatMap { userId ->
-            questionIndexes.map { questionIndex ->
-                participantAnswerKey(quizId, userId, questionIndex)
-            }
-        }
-
-        print("userIds = ${userIds}, questionIndexes = ${questionIndexes}, expectedQuestionAnswerKeys = ${expectedQuestionAnswerKeys}")
-
-        // If all questions have an answer then the quiz is finished
-        val quizFinished = coroutineScope {
+        val participantFinished = coroutineScope {
             expectedQuestionAnswerKeys.map {
                 async {
                     this@RedisClient.redissonClient.getBucket<String>(it).isExists.await()
+                }
+            }.awaitAll().all { it }
+        }
+        return participantFinished
+    }
+
+    override suspend fun isQuizFinished(quizId: String): Boolean {
+        val userIds = getUserIds(quizId)
+        val quizFinished = coroutineScope {
+            userIds.map {
+                async {
+                    isParticipantFinished(quizId, it)
                 }
             }.awaitAll().all { it }
         }

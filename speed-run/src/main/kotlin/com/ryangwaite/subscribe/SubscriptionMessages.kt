@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 enum class SubscriptionMessages {
     `LEADERBOARD-UPDATED`,
     `NOTIFY-HOST-QUIZ-SUMMARY`,
-    `QUIZ-FINISHED`
+    `QUIZ-STARTED`,
+    `QUIZ-FINISHED`,
+    `PARTICIPANT-FINISHED`
 }
 

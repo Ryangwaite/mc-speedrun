@@ -13,6 +13,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.time.Instant
 
 fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPublish) = actor<ConnectionManagerMsg> {
 
@@ -75,9 +76,10 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 datastore.setSelectedCategories(quizId, categories)
                 datastore.setQuestionDuration(quizId, duration)
                 datastore.setSelectedQuestionIndexes(quizId, selectedQuestionIndexes)
+                datastore.setQuizStartTime(quizId, Instant.now())
 
                 LOG.info("Starting quiz '$quizId'")
-                channel.send(ForwardMsgToAll(quizId, BroadcastStartMsg(duration, selectedQuestionIndexes.size)))
+                publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-STARTED`)
             }
             is RequestParticipantQuestionMsg -> {
                 val userId = (connection as ParticipantConnection).userId
@@ -122,7 +124,13 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`LEADERBOARD-UPDATED`)
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
 
+                if (datastore.isParticipantFinished(quizId, userId)) {
+                    datastore.setParticipantStopTime(quizId, userId, Instant.now())
+                    publisher.publishQuizEvent(quizId, SubscriptionMessages.`PARTICIPANT-FINISHED`)
+                }
+
                 if (datastore.isQuizFinished(quizId)) {
+                    datastore.setQuizStopTime(quizId, Instant.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
                 }
             }
@@ -143,7 +151,13 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 // Let the host know the result - this doesn't affect the leaderboard scores
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
 
+                if (datastore.isParticipantFinished(quizId, userId)) {
+                    datastore.setParticipantStopTime(quizId, userId, Instant.now())
+                    publisher.publishQuizEvent(quizId, SubscriptionMessages.`PARTICIPANT-FINISHED`)
+                }
+
                 if (datastore.isQuizFinished(quizId)) {
+                    datastore.setQuizStopTime(quizId, Instant.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
                 }
             }

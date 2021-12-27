@@ -5,9 +5,9 @@ import { LeaderboardColumn } from "./Leaderboard";
 import { OptionMode, QuestionCardWithStats } from "./Question";
 import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary,} from "../../types";
 import { useAppDispatch, useAppSelector } from "../../hooks";
-import { resetParticipantState, selectParticipantQuizSummary, selectUserId } from "../../slices/participant";
+import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../slices/participant";
 import { resetCommonState, selectClientType, selectLeaderboard } from "../../slices/common";
-import { resetHostState, selectHostQuizSummary } from "../../slices/host";
+import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../../slices/host";
 import { useNavigate } from "react-router-dom";
 
 interface IProgressSectionProps {
@@ -94,6 +94,8 @@ function StatCard(props: IStatCardProps) {
 
 interface ISummaryColumnProps {
     onReturnToHomeClicked: () => void
+    totalTimeElapsed: string,
+    avgAnswerTime: string,
 }
 
 function SummaryColumn(props: ISummaryColumnProps) {
@@ -113,8 +115,8 @@ function SummaryColumn(props: ISummaryColumnProps) {
             }}
         >
             <ProgressSection onReturnToHomeClicked={props.onReturnToHomeClicked} progressCurrent={15} progressTotal={15} />
-            <StatCard value="5:21" label="Time elapsed" />
-            <StatCard value="20s" label="Avg. answer time" />
+            <StatCard value={props.totalTimeElapsed} label="Time elapsed" />
+            <StatCard value={props.avgAnswerTime} label="Avg. answer time" />
         </Box>
     )
 }
@@ -227,15 +229,25 @@ function Summary(props: ISummaryProps) {
     const clientType = useAppSelector(state => selectClientType(state))
     // Note: the following are undefined before the first quizSummary has been received when arriving on this page
     const hostQuizSummary = useAppSelector(state => selectHostQuizSummary(state))
+    const hostAvgAnswerTime = useAppSelector(state => selectHostAvgAnswerTime(state))
+    const hostTotalTimeElapsed = useAppSelector(state => selectHostTotalTimeElapsed(state))
     const participantQuizSummary = useAppSelector(state => selectParticipantQuizSummary(state))
+    const participantAvgAnswerTime = useAppSelector(state => selectParticipantAvgAnswerTime(state))
+    const participantTotalTimeElapsed = useAppSelector(state => selectParticipantTotalTimeElapsed(state))
     
     let questionSummary: IParticipantQuestionSummary[] | IHostQuestionSummary[]
+    let avgAnswerTime: string
+    let totalTimeElapsed: string
     let loadingMessage: string
     if (clientType === ClientType.HOST) {
         questionSummary = hostQuizSummary || []
+        avgAnswerTime = hostAvgAnswerTime ? `${hostAvgAnswerTime / 1000}s` : ""
+        totalTimeElapsed = hostTotalTimeElapsed ? `${hostTotalTimeElapsed}s` : ""
         loadingMessage = "Awaiting participant answers..."
     } else if (clientType === ClientType.PARTICIPANT) {
         questionSummary = participantQuizSummary || []
+        avgAnswerTime = participantAvgAnswerTime ? `${participantAvgAnswerTime / 1000}s` : ""
+        totalTimeElapsed = participantTotalTimeElapsed ? `${participantTotalTimeElapsed}s` : ""
         loadingMessage = "Waiting for other participants to finish..."
     } else {
         throw Error(`Unexpected clientType '${clientType}'`)
@@ -258,7 +270,11 @@ function Summary(props: ISummaryProps) {
                 height: "100%",
             }}
         >
-            <SummaryColumn onReturnToHomeClicked={onReturnToHomeClicked} />
+            <SummaryColumn
+                totalTimeElapsed={totalTimeElapsed}
+                avgAnswerTime={avgAnswerTime}
+                onReturnToHomeClicked={onReturnToHomeClicked}
+            />
             <QuestionSection
                 questionSummary={questionSummary}
                 loadingMessage={loadingMessage}

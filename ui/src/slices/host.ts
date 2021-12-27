@@ -2,10 +2,11 @@ import _ from "lodash";
 import { Action, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { IHostQuestionSummary, IQuestionAndAnswers } from "../types";
-import { HostConfigMsgType, NotifyHostQuizSummaryMsgType } from "../api/protocol/messages";
+import { HostConfigMsgType } from "../api/protocol/messages";
 
 interface IHostState {
     totalTimeElapsed?: number,
+    avgAnswerTime?: number,
     requestQuestions: boolean,
     questions?: IQuestionAndAnswers[],
     quizSummary?: IHostQuestionSummary[],
@@ -22,9 +23,13 @@ export const hostSlice = createSlice({
         resetHostState: (state, action: Action) => {
             return initialState
         },
-        setTotalTimeElapsed: (state, action: PayloadAction<number>) => {
+        setHostTotalTimeElapsed: (state, action: PayloadAction<number>) => {
             const timeElapsed = action.payload
             state.totalTimeElapsed = timeElapsed
+        },
+        setHostAvgAnswerTime: (state, action: PayloadAction<number>) => {
+            const avgAnswerTime = action.payload
+            state.avgAnswerTime = avgAnswerTime
         },
         setRequestQuestions: (state, action: PayloadAction<boolean>) => {
             const requestQuestions = action.payload
@@ -46,9 +51,10 @@ export const hostSlice = createSlice({
     },
 })
 
-export const { resetHostState, setTotalTimeElapsed, setRequestQuestions, setQuestions, setHostConfig, setHostQuizSummary } = hostSlice.actions
+export const { resetHostState, setHostTotalTimeElapsed, setHostAvgAnswerTime, setRequestQuestions, setQuestions, setHostConfig, setHostQuizSummary } = hostSlice.actions
 
-export const selectTotalTimeElapsed = (state: RootState) => state.host.totalTimeElapsed
+export const selectHostTotalTimeElapsed = (state: RootState) => state.host.totalTimeElapsed
+export const selectHostAvgAnswerTime = (state: RootState) => state.host.avgAnswerTime
 export const selectSetRequestQuestions = (state: RootState) => state.host.requestQuestions
 export const selectHostQuestions = (state: RootState) => state.host.questions
 export const selectHostQuizSummary = (state: RootState) => state.host.quizSummary

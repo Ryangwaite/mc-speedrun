@@ -6,7 +6,8 @@ import kotlinx.serialization.Serializable
 data class AnswererWithOptions(
     val userId: String,
     val name: String,
-    val participantOptions: List<Int>
+    val participantOptions: List<Int>,
+    val answeredInDuration: Int
 )
 
 @Serializable

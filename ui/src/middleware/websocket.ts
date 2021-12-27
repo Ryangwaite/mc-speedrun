@@ -5,9 +5,9 @@ import { getJwtTokenClaims } from "../api/auth";
 import { BroadcastLeaderboardMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_QUIZ_FINISHED, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket, { WebsocketConnectionStateType } from "../api/websocket";
-import { selectClientType, setLeaderboard, setWebsocketConnectionState } from "../slices/common";
-import { setHostConfig, setHostQuizSummary, setQuestions, setRequestQuestions } from "../slices/host";
-import { setCurrentQuestion, setNumberOfQuestions, setParticipantQuizSummary, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
+import { selectClientType, setLeaderboard, setStartTime, setWebsocketConnectionState } from "../slices/common";
+import { setHostAvgAnswerTime, setHostConfig, setHostQuizSummary, setQuestions, setRequestQuestions, setHostTotalTimeElapsed } from "../slices/host";
+import { setCurrentQuestion, setNumberOfQuestions, setParticipantAvgAnswerTime, setParticipantQuizSummary, setParticipantTotalTimeElapsed, setQuestionAnswer, setQuestionAnswerTimeout, setQuestionDuration, setRequestQuestion, setUsername } from "../slices/participant";
 import { RootState } from "../store"
 import { ClientType, } from "../types";
 
@@ -85,6 +85,7 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
                 break
             case BROADCAST_START:
                 msg = packet.payload as BroadcastStartMsgType
+                store.dispatch(setStartTime(msg.startTimeEpochSecs)) // TODO: Determine if i need this
                 const clientType = selectClientType(store.getState())
                 switch (clientType) {
                     case ClientType.HOST:
@@ -112,10 +113,14 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
             case NOTIFY_HOST_QUIZ_SUMMARY:
                 msg = packet.payload as NotifyHostQuizSummaryMsgType
                 store.dispatch(setHostQuizSummary(msg.questions))
+                store.dispatch(setHostAvgAnswerTime(msg.avgAnswerTime))
+                store.dispatch(setHostTotalTimeElapsed(msg.totalTimeElapsed))
                 break
             case NOTIFY_PARTICIPANT_QUIZ_SUMMARY:
                 msg = packet.payload as NotifyParticipantQuizSummaryMsgType
                 store.dispatch(setParticipantQuizSummary(msg.questions))
+                store.dispatch(setParticipantAvgAnswerTime(msg.avgAnswerTime))
+                store.dispatch(setParticipantTotalTimeElapsed(msg.totalTimeElapsed))
                 break
             case BROADCAST_QUIZ_FINISHED:
                 store.dispatch(websocketDisconnect())

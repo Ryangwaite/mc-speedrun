@@ -30,6 +30,7 @@ sealed class ProtocolMsg {
         `BROADCAST-PARTICIPANT-CONFIG`,
         `BROADCAST-START`,
         `BROADCAST-LEADERBOARD`,
+        `BROADCAST-PARTICIPANT-FINISHED`,
         `BROADCAST-QUIZ-FINISHED`,
     }
 }
@@ -55,14 +56,15 @@ data class ResponseHostQuestionsMsg(
 
 @Serializable
 data class NotifyHostQuizSummaryMsg(
-    val totalTimeElapsed: Int, // milliseconds
+    val totalTimeElapsed: Long, // seconds
+    val avgAnswerTime: Int,  // milliseconds
     val questions: List<HostQuestionSummary>,
 ): ProtocolMsg()
 
 @Serializable
 data class NotifyParticipantQuizSummaryMsg(
     // These metrics are just for this participant
-    val totalTimeElapsed: Int, // milliseconds
+    val totalTimeElapsed: Long, // seconds
     val avgAnswerTime: Int, // milliseconds
     val questions: List<ParticipantQuestionSummary>,
 ): ProtocolMsg()
@@ -105,6 +107,7 @@ data class BroadcastParticipantConfigMsg(
 
 @Serializable
 data class BroadcastStartMsg(
+    val startTimeEpochSecs: Long,
     val questionDuration: Int,
     val numberOfQuestions: Int,
 ): ProtocolMsg()
@@ -112,6 +115,11 @@ data class BroadcastStartMsg(
 @Serializable
 data class BroadcastLeaderboardMsg(
     val leaderboard: List<LeaderboardItem>
+): ProtocolMsg()
+
+@Serializable
+data class BroadcastParticipantFinishedMsg(
+    val totalFinishedParticipants: Int,
 ): ProtocolMsg()
 
 @Serializable

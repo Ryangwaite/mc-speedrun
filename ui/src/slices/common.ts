@@ -9,6 +9,7 @@ interface ICommonState {
     connection: WebsocketConnectionStateType,
     leaderboard: ILeaderboardItem[],
     quizId?: string,
+    startTime?: number,
 }
 
 // State consists of that which is the intersection of participant and hosts
@@ -40,15 +41,20 @@ export const commonSlice = createSlice({
         setLeaderboard: (state, action: PayloadAction<ILeaderboardItem[]>) => {
             const updatedLeaderboard = action.payload
             state.leaderboard = updatedLeaderboard
+        },
+        setStartTime: (state, action: PayloadAction<number>) => {
+            const startTime = action.payload
+            state.startTime = startTime
         }
     }
 })
 
-export const { resetCommonState, setClientType, setWebsocketConnectionState, setLeaderboard, setQuizId } = commonSlice.actions
+export const { resetCommonState, setClientType, setWebsocketConnectionState, setLeaderboard, setQuizId, setStartTime } = commonSlice.actions
 
 export const selectClientType = (state: RootState) => state.common.clientType
 export const selectWebsocketConnectionState = (state: RootState) => state.common.connection
 export const selectQuizId = (state: RootState) => state.common.quizId
 export const selectLeaderboard = (state: RootState) => state.common.leaderboard
+export const selectStartTime = (state: RootState) => state.common.startTime
 
 export default commonSlice.reducer

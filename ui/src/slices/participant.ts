@@ -15,6 +15,8 @@ interface IParticipantState {
     requestQuestion: boolean,
     currentQuestion?: ResponseParticipantQuestionMsgType,
     quizSummary?: IParticipantQuestionSummary[],
+    totalTimeElapsed?: number,
+    avgAnswerTime?: number,
 }
 
 const initialState: IParticipantState = {
@@ -54,7 +56,15 @@ export const participantSlice = createSlice({
         },
         setParticipantQuizSummary: (state, action: PayloadAction<IParticipantQuestionSummary[]>) => {
             state.quizSummary = action.payload
-        }
+        },
+        setParticipantTotalTimeElapsed: (state, action: PayloadAction<number>) => {
+            console.log("Setting participantTotalTimeElapsed")
+            state.totalTimeElapsed = action.payload
+        },
+        setParticipantAvgAnswerTime: (state, action: PayloadAction<number>) => {
+            console.log("Setting participantAvgAnswerTime")
+            state.avgAnswerTime = action.payload
+        },
     }
 })
 
@@ -65,6 +75,7 @@ export const {
     setRequestQuestion, setCurrentQuestion,
     setQuestionAnswer, setQuestionAnswerTimeout,
     setParticipantQuizSummary,
+    setParticipantTotalTimeElapsed, setParticipantAvgAnswerTime,
 } = participantSlice.actions
 
 export const selectUserId = (state: RootState) => state.participant.userId
@@ -74,5 +85,7 @@ export const selectNumberOfQuestions = (state: RootState) => state.participant.n
 export const selectRequestQuestion = (state: RootState) => state.participant.requestQuestion
 export const selectCurrentQuestion = (state: RootState) => state.participant.currentQuestion
 export const selectParticipantQuizSummary = (state: RootState) => state.participant.quizSummary
+export const selectParticipantTotalTimeElapsed = (state: RootState) => state.participant.totalTimeElapsed
+export const selectParticipantAvgAnswerTime = (state: RootState) => state.participant.avgAnswerTime
 
 export default participantSlice.reducer

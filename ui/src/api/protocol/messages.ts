@@ -77,6 +77,7 @@ export interface ResponseHostQuizSummaryMsgType {
 
 export const BROADCAST_START = "BROADCAST-START"
 export interface BroadcastStartMsgType {
+    startTimeEpochSecs: number,
     questionDuration: number,
     numberOfQuestions: number,
 }
@@ -91,7 +92,8 @@ export interface ResponseParticipantQuestionMsgType {
 
 export const NOTIFY_HOST_QUIZ_SUMMARY = "NOTIFY-HOST-QUIZ-SUMMARY"
 export interface NotifyHostQuizSummaryMsgType {
-    totalTimeElapsed: number,
+    totalTimeElapsed: number,   // seconds
+    avgAnswerTime: number,      // milliseconds
     questions: IHostQuestionSummary[],
 }
 

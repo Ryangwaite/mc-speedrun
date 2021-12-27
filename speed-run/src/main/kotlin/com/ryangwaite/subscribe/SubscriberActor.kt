@@ -9,10 +9,7 @@ import com.ryangwaite.models.Answerer
 import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.models.ParticipantQuestionSummary
 import com.ryangwaite.models.VerboseQuestionSummary
-import com.ryangwaite.protocol.BroadcastLeaderboardMsg
-import com.ryangwaite.protocol.BroadcastQuizFinishedMsg
-import com.ryangwaite.protocol.NotifyHostQuizSummaryMsg
-import com.ryangwaite.protocol.NotifyParticipantQuizSummaryMsg
+import com.ryangwaite.protocol.*
 import com.ryangwaite.redis.IDataStore
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
@@ -21,6 +18,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.time.Instant
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import kotlin.system.measureTimeMillis
 
 data class Subscription(
@@ -50,7 +50,14 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                 }
                 LOG.debug("Computed quiz summary in $summaryBuildTime ms")
 
+                val answerDurations = mutableListOf<Int>()
+
                 val hostQuestionSummary = questionSummary.map {
+
+                    // Only interested in the durations for non-timed out questions
+                    answerDurations.addAll(it.correctAnswerers.map { it.answeredInDuration })
+                    answerDurations.addAll(it.incorrectAnswerers.map { it.answeredInDuration })
+
                     HostQuestionSummary(
                         it.question,
                         it.options,
@@ -60,10 +67,21 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                         it.timeExpiredAnswerers.map { Answerer(it.userId, it.name) },
                     )
                 }
+
+                val avgAnswerTimeMillis = (answerDurations.average() * 1000).roundToInt()
+                val totalTimeElapsed = Instant.now().epochSecond - datastore.getQuizStartTime(quizId).epochSecond
+
                 connectionManager.send(ForwardMsgToHost(quizId, NotifyHostQuizSummaryMsg(
-                    10, // Todo: calculate this from start time
+                    totalTimeElapsed,
+                    avgAnswerTimeMillis,
                     hostQuestionSummary
                 )))
+            }
+            SubscriptionMessages.`QUIZ-STARTED` -> {
+                val startTime = datastore.getQuizStartTime(quizId).epochSecond
+                val duration = datastore.getQuestionDuration(quizId)
+                val numberOfQuestions = datastore.getSelectedQuestionIndexes(quizId).size
+                connectionManager.send(ForwardMsgToAll(quizId, BroadcastStartMsg(startTime, duration, numberOfQuestions)))
             }
             SubscriptionMessages.`QUIZ-FINISHED` -> {
                 val questionSummary = datastore.getQuizSummary(quizId)
@@ -71,24 +89,32 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                 // Formulate and send a unique quiz summary message to the connection manager for each userId in the quiz
                 val jobs = userIds.map { userId ->
                     launch {
+                        val answerDurations = mutableListOf<Int>()
                         val participantQuestionSummary = questionSummary.map {
-                            val participantOptions = (it.correctAnswerers + it.incorrectAnswerers + it.timeExpiredAnswerers).first {
+                            val participantAnswer = (it.correctAnswerers + it.incorrectAnswerers + it.timeExpiredAnswerers).first {
                                 it.userId == userId
-                            }.participantOptions
+                            }
+
+                            // Only calculate the durations for questions that were answered and not timed out
+                            if (!it.timeExpiredAnswerers.contains(participantAnswer)) {
+                                answerDurations.add(participantAnswer.answeredInDuration)
+                            }
 
                             ParticipantQuestionSummary(
                                 it.question,
                                 it.options,
                                 it.correctOptions,
-                                participantOptions,
+                                participantAnswer.participantOptions,
                                 it.correctAnswerers.map { Answerer(it.userId, it.name) },
                                 it.incorrectAnswerers.map { Answerer(it.userId, it.name) },
                                 it.timeExpiredAnswerers.map { Answerer(it.userId, it.name) },
                             )
                         }
+                        val totalElapsedTime = datastore.getParticipantStopTime(quizId, userId).epochSecond - datastore.getQuizStartTime(quizId).epochSecond
+                        val avgAnswerTime = (answerDurations.average() * 1000).roundToInt()
                         connectionManager.send(ForwardMsgToParticipant(quizId, userId, NotifyParticipantQuizSummaryMsg(
-                            100,
-                            100,
+                            totalElapsedTime,
+                            avgAnswerTime,
                             participantQuestionSummary
                         )))
                     }
@@ -97,6 +123,17 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
 
                 // Let everyone know that the quiz has ended
                 connectionManager.send(ForwardMsgToAll(quizId, BroadcastQuizFinishedMsg()))
+            }
+            SubscriptionMessages.`PARTICIPANT-FINISHED` -> {
+                val userIds = datastore.getUserIds(quizId)
+                val numCompleted = coroutineScope {
+                    userIds.map {
+                        async {
+                            datastore.isParticipantFinished(quizId, it)
+                        }
+                    }.awaitAll().filter { it }.size
+                }
+                connectionManager.send(ForwardMsgToAll(quizId, BroadcastParticipantFinishedMsg(numCompleted)))
             }
         }
     }
