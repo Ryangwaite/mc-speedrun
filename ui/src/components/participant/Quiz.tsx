@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Button, Typography, Box, Card, LinearProgress, Container, CircularProgress} from "@mui/material";
 import { OptionMode, QuestionCard } from "../common/Question";
-import { SAMPLE_QUESTIONS_AND_ANSWERS } from "../../const";
 import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
-import { IQuestionAndAnswers } from "../../types";
 import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard } from "../../slices/common";
 import { useNavigate } from "react-router-dom";
-import { cleanup } from "@testing-library/react";
 interface IQuestionNumberCardProps {
     questionNumber: number,
     totalQuestions: number,
@@ -186,7 +183,8 @@ function Quiz(props: IQuizProps) {
             clearTimeout(timeout)
             console.debug("Cleaned up countdown timer")
         }
-    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [timeRemaining])
 
     function clickOption(optionIndex: number) {
         let updatedSelection = [...optionSelection]
