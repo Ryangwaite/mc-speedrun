@@ -32,6 +32,7 @@ export function TopBar({connectionState}: ITopBarProps) {
             >
                 <Typography
                     variant="h1"
+                    marginLeft={4}
                     sx={{
                         fontSize: {
                             xs: "1.5rem",

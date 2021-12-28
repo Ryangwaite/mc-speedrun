@@ -12,17 +12,27 @@ function ButtonCard(props: IButtonCardProps) {
     return (
         <Card sx={{
             width: 320,
+            boxShadow: 0, // no shadow
         }}>
-            <CardHeader title={title} sx={{ textAlign: "center" }} />
-            <CardActions
+            <CardHeader
+                title={title}
                 sx={{
-                    height: 80
+                    textAlign: "center",
+                    padding: 0,
+                    marginTop: 3,
                 }}
-            >
+            />
+            <CardActions>
                 <Button
                     onClick={onSubmit}
                     variant="contained" 
                     fullWidth
+                    sx={{
+                        marginRight: 3,
+                        marginLeft: 3,
+                        marginTop: 4,
+                        marginBottom: 4,
+                    }}
                 >{buttonLabel}</Button>
             </CardActions>
         </Card>

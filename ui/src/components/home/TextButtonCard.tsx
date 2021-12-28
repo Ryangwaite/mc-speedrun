@@ -30,11 +30,20 @@ function TextButtonCard(props: ITextButtonCardProps) {
     return (
         <Card sx={{
             width: 320,
+            boxShadow: 0, // no shadow
         }}>
-            <CardHeader title={title} sx={{ textAlign: "center" }} />
+            <CardHeader
+                title={title}
+                sx={{
+                    textAlign: "center",
+                    padding: 0,
+                    marginTop: 3,
+                }}
+            />
             <CardActions
                 sx={{
-                    height: 80
+                    // height: 120
+                    justifyContent: "center"
                 }}
             >
                 <TextField
@@ -43,13 +52,19 @@ function TextButtonCard(props: ITextButtonCardProps) {
                     onChange={onFieldChange}
                     onKeyDown={onKeyDown}
                     sx={{
-                        marginRight: 1
+                        marginTop: 3,
+                        marginBottom: 3,
+                        marginLeft: 3,
+                        marginRight: 4,
                     }}
                 />
                 <Button
                     disabled={!fieldContent}
                     onClick={() => onSubmit(fieldContent)}
-                    variant="contained" 
+                    variant="contained"
+                    sx={{
+                        marginRight: 3
+                    }} 
                 >{buttonLabel}</Button>
             </CardActions>
         </Card>
