@@ -22,7 +22,7 @@ function App() {
             sx={{
                 height: "100vh",
                 width: "100vw",
-                border: "1px solid blue"
+                backgroundColor: "grey.100"
             }}
         >
             <TopBar connectionState={connectionState}/>
