@@ -12,7 +12,6 @@ function ButtonCard(props: IButtonCardProps) {
     return (
         <Card sx={{
             width: 320,
-            boxShadow: 0, // no shadow
         }}>
             <CardHeader
                 title={title}

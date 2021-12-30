@@ -1,7 +1,5 @@
-import { LoadingButton } from "@mui/lab";
-import { Box, Button, Checkbox, CircularProgress, Container, FormControlLabel, FormGroup, IconButton, Input, Link, Modal, Snackbar, Stack, TextField, Typography } from "@mui/material";
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import React, { useRef, useState } from "react";
+import { Box, Button, Card, Checkbox, CircularProgress, Collapse, Container, FormControlLabel, FormGroup, TextField, Typography } from "@mui/material";
+import React, { useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers } from "../../types";
 import { useAppDispatch, useAppSelector } from "../../hooks";
@@ -12,240 +10,13 @@ import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";
 import { OptionMode, QuestionCard } from "../common/Question";
 import _ from "lodash";
-import { useNavigate } from "react-router-dom";
+import UploadModal from "./UploadModal";
+import QuizNameBlock from "./QuizNameBlock";
+import QuizAccessCode from "./QuizAccessCode";
+import CategoriesBlock from "./CategoriesBlock";
+import QuestionDurationBlock from "./QuestionDurationBlock";
 
-
-const COLUMN_WIDTH = "320px"
-
-interface IUploadModalProps {
-    open: boolean,
-    onUpload: (file: File) => Promise<void>,
-    // Show an error on the dialog. This will only arise if validation of the previously
-    // uploaded file failed.
-    uploadErrMsg?: string,
-}
-
-function UploadModal(props: IUploadModalProps): JSX.Element {
-
-    const fileInput = useRef<HTMLInputElement>(null)
-    const [fileSelected, setFileSelected] = useState(false)
-    const [isUploading, setIsUploading] = useState(false)
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsUploading(true)
-        if (fileInput.current != null) {
-            const files = fileInput.current.files!
-            await props.onUpload(files[0])
-            setFileSelected(false)
-            if (fileInput.current) {
-                // clear the form element. This is needed in case of errors uploading which gets displayed
-                // via the uploadErrMsg prop
-                fileInput.current.value = ""
-            }
-        }
-        setIsUploading(false)
-    }
-
-    const handleFileSelected = () => {
-        setFileSelected(true)
-    }
-
-    const uploadErrMsgComponent = !fileSelected && props.uploadErrMsg
-        ? <Typography color="red" variant="caption">{props.uploadErrMsg}</Typography>
-        : undefined
-
-    return (
-        <Modal
-            open={props.open}
-        >
-            <Box
-                sx={{
-                    // Position in the centre of the window
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: 'translate(-50%, -50%)',
-                    width: "500px",
-                    backgroundColor: "whitesmoke",
-                    border: "1px solid black",
-                    borderRadius: "12px",
-                    padding: "24px"
-                }}
-            >
-                <Typography
-                    variant="h4"
-                    textAlign="center"
-                    marginBottom="24px"
-                >Upload Quiz</Typography>
-                <form onSubmit={handleSubmit}>
-                    <Stack
-                        justifyContent="center"
-                        alignItems="center"
-                    >
-                        <Input
-                            required
-                            disableUnderline
-                            type="file"
-                            inputRef={fileInput}
-                            margin="none"
-                            onInput={handleFileSelected}
-                        />
-                        {uploadErrMsgComponent}
-                        <LoadingButton
-                            type="submit"
-                            disabled={!fileSelected}
-                            loading={isUploading}
-                        >Upload</LoadingButton>
-                    </Stack>
-                </form>
-            </Box>
-        </Modal>
-    )
-}
-
-interface IQuizAccessCodeBlockProps {
-    accessCode: string,
-}
-
-function QuizAccessCodeBlock(props: IQuizAccessCodeBlockProps) {
-    
-    const [snackbarVisible, setSnackbarVisible] = useState(false)
-    const accessCodeRef = useRef(null)
-
-    /**
-     * Copies the code to clipboard
-     */
-    function onCopyIconClicked() {
-        const element: HTMLInputElement = accessCodeRef.current!
-        element.select()
-        document.execCommand("copy")
-
-        // Display the copy snackbar
-        setSnackbarVisible(true)
-    }
-
-    return (
-        <Stack
-            direction="row"
-            margin="12px"
-        >
-            <TextField
-                inputRef={accessCodeRef}
-                id="access-code-field"
-                label="Access Code"
-                defaultValue={props.accessCode}
-                InputProps={{
-                    readOnly: true,
-                }}
-            />
-            <IconButton aria-label="copy" onClick={onCopyIconClicked}>
-                <ContentCopyIcon />
-            </IconButton>
-            <Snackbar
-                open={snackbarVisible}
-                autoHideDuration={1000}
-                onClose={() => setSnackbarVisible(false)}
-                message="Access code copied!"
-                anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                }}
-            />
-        </Stack>
-    )
-}
-
-interface IQuizNameBlockProps {
-    onQuizNameChange: (name: string) => void
-}
-
-function QuizNameBlock(props: IQuizNameBlockProps): JSX.Element {
-    return (
-        <Box>
-            <Typography variant="h4">Quiz Name</Typography>
-            <TextField
-                id="outlined-number"
-                label="Name"
-                type="text"
-                InputLabelProps={{
-                    shrink: true,
-                }}
-                onChange={(event) => props.onQuizNameChange(event.target.value)}
-            />
-        </Box>
-    )
-}
-
-interface ICategoriesBlockProps {
-    categories: string[],
-    selectedCategories: string[],
-    checkListener: (category: string, checked: boolean) => void
-}
-
-function CategoriesBlock(props: ICategoriesBlockProps): JSX.Element {
-
-    const { categories, selectedCategories, checkListener } = props
-
-    const handleCheckChange = (event: React.ChangeEvent<HTMLInputElement>, category: string) => {
-        const newCheckState = event.target.checked
-        console.log("Categories block handleCheckChange new check state:", newCheckState)
-        checkListener(category, newCheckState)
-    }
-
-    const items = categories.map(category => {
-        const isChecked = selectedCategories.includes(category)
-        return (
-            <FormControlLabel
-                key={category}
-                label={category}
-                checked={isChecked}
-                control={
-                    <Checkbox
-                        onChange={e => handleCheckChange(e, category)}
-                    />
-                }
-                sx={{
-                    // Dont highlight the text
-                    userSelect: "none"
-                }}
-            />
-        )
-    })
-
-    return (
-        <Box>
-            <Typography variant="h4">Categories</Typography>
-            <FormGroup>
-                {items}
-            </FormGroup>
-        </Box>
-    )
-}
-
-interface IQuestionDurationBlockProps {
-    onDurationChanged: (duration: number) => void
-}
-
-function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
-
-    return (
-        <Box>
-            <Typography variant="h4">Question Duration</Typography>
-            <TextField
-                id="outlined-number"
-                label="Number"
-                type="number"
-                helperText="seconds"
-                InputLabelProps={{
-                    shrink: true,
-                }}
-                onChange={(event) => props.onDurationChanged(parseInt(event.target.value))}
-            />
-        </Box>
-    )
-}
-
+const COLUMN_WIDTH = "340px"
 interface IConfigColumnProps {
     accessCode: string,
     onUploadQuizClicked: () => void,
@@ -255,6 +26,20 @@ interface IConfigColumnProps {
     selectedCategories?: string[],
     categoriesCheckListener: (category: string, checked: boolean) => void
 }
+
+// Wrapper for consistent gaps between config elements in the config column
+// NOTE: Defined here as opposed to inside the ConfigColumn function body
+//       to maintain focus on input elemenst across re-renders.
+const ConfigColumnElementWrapper = (props: { children: React.ReactNode, marginTop?: number }) => (
+    <Box
+        sx={{
+            margin: 3,
+            marginTop: props.marginTop,
+        }}
+    >
+        {props.children}
+    </Box>
+)
 
 function ConfigColumn(props: IConfigColumnProps) {
 
@@ -282,17 +67,39 @@ function ConfigColumn(props: IConfigColumnProps) {
                 overflowY: "auto",
             }}
         >
-            <QuizAccessCodeBlock accessCode={props.accessCode} />
-            <QuizNameBlock onQuizNameChange={onQuizNameChange} />
-            <Button
-                variant="contained"
-                component="label"
-                onClick={props.onUploadQuizClicked}
+            <Card
+                sx={{
+                    margin: 3
+                }}
             >
-                Upload Quiz
-            </Button>
-            {categoryBlock}
-            {questionDurationBlock}
+                <ConfigColumnElementWrapper>
+                    <QuizAccessCode accessCode={props.accessCode} />
+                </ConfigColumnElementWrapper>
+                <ConfigColumnElementWrapper>
+                    <QuizNameBlock onQuizNameChange={onQuizNameChange} />
+                </ConfigColumnElementWrapper>
+                <ConfigColumnElementWrapper>
+                    <Button
+                        variant="contained"
+                        component="label"
+                        onClick={props.onUploadQuizClicked}
+                    >
+                        Upload Quiz
+                    </Button>
+                </ConfigColumnElementWrapper>
+                {/* Uncollapse these ui elements */}
+                <Collapse
+                    orientation="vertical"
+                    in={categoryBlock !== undefined && questionDurationBlock !== undefined}
+                >
+                    <ConfigColumnElementWrapper marginTop={0}>
+                        {categoryBlock}
+                    </ConfigColumnElementWrapper>
+                    <ConfigColumnElementWrapper>
+                        {questionDurationBlock}
+                    </ConfigColumnElementWrapper>
+                </Collapse>
+            </Card>
         </Box>
     )
 }
@@ -399,7 +206,6 @@ function Config(props: IConfigProps) {
     const questionsAndAnswers = useAppSelector(state => selectHostQuestions(state))
 
     const dispatch = useAppDispatch()
-    let navigate = useNavigate();
 
     // Extract categories
     let categories = questionsAndAnswers
@@ -487,7 +293,7 @@ function Config(props: IConfigProps) {
         leaderboard.length > 0
 
     return (
-        <Container
+        <Box
             sx={{
                 flexGrow: 1,
                 // Position the container so the columns can be positioned relative to it
@@ -520,7 +326,7 @@ function Config(props: IConfigProps) {
                 onStartClicked={onStartClicked}
                 startDisabled={!startButtonEnabled}
             />
-        </Container>
+        </Box>
     )
 }
 

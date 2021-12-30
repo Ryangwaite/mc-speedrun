@@ -12,6 +12,16 @@ const theme = createTheme({
         success: green,
         error: red,
     },
+    components: {
+        MuiCard: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 16,
+                    boxShadow: "none",
+                }
+            }
+        }
+    }
 })
 
 export default theme
