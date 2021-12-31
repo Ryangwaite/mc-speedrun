@@ -1,7 +1,16 @@
 import { Color } from "@mui/material"
 import { blue, green, grey, red } from "@mui/material/colors"
 import { createTheme } from "@mui/material/styles"
-import { type } from "os"
+
+// Make all the shades of colors defined in the pallette below
+// available to components.
+// See https://stackoverflow.com/questions/67013112/material-ui-how-to-access-all-palette-shades-inside-component
+type ColorPartial = Partial<Color>
+declare module "@mui/material/styles/createPalette" {
+    interface PaletteColor extends ColorPartial {}
+}
+
+
 
 const theme = createTheme({
     palette: {

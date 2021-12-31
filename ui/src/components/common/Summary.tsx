@@ -2,13 +2,14 @@ import { Box, Typography, Card, LinearProgress, Button, Container, Stack, Circul
 import _ from "lodash";
 import React, { useEffect, useState } from "react";
 import { LeaderboardColumn } from "./Leaderboard";
-import { OptionMode, QuestionCardWithStats } from "./Question";
+import { QuestionCardWithStats } from "./question/Question";
 import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary,} from "../../types";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../slices/participant";
 import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../../slices/common";
 import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../../slices/host";
 import { useNavigate } from "react-router-dom";
+import { OptionMode } from "./question/Option";
 
 interface IProgressSectionProps {
     progressCurrent: number,        // i.e. how many participants have finished

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Button, Typography, Box, Card, LinearProgress, Container, CircularProgress} from "@mui/material";
-import { OptionMode, QuestionCard } from "../common/Question";
 import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard } from "../../slices/common";
 import { useNavigate } from "react-router-dom";
+import { OptionMode } from "../common/question/Option";
+import QuestionCard from "../common/question/QuestionCard";
 interface IQuestionNumberCardProps {
     questionNumber: number,
     totalQuestions: number,

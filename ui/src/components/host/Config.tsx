@@ -1,4 +1,4 @@
-import { Box, Button, Card, Checkbox, CircularProgress, Collapse, Container, FormControlLabel, FormGroup, TextField, Typography } from "@mui/material";
+import { Box, Button, Card, CircularProgress, Collapse, FormGroup, TextField, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers } from "../../types";
@@ -8,13 +8,15 @@ import { selectHostQuestions, selectSetRequestQuestions, setHostConfig, setReque
 import { ILeaderboardItem } from "../../types";
 import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
 import ParticipantList from "../common/ParticipantList";
-import { OptionMode, QuestionCard } from "../common/Question";
 import _ from "lodash";
 import UploadModal from "./UploadModal";
 import QuizNameBlock from "./QuizNameBlock";
 import QuizAccessCode from "./QuizAccessCode";
 import CategoriesBlock from "./CategoriesBlock";
 import QuestionDurationBlock from "./QuestionDurationBlock";
+import { OptionMode } from "../common/question/Option";
+import QuestionCard from "../common/question/QuestionCard";
+import theme from "../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
 interface IConfigColumnProps {
@@ -111,7 +113,6 @@ interface IQuestionColumnProps {
 
 function QuestionColumn(props: IQuestionColumnProps) {
 
-
     let content = undefined
 
     if (props.loading) {
@@ -127,15 +128,22 @@ function QuestionColumn(props: IQuestionColumnProps) {
             }))
 
             renderedQuestions.push(
-                <QuestionCard
-                    question={question}
-                    numCorrectOptions={answers.length}
-                    options={optionsAndMode}
-                />
+                <Box
+                    marginTop={3}
+                    marginBottom={3}
+                >
+                    <QuestionCard
+                        question={question}
+                        numCorrectOptions={answers.length}
+                        options={optionsAndMode}
+                    />
+                </Box>
             )
         }
         content = renderedQuestions
     }
+
+    const scrollbarWidth = theme.spacing(1)
 
     return (
         <Box
@@ -144,9 +152,26 @@ function QuestionColumn(props: IQuestionColumnProps) {
             top="0"
             bottom="0"
             left="50%" // NOTE: the translateX(-50%) to position in centre
+            maxWidth={theme.spacing(100)}
+            // width={`calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH} - ${scrollbarWidth})`}
+            width={`calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH})`}
             sx={{
+                transform: "translateX(-50%)",
                 overflowY: "auto",
-                transform: "translateX(-50%)" // There's no direct prop for this, hence its here
+                scrollbarColor: "red",
+                "&::-webkit-scrollbar": {
+                    width: scrollbarWidth,
+                },
+                "&::-webkit-scrollbar-track": {
+                    boxShadow: theme.shadows[0],
+                },
+                "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: theme.palette.grey[500],
+                    borderRadius: 5,
+                    "&:hover": {
+                        backgroundColor: theme.palette.grey[600],
+                    }
+                },
             }}
         >
             {content}
@@ -171,7 +196,7 @@ function ParticipantColumn(props: IParticipantColumnProps) {
             top="0"
             right="0"
             bottom="0"
-            width={LEADERBOARD_COLUMN_WIDTH}
+            width={COLUMN_WIDTH}
             marginRight="12px"
             sx={{
                 overflowY: "auto",
