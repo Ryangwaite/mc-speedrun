@@ -15,7 +15,8 @@ declare module "@mui/material/styles/createPalette" {
 const theme = createTheme({
     palette: {
         primary: {
-            main: blue[700]
+            ...blue,
+            main: blue[700],
         },
         grey: grey,
         success: green,
@@ -27,7 +28,7 @@ const theme = createTheme({
                 root: {
                     borderRadius: 16,
                     boxShadow: "none",
-                }
+                },
             }
         }
     }

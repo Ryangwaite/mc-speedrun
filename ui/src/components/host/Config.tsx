@@ -6,8 +6,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard, selectQuizId } from "../../slices/common";
 import { selectHostQuestions, selectSetRequestQuestions, setHostConfig, setRequestQuestions } from "../../slices/host";
 import { ILeaderboardItem } from "../../types";
-import { LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
-import ParticipantList from "../common/ParticipantList";
+import ParticipantList from "../common/participantList/ParticipantList";
 import _ from "lodash";
 import UploadModal from "./UploadModal";
 import QuizNameBlock from "./QuizNameBlock";
@@ -197,14 +196,12 @@ function ParticipantColumn(props: IParticipantColumnProps) {
             right="0"
             bottom="0"
             width={COLUMN_WIDTH}
-            marginRight="12px"
             sx={{
                 overflowY: "auto",
             }}
         >
-            <Typography variant="h4">Participants</Typography>
+            <Typography variant="h6" color={theme.palette.grey[600]}>Participants</Typography>
             <ParticipantList
-                thisParticipant={null}
                 otherParticipants={participants}
             />
             <Button disabled={startDisabled} variant="contained" onClick={() => onStartClicked()}>Start</Button>
