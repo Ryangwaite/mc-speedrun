@@ -1,4 +1,4 @@
-import { IconButton, Snackbar, Stack, TextField } from "@mui/material"
+import { IconButton, Snackbar, Stack, TextField, Typography } from "@mui/material"
 import { useRef, useState } from "react"
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
@@ -7,7 +7,6 @@ interface IQuizAccessCodeProps {
 }
 
 function QuizAccessCode(props: IQuizAccessCodeProps) {
-    
     const [snackbarVisible, setSnackbarVisible] = useState(false)
     const accessCodeRef = useRef(null)
 
@@ -24,32 +23,37 @@ function QuizAccessCode(props: IQuizAccessCodeProps) {
     }
 
     return (
-        <Stack
-            direction="row"
-        >
-            <TextField
-                inputRef={accessCodeRef}
-                id="access-code-field"
-                label="Access Code"
-                defaultValue={props.accessCode}
-                InputProps={{
-                    readOnly: true,
-                }}
-            />
-            <IconButton aria-label="copy" onClick={onCopyIconClicked}>
-                <ContentCopyIcon />
-            </IconButton>
-            <Snackbar
-                open={snackbarVisible}
-                autoHideDuration={1000}
-                onClose={() => setSnackbarVisible(false)}
-                message="Access code copied!"
-                anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                }}
-            />
-        </Stack>
+        <>
+            <Typography variant="h6" color="grey.600">Participants</Typography>
+            <Typography variant="body1" color="grey.500">Invite friends to join by sharing the following code</Typography>
+            <Stack
+                direction="row"
+                marginTop={1.5}
+            >
+                <TextField
+                    inputRef={accessCodeRef}
+                    id="access-code-field"
+                    label="Access Code"
+                    defaultValue={props.accessCode}
+                    InputProps={{
+                        readOnly: true,
+                    }}
+                />
+                <IconButton aria-label="copy" onClick={onCopyIconClicked}>
+                    <ContentCopyIcon />
+                </IconButton>
+                <Snackbar
+                    open={snackbarVisible}
+                    autoHideDuration={1000}
+                    onClose={() => setSnackbarVisible(false)}
+                    message="Access code copied!"
+                    anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "right",
+                    }}
+                />
+            </Stack>
+        </>
     )
 }
 

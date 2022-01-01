@@ -1,4 +1,4 @@
-import { Box, Button, Card, CircularProgress, Collapse, FormGroup, TextField, Typography } from "@mui/material";
+import { Box, Button, Card, CircularProgress, Collapse, Fab, Fade, FormGroup, TextField, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers } from "../../types";
@@ -15,11 +15,10 @@ import CategoriesBlock from "./CategoriesBlock";
 import QuestionDurationBlock from "./QuestionDurationBlock";
 import { OptionMode } from "../common/question/Option";
 import QuestionCard from "../common/question/QuestionCard";
-import theme from "../../themes/theme";
+import theme, { scrollbarMixin } from "../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
 interface IConfigColumnProps {
-    accessCode: string,
     onUploadQuizClicked: () => void,
     onQuestionDurationChange: (duration: number) => void,
     onQuizNameChange: (name: string) => void,
@@ -31,7 +30,7 @@ interface IConfigColumnProps {
 // Wrapper for consistent gaps between config elements in the config column
 // NOTE: Defined here as opposed to inside the ConfigColumn function body
 //       to maintain focus on input elemenst across re-renders.
-const ConfigColumnElementWrapper = (props: { children: React.ReactNode, marginTop?: number }) => (
+const ColumnElementWrapper = (props: { children: React.ReactNode, marginTop?: number }) => (
     <Box
         sx={{
             margin: 3,
@@ -73,13 +72,10 @@ function ConfigColumn(props: IConfigColumnProps) {
                     margin: 3
                 }}
             >
-                <ConfigColumnElementWrapper>
-                    <QuizAccessCode accessCode={props.accessCode} />
-                </ConfigColumnElementWrapper>
-                <ConfigColumnElementWrapper>
+                <ColumnElementWrapper>
                     <QuizNameBlock onQuizNameChange={onQuizNameChange} />
-                </ConfigColumnElementWrapper>
-                <ConfigColumnElementWrapper>
+                </ColumnElementWrapper>
+                <ColumnElementWrapper>
                     <Button
                         variant="contained"
                         component="label"
@@ -87,18 +83,18 @@ function ConfigColumn(props: IConfigColumnProps) {
                     >
                         Upload Quiz
                     </Button>
-                </ConfigColumnElementWrapper>
+                </ColumnElementWrapper>
                 {/* Uncollapse these ui elements */}
                 <Collapse
                     orientation="vertical"
                     in={categoryBlock !== undefined && questionDurationBlock !== undefined}
                 >
-                    <ConfigColumnElementWrapper marginTop={0}>
+                    <ColumnElementWrapper marginTop={0}>
                         {categoryBlock}
-                    </ConfigColumnElementWrapper>
-                    <ConfigColumnElementWrapper>
+                    </ColumnElementWrapper>
+                    <ColumnElementWrapper>
                         {questionDurationBlock}
-                    </ConfigColumnElementWrapper>
+                    </ColumnElementWrapper>
                 </Collapse>
             </Card>
         </Box>
@@ -142,8 +138,6 @@ function QuestionColumn(props: IQuestionColumnProps) {
         content = renderedQuestions
     }
 
-    const scrollbarWidth = theme.spacing(1)
-
     return (
         <Box
             // Position
@@ -152,25 +146,11 @@ function QuestionColumn(props: IQuestionColumnProps) {
             bottom="0"
             left="50%" // NOTE: the translateX(-50%) to position in centre
             maxWidth={theme.spacing(100)}
-            // width={`calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH} - ${scrollbarWidth})`}
             width={`calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH})`}
             sx={{
                 transform: "translateX(-50%)",
                 overflowY: "auto",
-                scrollbarColor: "red",
-                "&::-webkit-scrollbar": {
-                    width: scrollbarWidth,
-                },
-                "&::-webkit-scrollbar-track": {
-                    boxShadow: theme.shadows[0],
-                },
-                "&::-webkit-scrollbar-thumb": {
-                    backgroundColor: theme.palette.grey[500],
-                    borderRadius: 5,
-                    "&:hover": {
-                        backgroundColor: theme.palette.grey[600],
-                    }
-                },
+                ...scrollbarMixin
             }}
         >
             {content}
@@ -179,14 +159,13 @@ function QuestionColumn(props: IQuestionColumnProps) {
 }
 
 interface IParticipantColumnProps {
+    accessCode: string,
     participants: ILeaderboardItem[],
-    onStartClicked: () => void,
-    startDisabled: boolean,
 }
 
 function ParticipantColumn(props: IParticipantColumnProps) {
 
-    const { participants, onStartClicked, startDisabled } = props
+    const { participants } = props
 
     return (
         <Box
@@ -198,13 +177,25 @@ function ParticipantColumn(props: IParticipantColumnProps) {
             width={COLUMN_WIDTH}
             sx={{
                 overflowY: "auto",
+                ...scrollbarMixin,
             }}
         >
-            <Typography variant="h6" color={theme.palette.grey[600]}>Participants</Typography>
+            <Card
+                sx={{
+                    margin: 3
+                }}
+            >
+                <ColumnElementWrapper>
+                    <QuizAccessCode accessCode={props.accessCode} />
+                </ColumnElementWrapper>
+            </Card>
             <ParticipantList
                 otherParticipants={participants}
+                sx={{
+                    marginLeft: 3,
+                    marginRight: 3,
+                }}
             />
-            <Button disabled={startDisabled} variant="contained" onClick={() => onStartClicked()}>Start</Button>
         </Box>
     )
 }
@@ -308,11 +299,11 @@ function Config(props: IConfigProps) {
         ))
     }
 
-    const startButtonEnabled = quizName &&
+    const startButtonEnabled = (quizName &&
         selectedCategories && selectedCategories!.length > 0 &&
         questionDuration > 0 &&
         questionsAndAnswers && selectedQuestionIndexes.length > 0 &&
-        leaderboard.length > 0
+        leaderboard.length > 0) || false
 
     return (
         <Box
@@ -329,7 +320,6 @@ function Config(props: IConfigProps) {
                 uploadErrMsg={uploadErrMsg}
             />
             <ConfigColumn
-                accessCode={quizId!}
                 onQuizNameChange={onQuizNameChange}
                 onUploadQuizClicked={onUploadQuizClicked}
                 onQuestionDurationChange={onQuestionDurationChange}
@@ -344,10 +334,28 @@ function Config(props: IConfigProps) {
             />
 
             <ParticipantColumn
+                accessCode={quizId!}
                 participants={leaderboard}
-                onStartClicked={onStartClicked}
-                startDisabled={!startButtonEnabled}
             />
+            <Fade in={startButtonEnabled}>
+                <Fab
+                    variant="extended"
+                    color="primary"
+                    disabled={!startButtonEnabled}
+                    onClick={onStartClicked}
+                    sx={{
+                        width: theme.spacing(16),
+                        borderRadius: 4,
+                        // Centre in the middle of the participants column
+                        position: "absolute",
+                        bottom: theme.spacing(5),
+                        right: `calc(170px - ${theme.spacing(8)})`, // = half column width - half button width,
+                        display: startButtonEnabled ? "inherit" : "none" // hide the button when not enabled
+                    }}
+                >
+                    Start
+                </Fab>
+            </Fade>
         </Box>
     )
 }
