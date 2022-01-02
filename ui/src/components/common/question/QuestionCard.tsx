@@ -16,9 +16,7 @@ export function QuestionCard(props: IQuestionCardProps) {
     const { question, options, numCorrectOptions, onOptionClicked} = props
 
     return (
-        <Card
-            variant="outlined"
-        >
+        <Card>
             <CardContent
                 sx={{
                     padding: 0,

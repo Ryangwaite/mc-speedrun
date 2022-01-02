@@ -18,6 +18,7 @@ import QuestionCard from "../common/question/QuestionCard";
 import theme, { scrollbarMixin } from "../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
+
 interface IConfigColumnProps {
     onUploadQuizClicked: () => void,
     onQuestionDurationChange: (duration: number) => void,
