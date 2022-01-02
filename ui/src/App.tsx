@@ -9,6 +9,7 @@ import Quiz from './components/participant/Quiz';
 import { Route, Routes } from 'react-router-dom';
 import { selectWebsocketConnectionState } from './slices/common';
 import { useAppSelector } from './hooks';
+import theme from './themes/theme';
 
 function App() {
 
@@ -22,7 +23,7 @@ function App() {
             sx={{
                 height: "100vh",
                 width: "100vw",
-                backgroundColor: "grey.100"
+                backgroundColor: theme.palette.grey[100],
             }}
         >
             <TopBar connectionState={connectionState}/>

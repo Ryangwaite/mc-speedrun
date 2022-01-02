@@ -1,7 +1,7 @@
 import { LoadingButton } from "@mui/lab"
-import { Box, Input, Modal, Stack, Typography } from "@mui/material"
+import { Box, Button, Modal, Stack, Typography } from "@mui/material"
 import { useRef, useState } from "react"
-
+import theme from "../../themes/theme"
 
 interface IUploadModalProps {
     open: boolean,
@@ -15,6 +15,7 @@ function UploadModal(props: IUploadModalProps): JSX.Element {
 
     const fileInput = useRef<HTMLInputElement>(null)
     const [fileSelected, setFileSelected] = useState(false)
+    const [selectedFileName, setSelectedFileName] = useState<string>()
     const [isUploading, setIsUploading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -35,11 +36,15 @@ function UploadModal(props: IUploadModalProps): JSX.Element {
 
     const handleFileSelected = () => {
         setFileSelected(true)
+        const fileName = fileInput.current!.files![0]!.name
+        setSelectedFileName(fileName)
     }
 
     const uploadErrMsgComponent = !fileSelected && props.uploadErrMsg
-        ? <Typography color="red" variant="caption">{props.uploadErrMsg}</Typography>
+        ? <Typography color="red" variant="caption" marginBottom={3}>{props.uploadErrMsg}</Typography>
         : undefined
+
+    const fileInputId = "upload-quiz-input"
 
     return (
         <Modal
@@ -52,36 +57,60 @@ function UploadModal(props: IUploadModalProps): JSX.Element {
                     top: "50%",
                     left: "50%",
                     transform: 'translate(-50%, -50%)',
-                    width: "500px",
-                    backgroundColor: "whitesmoke",
-                    border: "1px solid black",
-                    borderRadius: "12px",
-                    padding: "24px"
+                    width: theme.spacing(50),
+                    backgroundColor: theme.palette.grey[100],
+                    borderRadius: 5,
+                    padding: "24px",
+                    boxShadow: theme.shadows[10],
                 }}
             >
                 <Typography
                     variant="h4"
                     textAlign="center"
-                    marginBottom="24px"
+                    padding={0}
+                    marginBottom={3}
                 >Upload Quiz</Typography>
                 <form onSubmit={handleSubmit}>
                     <Stack
                         justifyContent="center"
                         alignItems="center"
                     >
-                        <Input
-                            required
-                            disableUnderline
-                            type="file"
-                            inputRef={fileInput}
-                            margin="none"
-                            onInput={handleFileSelected}
-                        />
+                        <Stack
+                            direction={"row"}
+                            alignItems={"center"}
+                            padding={1.5}
+                            marginBottom={3}
+                            sx={{
+                                backgroundColor: "white",
+                                borderRadius: 5,
+                            }}
+                        >
+                            <input
+                                id={fileInputId}
+                                type="file"
+                                ref={fileInput}
+                                onInput={handleFileSelected}
+                                style={{
+                                    display: "none",
+                                }}
+                            />
+                            <label
+                                htmlFor={fileInputId}
+                            >
+                                <Button
+                                    component="span"
+                                >Choose</Button>
+                            </label>
+                            <Typography
+                                color={fileSelected ? theme.palette.grey[900] : theme.palette.grey[500]}
+                            >{fileSelected ? selectedFileName! : "No file selected"}</Typography>
+                        </Stack>
                         {uploadErrMsgComponent}
                         <LoadingButton
                             type="submit"
                             disabled={!fileSelected}
                             loading={isUploading}
+                            variant="contained"
                         >Upload</LoadingButton>
                     </Stack>
                 </form>

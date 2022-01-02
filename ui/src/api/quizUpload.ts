@@ -25,8 +25,8 @@ export async function uploadQuiz(quizFile: File, token: string) {
     // })
     // return 201 on success else 4xx on failure which is the result of parsing on the server side
 
-    // Sleep for 300ms to simulate network latency
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Sleep for 500ms to simulate network latency
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // throw new Error("File was incorrectly formatted") // comment out to show error behaviour
 }
