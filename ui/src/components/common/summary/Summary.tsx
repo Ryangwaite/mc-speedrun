@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { OptionMode } from "../question/Option";
 import ProgressBlock from "./ProgressBlock";
 import StatCard from "./StatCard";
-import theme, { scrollbarMixin } from "../../../themes/theme";
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
 
@@ -55,7 +55,7 @@ function SummaryColumn(props: ISummaryColumnProps) {
                 overflowY: "auto",
             }}
         >
-            <ColumnElementWrapper>
+            <ColumnElementWrapper marginTop={COLUMN_MARGIN_TOP}>
                 <ProgressBlock progressCurrent={numberParticipantsComplete} progressTotal={totalParticipants} onReturnToHomeClicked={onReturnToHomeClicked} />
             </ColumnElementWrapper>
             <Collapse
@@ -144,7 +144,7 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
 
         renderedQuestions.push(
             <Box
-                marginTop={3}
+                marginTop={COLUMN_MARGIN_TOP}
                 marginBottom={3}
             >
                 <QuestionCardWithStats

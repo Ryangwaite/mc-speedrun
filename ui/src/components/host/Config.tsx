@@ -15,7 +15,7 @@ import CategoriesBlock from "./CategoriesBlock";
 import QuestionDurationBlock from "./QuestionDurationBlock";
 import { OptionMode } from "../common/question/Option";
 import QuestionCard from "../common/question/QuestionCard";
-import theme, { scrollbarMixin } from "../../themes/theme";
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
 
@@ -70,7 +70,8 @@ function ConfigColumn(props: IConfigColumnProps) {
         >
             <Card
                 sx={{
-                    margin: 3
+                    margin: 3,
+                    marginTop: COLUMN_MARGIN_TOP,
                 }}
             >
                 <ColumnElementWrapper>
@@ -125,7 +126,7 @@ function QuestionColumn(props: IQuestionColumnProps) {
 
             renderedQuestions.push(
                 <Box
-                    marginTop={3}
+                    marginTop={COLUMN_MARGIN_TOP}
                     marginBottom={3}
                 >
                     <QuestionCard
@@ -183,7 +184,8 @@ function ParticipantColumn(props: IParticipantColumnProps) {
         >
             <Card
                 sx={{
-                    margin: 3
+                    margin: 3,
+                    marginTop: COLUMN_MARGIN_TOP,
                 }}
             >
                 <ColumnElementWrapper>

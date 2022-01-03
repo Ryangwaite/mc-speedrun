@@ -50,3 +50,6 @@ export const scrollbarMixin: SxProps<Theme> = {
         }
     },
 }
+
+// This defines the gap between the appbar and the element. This is the mulitplier on the theme spacing
+export const COLUMN_MARGIN_TOP = 0.5

@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectUserId, selectUsername, setUsername } from "../../slices/participant";
 import { selectLeaderboard } from "../../slices/common";
 import ParticipantListJoinItem from "../common/participantList/ParticipantListJoinItem";
-import theme, { scrollbarMixin } from "../../themes/theme";
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
 interface ILobbyProps {
     // participants // will add this eventually
 }
@@ -43,6 +43,7 @@ function Lobby(props: ILobbyProps) {
             <Typography
                 variant="h6"
                 margin={3}
+                marginTop={COLUMN_MARGIN_TOP}
                 padding={0}
             >Waiting for host to start...</Typography>
 

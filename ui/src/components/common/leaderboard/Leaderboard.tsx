@@ -4,7 +4,7 @@ import { ILeaderboardItem } from "../../../types";
 import _ from "lodash";
 import LeaderBoardItem from "./LeaderboardItem";
 import LeaderBoardOmission from "./LeaderboardOmission";
-import { scrollbarMixin } from "../../../themes/theme";
+import { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../../themes/theme";
 
 interface ILeaderBoardProps {
     items: ILeaderboardItem[],
@@ -75,6 +75,7 @@ export function LeaderBoard(props: ILeaderBoardProps) {
         <List
             sx={{
                 margin: 3,
+                marginTop: COLUMN_MARGIN_TOP,
                 padding: 0,
             }}
         >
