@@ -2,7 +2,7 @@ import { Box } from '@mui/material';
 import { TopBar } from './components/common/AppBar';
 import Home from './components/home/home';
 import Config from './components/host/Config';
-import Summary from './components/common/Summary';
+import Summary from './components/common/summary/Summary';
 
 import Lobby from './components/participant/Lobby';
 import Quiz from './components/participant/Quiz';
