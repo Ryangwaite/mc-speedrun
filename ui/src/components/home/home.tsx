@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { Button, Card, CardActions, CardHeader, Divider, Grid, TextField} from "@mui/material";
+import { Box, Divider, Stack } from "@mui/material";
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate } from "react-router-dom";
@@ -9,141 +8,18 @@ import { useAppDispatch } from "../../hooks";
 import { setUserId } from "../../slices/participant";
 import { setClientType, setQuizId } from "../../slices/common";
 import { ClientType } from "../../types";
-interface ITextButtonCardProps {
-    title: string,
-    label: string,
-    buttonLabel: string,
-    onSubmit: (inputContent: string) => void
-}
-
-function TextButtonCard(props: ITextButtonCardProps) {
-
-    const { title, label, buttonLabel, onSubmit} = props
-
-    const [fieldContent, setFieldContent] = useState("")
-
-    function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const value = event.target.value;
-        console.debug(`Field has updated to '${value}'`)
-        setFieldContent(value)
-    }
-
-    function onKeyDown(event: React.KeyboardEvent) {
-        if ((event.code === "Enter" || event.code === "NumpadEnter") && fieldContent) {
-            event.preventDefault()
-            onSubmit(fieldContent)
-        }
-    }
-    
-    return (
-        <Card sx={{
-            marginLeft: "auto",
-            marginRight: "auto",
-            maxWidth: 320,
-        }}>
-            <CardHeader title={title} sx={{ textAlign: "center" }} />
-            <CardActions
-                sx={{
-                    height: 80
-                }}
-            >
-                <TextField
-                    id="outlined-basic"
-                    label={label}
-                    onChange={onFieldChange}
-                    onKeyDown={onKeyDown}
-                    sx={{
-                        marginRight: 1
-                    }}
-                />
-                <Button
-                    disabled={!fieldContent}
-                    onClick={() => onSubmit(fieldContent)}
-                    variant="contained" 
-                >{buttonLabel}</Button>
-            </CardActions>
-        </Card>
-    )
-}
-
-interface IButtonCardProps {
-    title: string,
-    buttonLabel: string,
-    onSubmit: () => void
-}
-
-function ButtonCard(props: IButtonCardProps) {
-    
-    const { title, buttonLabel, onSubmit} = props
-    return (
-        <Card sx={{
-            marginLeft: "auto",
-            marginRight: "auto",
-            maxWidth: 320
-        }}>
-            <CardHeader title={title} sx={{ textAlign: "center" }} />
-            <CardActions
-                sx={{
-                    height: 80
-                }}
-            >
-                <Button
-                    onClick={onSubmit}
-                    variant="contained" 
-                    fullWidth
-                >{buttonLabel}</Button>
-            </CardActions>
-        </Card>
-    )
-}
-
-/**
- * Divider that switches between horizontal and vertical
- * depending on screen size
- */
-function ResponsiveDivider() {
-    const theme: Theme = useTheme();
-    const isSmallAndUp = useMediaQuery(theme.breakpoints.up("sm"));
-
-    const marginSize = 2
-
-    if (isSmallAndUp) {
-        // Vertical version
-        return (
-            <Divider
-                flexItem
-                orientation={isSmallAndUp ? "vertical" : "horizontal"}
-                textAlign="center"
-                sx={{
-                    marginLeft: marginSize,
-                    marginRight: marginSize
-                }}
-            >
-                OR
-            </Divider>
-        )
-    } else {
-        // Horizontal version
-        return (
-            <Divider
-                textAlign="center"
-                sx={{
-                    marginTop: marginSize,
-                    marginBottom: marginSize,
-                    width: "80%"
-                }}
-            >
-                OR
-            </Divider>
-        )
-    }
-}
+import TextButtonCard from "./TextButtonCard";
+import ButtonCard from "./ButtonCard";
+import ResponsiveDivider from "./ResponsiveDivider";
 
 interface IHomeProps {
     // TODO
 }
 
 function Home(props: IHomeProps) {
+    const theme: Theme = useTheme();
+    const isSmallAndUp = useMediaQuery(theme.breakpoints.up("sm"));
+
     const dispatch = useAppDispatch()
     let navigate = useNavigate();
 
@@ -152,15 +28,15 @@ function Home(props: IHomeProps) {
         try {
             const authorizationResponse = await postJoinQuiz(code)
             const token = authorizationResponse.access_token
-            const {userId, quizId} = getParticipantJwtTokenClaims(token)
-            
+            const { userId, quizId } = getParticipantJwtTokenClaims(token)
+
             dispatch(setClientType(ClientType.PARTICIPANT))
             dispatch(setUserId(userId))
             dispatch(setQuizId(quizId))
             dispatch(websocketConnect(token))
 
             navigate(`/lobby`)
-        } catch(e) {
+        } catch (e) {
             alert("Failed to join session:" + e)
         }
     }
@@ -170,42 +46,52 @@ function Home(props: IHomeProps) {
         try {
             const authorizationResponse = await postHostQuiz()
             const token = authorizationResponse.access_token
-            const {quizId} = getJwtTokenClaims(token)
+            const { quizId } = getJwtTokenClaims(token)
 
             dispatch(setClientType(ClientType.HOST))
             dispatch(setQuizId(quizId))
             dispatch(websocketConnect(token))
 
             navigate(`/config`)
-        } catch(e) {
+        } catch (e) {
             alert("Failed to host session:" + e)
         }
     }
 
+    // NOTE: Need to wrap in a <Box /> so that the "OR" text remains in the center of the
+    //       dividing line when displayed in a column
+    const divider = (
+        <Box
+            marginLeft="10%"
+            marginRight="10%"
+            marginTop="10%"
+            marginBottom="10%"
+            width={isSmallAndUp ? undefined : "80%"}
+        >
+            <ResponsiveDivider orientation={isSmallAndUp ? "vertical" : "horizontal"} />
+        </Box>
+    )
+
     return (
-        <Grid
-            container
+        <Stack
+            direction={isSmallAndUp ? "row" : "column"}
+            divider={divider}
             alignItems="center"
             justifyContent="center"
-            marginTop="5vh"
+            height="100vh"
         >
-            <Grid item xs={12} sm={5} >
-                <TextButtonCard
-                    title={"Join"} 
-                    label={"Access Code"} 
-                    buttonLabel={"Enter"}
-                    onSubmit={onParticipantJoin}
-                />
-            </Grid>
-            <ResponsiveDivider />
-            <Grid item xs={12} sm={5}>
-                <ButtonCard
-                    title={"Host"}
-                    buttonLabel={"Begin"}
-                    onSubmit={onHostBegin}
-                />
-            </Grid>
-        </Grid>
+            <TextButtonCard
+                title={"Join"}
+                label={"Access Code"}
+                buttonLabel={"Enter"}
+                onSubmit={onParticipantJoin}
+            />
+            <ButtonCard
+                title={"Host"}
+                buttonLabel={"Begin"}
+                onSubmit={onHostBegin}
+            />
+        </Stack>
     )
 }
 

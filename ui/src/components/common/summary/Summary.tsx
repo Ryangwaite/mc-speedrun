@@ -1,96 +1,33 @@
-import { Box, Typography, Card, LinearProgress, Button, Container, Stack, CircularProgress, } from "@mui/material";
+import { Box, Typography, Stack, CircularProgress, Collapse, } from "@mui/material";
 import _ from "lodash";
 import React, { useEffect, useState } from "react";
-import { LeaderboardColumn } from "./Leaderboard";
-import { OptionMode, QuestionCardWithStats } from "./Question";
-import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary,} from "../../types";
-import { useAppDispatch, useAppSelector } from "../../hooks";
-import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../slices/participant";
-import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../../slices/common";
-import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../../slices/host";
+import { PositionedLeaderboard } from "../leaderboard/Leaderboard";
+import QuestionCardWithStats from "../question/QuestionCardWithStats";
+import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary, } from "../../../types";
+import { useAppDispatch, useAppSelector } from "../../../hooks";
+import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../../slices/participant";
+import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../../../slices/common";
+import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../../../slices/host";
 import { useNavigate } from "react-router-dom";
+import { OptionMode } from "../question/Option";
+import ProgressBlock from "./ProgressBlock";
+import StatCard from "./StatCard";
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../../themes/theme";
 
-interface IProgressSectionProps {
-    progressCurrent: number,        // i.e. how many participants have finished
-    progressTotal: number,          // i.e. how many total participants
-    onReturnToHomeClicked: () => void
-}
+const COLUMN_WIDTH = "340px"
 
-function ProgressSection(props: IProgressSectionProps) {
-    const {progressCurrent, progressTotal, onReturnToHomeClicked} = props
-    
-    if (progressCurrent === progressTotal) {
-        // All Participants have finished
-        return (
-            <Box
-                margin="16px"
-            >
-                <Typography
-                    variant="h4"
-                    fontWeight="bold"
-                    color="green"
-                >Complete!</Typography>
-                <Button
-                    variant="outlined"
-                    color="error"       // Not actually an error but its an easy way to make it red
-                    onClick={onReturnToHomeClicked}
-                    sx={{
-                        margin: "4px"
-                    }}
-                >RETURN TO HOME</Button>
-            </Box>
-        )
-    } else {
-        // Some participants are still going
-        const progress = (progressCurrent / progressTotal) * 100
-        return (
-            <Box
-                margin="16px"
-            >
-                <Typography variant="h4">In progress...</Typography>
-                <Typography variant="subtitle1">{progressCurrent}/{progressTotal} finished</Typography>
-                <LinearProgress value={progress} variant="determinate"/>
-            </Box>
-        )
-    }
-}
-
-interface IStatCardProps {
-    value: string,
-    label: string,
-}
-
-function StatCard(props: IStatCardProps) {
-
-    const {label, value} = props
-
-    return (
-        <Card
-            sx={{
-                // Position this so the label can be positioned relative to it
-                position: "relative",
-                width: "256px",
-                height: "164px",
-                margin: "16px",
-                // Centre the value in the middle
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-            }}
-        >
-            <Typography variant="h2">{value}</Typography>
-            <Typography
-                variant="h6"
-                color="gray"
-                position="absolute"
-                right="0"
-                bottom="0"
-                marginRight="8px"
-                marginBottom="8px"
-            >{label}</Typography>
-        </Card>
-    )
-}
+// Wrapper for consistent gaps between elements in the summary column
+const ColumnElementWrapper = (props: { children: React.ReactNode, marginTop?: number }) => (
+    <Box
+        sx={{
+            margin: 3,
+            marginTop: props.marginTop,
+        }}
+        component="div"
+    >
+        {props.children}
+    </Box>
+)
 
 interface ISummaryColumnProps {
     numberParticipantsComplete: number,
@@ -101,8 +38,8 @@ interface ISummaryColumnProps {
 }
 
 function SummaryColumn(props: ISummaryColumnProps) {
-    const {numberParticipantsComplete, totalParticipants, onReturnToHomeClicked} = props
-    const {totalTimeElapsed, avgAnswerTime} = props
+    const { numberParticipantsComplete, totalParticipants, onReturnToHomeClicked } = props
+    const { totalTimeElapsed, avgAnswerTime } = props
     return (
         <Box
             // Position
@@ -113,15 +50,31 @@ function SummaryColumn(props: ISummaryColumnProps) {
             // Content
             display="flex"
             flexDirection="column"
-            maxWidth="320px" // TODO: Pull out to a const
+            width={COLUMN_WIDTH}
             sx={{
                 overflowY: "auto",
             }}
         >
-            <ProgressSection progressCurrent={numberParticipantsComplete} progressTotal={totalParticipants} onReturnToHomeClicked={onReturnToHomeClicked} />
-            <StatCard value={totalTimeElapsed} label="Time elapsed" />
-            <StatCard value={avgAnswerTime} label="Avg. answer time" />
-        </Box>
+            <ColumnElementWrapper marginTop={COLUMN_MARGIN_TOP}>
+                <ProgressBlock progressCurrent={numberParticipantsComplete} progressTotal={totalParticipants} onReturnToHomeClicked={onReturnToHomeClicked} />
+            </ColumnElementWrapper>
+            <Collapse
+                in={totalTimeElapsed.length > 0}
+                orientation="vertical"
+            >
+                <ColumnElementWrapper marginTop={0}>
+                    <StatCard label="Time elapsed" value={totalTimeElapsed} unit="seconds" />
+                </ColumnElementWrapper>
+            </Collapse>
+            <Collapse
+                in={avgAnswerTime.length > 0}
+                orientation="vertical"
+            >
+                <ColumnElementWrapper marginTop={0}>
+                    <StatCard label="Average answer time" value={avgAnswerTime} unit="seconds" />
+                </ColumnElementWrapper>
+            </Collapse>
+        </Box >
     )
 }
 
@@ -130,7 +83,7 @@ interface IQuestionSectionProps {
     loadingMessage: string,
 }
 
-function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProps) {
+function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionProps) {
 
     if (questionSummary.length === 0) {
         return (
@@ -150,7 +103,7 @@ function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProp
                     sx={{
                         marginLeft: "auto",
                         marginRight: "auto",
-                        marginBottom: "4px"
+                        marginBottom: theme.spacing(3),
                     }}
                 />
                 <Typography>{loadingMessage}</Typography>
@@ -179,7 +132,7 @@ function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProp
                 } else {
                     throw Error("Unexpected OptionMode state")
                 }
-                return {text: value, mode}
+                return { text: value, mode }
             })
         } else {
             // HostQuestionSummary
@@ -190,16 +143,21 @@ function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProp
         }
 
         renderedQuestions.push(
-            <QuestionCardWithStats
-                question={qs.question}
-                numCorrectOptions={qs.correctOptions.length}
-                options={optionsAndMode}
-                answerStats={{
-                    correctAnswerers: qs.correctAnswerers.map(x => x.name),
-                    incorrectAnswerers: qs.incorrectAnswerers.map(x => x.name),
-                    timeExpiredAnswerers: qs.timeExpiredAnswerers.map(x => x.name),
-                }}
-            />
+            <Box
+                marginTop={COLUMN_MARGIN_TOP}
+                marginBottom={3}
+            >
+                <QuestionCardWithStats
+                    question={qs.question}
+                    numCorrectOptions={qs.correctOptions.length}
+                    options={optionsAndMode}
+                    answerStats={{
+                        correctAnswerers: qs.correctAnswerers.map(x => x.name),
+                        incorrectAnswerers: qs.incorrectAnswerers.map(x => x.name),
+                        timeExpiredAnswerers: qs.timeExpiredAnswerers.map(x => x.name),
+                    }}
+                />
+            </Box>
         )
     }
 
@@ -210,9 +168,12 @@ function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProp
             top="0"
             bottom="0"
             left="50%" // NOTE: the translateX(-50%) to position in centre
+            maxWidth={theme.spacing(100)}
             sx={{
+                transform: "translateX(-50%)", // There's no direct prop for this, hence its here
+                width: `calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH})`, // = fillwidth - SummaryColumnWidth - leaderboardColumnWidth
                 overflowY: "auto",
-                transform: "translateX(-50%)" // There's no direct prop for this, hence its here
+                ...scrollbarMixin,
             }}
         >
             {renderedQuestions}
@@ -220,13 +181,13 @@ function QuestionSection({questionSummary, loadingMessage}: IQuestionSectionProp
     )
 }
 
-interface ISummaryProps {}
+interface ISummaryProps { }
 
 function Summary(props: ISummaryProps) {
 
     let navigate = useNavigate();
     const dispatch = useAppDispatch()
-    
+
     // App State
     const userId = useAppSelector(state => selectUserId(state))!
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
@@ -239,7 +200,7 @@ function Summary(props: ISummaryProps) {
     const participantQuizSummary = useAppSelector(state => selectParticipantQuizSummary(state))
     const participantAvgAnswerTime = useAppSelector(state => selectParticipantAvgAnswerTime(state))
     const participantTotalTimeElapsed = useAppSelector(state => selectParticipantTotalTimeElapsed(state))
-    
+
     // Local state
     const [hostTotalTimeElapsed, setHostTotalTimeElapsed] = useState(0)
     const [lastServerHostTotalTimeElapsed, setLastHostTotalTimeElaped] = useState(0)
@@ -277,13 +238,13 @@ function Summary(props: ISummaryProps) {
     let loadingMessage: string
     if (clientType === ClientType.HOST) {
         questionSummary = hostQuizSummary || []
-        avgAnswerTime = hostAvgAnswerTime ? `${hostAvgAnswerTime / 1000}s` : ""
-        totalTimeElapsed = hostTotalTimeElapsed ? `${hostTotalTimeElapsed}s` : ""
+        avgAnswerTime = hostAvgAnswerTime ? `${hostAvgAnswerTime / 1000}` : ""
+        totalTimeElapsed = hostTotalTimeElapsed ? `${hostTotalTimeElapsed}` : ""
         loadingMessage = "Awaiting participant answers..."
     } else if (clientType === ClientType.PARTICIPANT) {
         questionSummary = participantQuizSummary || []
-        avgAnswerTime = participantAvgAnswerTime ? `${participantAvgAnswerTime / 1000}s` : ""
-        totalTimeElapsed = participantTotalTimeElapsed ? `${participantTotalTimeElapsed}s` : ""
+        avgAnswerTime = participantAvgAnswerTime ? `${participantAvgAnswerTime / 1000}` : ""
+        totalTimeElapsed = participantTotalTimeElapsed ? `${participantTotalTimeElapsed}` : ""
         loadingMessage = "Waiting for other participants to finish..."
     } else {
         throw Error(`Unexpected clientType '${clientType}'`)
@@ -312,13 +273,12 @@ function Summary(props: ISummaryProps) {
                 onReturnToHomeClicked={onReturnToHomeClicked}
                 totalTimeElapsed={totalTimeElapsed}
                 avgAnswerTime={avgAnswerTime}
-                
             />
             <QuestionSection
                 questionSummary={questionSummary}
                 loadingMessage={loadingMessage}
             />
-            <LeaderboardColumn items={leaderboard} selectedUserId={userId} />
+            <PositionedLeaderboard items={leaderboard} selectedUserId={userId} />
         </Box>
     )
 }

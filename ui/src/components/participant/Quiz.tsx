@@ -1,60 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Button, Typography, Box, Card, LinearProgress, Container, CircularProgress} from "@mui/material";
-import { OptionMode, QuestionCard } from "../common/Question";
-import { LeaderboardColumn, LEADERBOARD_COLUMN_WIDTH } from "../common/Leaderboard";
+import { Button, Box, Card, LinearProgress, Container, CircularProgress} from "@mui/material";
+import { PositionedLeaderboard, LEADERBOARD_COLUMN_WIDTH } from "../common/leaderboard/Leaderboard";
 import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard } from "../../slices/common";
 import { useNavigate } from "react-router-dom";
-interface IQuestionNumberCardProps {
-    questionNumber: number,
-    totalQuestions: number,
-}
+import { OptionMode } from "../common/question/Option";
+import QuestionCard from "../common/question/QuestionCard";
+import QuestionNumberCard from "./QuestionNumberCard";
+import CountdownCard from "./CountdownCard";
+import theme from "../../themes/theme";
 
-function QuestionNumberCard(props: IQuestionNumberCardProps) {
-
-    const { questionNumber, totalQuestions } = props;
-
-    return (
-        <Card
-            sx={{
-                padding: "12px"
-            }}
-        >
-            <Typography
-                variant="h4"
-                textAlign="center"
-            >Question {questionNumber}/{totalQuestions}</Typography>
-        </Card>
-    )
-}
-
-interface ICountdownCardProps {
-    secondsRemaining: number,
-    totalSeconds: number,
-}
-
-function CountdownCard(props: ICountdownCardProps) {
-
-    const {secondsRemaining, totalSeconds} = props
-
-    // Map to a value between 0 and 100
-    const progressValue = 100 * (secondsRemaining / totalSeconds)
-
-    return (
-        <Card
-            sx={{
-                padding: "10px"
-            }}
-        >
-            <Typography
-                variant="h4"
-                textAlign="center"
-            >{secondsRemaining}s</Typography>
-            <LinearProgress variant="determinate" value={progressValue} />
-        </Card>
-    )
-}
+const COLUMN_WIDTH = "340px"
 
 interface IQuizSectionProps {
     questionNumber: number,
@@ -80,55 +37,52 @@ function QuizSection(props: IQuizSectionProps) {
     } = props
 
     return (
-        <Container
-            disableGutters={true}
-            maxWidth={false}  // Prevent mui from controlling the width
+        <Box
             sx={{
                 display: "grid",
-                gridTemplateColumns: "50% 50%",
-                gridTemplateRows: "84px 178px 64px",
+                gridTemplateColumns: `calc(50% - ${theme.spacing(1.5)}) calc(50% - ${theme.spacing(1.5)})`, // NOTE: This needs to sum to 100% including columnGap
+                gridTemplateRows: `${theme.spacing(15)} auto auto`,
                 gridTemplateAreas: `'question-number      countdown'
                                     'question            question'
                                     'button              button'`,
-                maxWidth: "800px",
-                alignItems: "center",
-                justifyContent: "center",
+                // maxWidth: theme.spacing(100),
+                // justifyItems: "stretch",
+                columnGap: theme.spacing(3),
+                rowGap: theme.spacing(3),
+                margin: 3,
+                marginRight: 0,
             }}
         >
-            <Container sx={{gridArea: "question-number"}}>
+            <Box sx={{gridArea: "question-number"}}>
                 <QuestionNumberCard questionNumber={questionNumber} totalQuestions={totalQuestions} />
-            </Container>
-            <Container sx={{gridArea: "countdown"}}>
+            </Box>
+            <Box sx={{gridArea: "countdown"}}>
                 <CountdownCard secondsRemaining={secondsRemaining} totalSeconds={totalSeconds} />
-            </Container>
-            <Container sx={{gridArea: "question"}}>
+            </Box>
+            <Box sx={{gridArea: "question"}}>
                 <QuestionCard
                     question={questionText}
                     numCorrectOptions={numCorrectOptions}
                     options={options}
                     onOptionClicked={props.onOptionClicked}
                 />
-            </Container>
+            </Box>
                 <Button
                     variant="contained"
                     disabled={submitDisabled}
                     onClick={props.onSubmit}
                     sx={{
-                        marginLeft: "auto",
-                        marginRight: "auto",
                         gridArea: "button",
-                        placeSelf: "center"
+                        justifySelf: "center",
                     }}
                 >Submit</Button>
-        </Container>
+        </Box>
     )
 }
 
 function PositionedQuizSection(props: IQuizSectionProps) {
     return (
-        <Container
-            disableGutters
-            maxWidth={false}
+        <Box
             sx={{
                 // Position container on lhs
                 position: "absolute",
@@ -139,11 +93,11 @@ function PositionedQuizSection(props: IQuizSectionProps) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: `calc(100vw - ${LEADERBOARD_COLUMN_WIDTH})`
+                width: `calc(100% - ${LEADERBOARD_COLUMN_WIDTH})`,
             }}
         >
             <QuizSection {...props} />
-        </Container>
+        </Box>
     )
 }
 
@@ -267,7 +221,7 @@ function Quiz(props: IQuizProps) {
             }}
         >
             {content}
-            <LeaderboardColumn items={leaderboard} selectedUserId={userId} />
+            <PositionedLeaderboard items={leaderboard} selectedUserId={userId} />
         </Box>
         
     )
