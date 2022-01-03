@@ -74,6 +74,7 @@ export function LeaderBoard(props: ILeaderBoardProps) {
         <List
             sx={{
                 margin: 3,
+                padding: 0,
             }}
         >
             {elements}
