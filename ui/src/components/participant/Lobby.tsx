@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectUserId, selectUsername, setUsername } from "../../slices/participant";
 import { selectLeaderboard } from "../../slices/common";
 import ParticipantListJoinItem from "../common/participantList/ParticipantListJoinItem";
-import theme from "../../themes/theme";
+import theme, { scrollbarMixin } from "../../themes/theme";
 interface ILobbyProps {
     // participants // will add this eventually
 }
@@ -36,7 +36,8 @@ function Lobby(props: ILobbyProps) {
             alignItems="center"
             height="100%"
             sx={{
-                overflowY: "auto"
+                overflowY: "auto",
+                ...scrollbarMixin,
             }}
         >
             <Typography

@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { OptionMode } from "../question/Option";
 import ProgressBlock from "./ProgressBlock";
 import StatCard from "./StatCard";
-import theme from "../../../themes/theme";
+import theme, { scrollbarMixin } from "../../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
 
@@ -170,9 +170,10 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
             left="50%" // NOTE: the translateX(-50%) to position in centre
             maxWidth={theme.spacing(100)}
             sx={{
-                overflowY: "auto",
                 transform: "translateX(-50%)", // There's no direct prop for this, hence its here
                 width: `calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH})`, // = fillwidth - SummaryColumnWidth - leaderboardColumnWidth
+                overflowY: "auto",
+                ...scrollbarMixin,
             }}
         >
             {renderedQuestions}

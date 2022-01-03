@@ -4,6 +4,7 @@ import { ILeaderboardItem } from "../../../types";
 import _ from "lodash";
 import LeaderBoardItem from "./LeaderboardItem";
 import LeaderBoardOmission from "./LeaderboardOmission";
+import { scrollbarMixin } from "../../../themes/theme";
 
 interface ILeaderBoardProps {
     items: ILeaderboardItem[],
@@ -96,7 +97,7 @@ export function PositionedLeaderboard(props: ILeaderBoardProps) {
             width={LEADERBOARD_COLUMN_WIDTH}
             sx={{
                 overflowY: "auto",
-                // margin: 3,
+                ...scrollbarMixin,
             }}
         >
             <LeaderBoard {...props} />

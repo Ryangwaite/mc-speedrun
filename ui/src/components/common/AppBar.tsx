@@ -2,12 +2,14 @@ import {AppBar, SxProps, Toolbar, Typography} from '@mui/material';
 import { Theme } from '@mui/system';
 import { WebsocketConnectionStateType } from '../../api/websocket';
 import { APP_NAME } from '../../const';
+import theme from '../../themes/theme';
 import { ConnectionIndicator } from './ConnectionIndicator';
 
 export const APP_BAR_HEIGHT = "48px"//"64px"
 
 const appbarStyles: SxProps<Theme> = {
     boxShadow: 0, // no drop shadow
+    backgroundColor: "transparent",
 }
 
 interface ITopBarProps {
@@ -31,13 +33,10 @@ export function TopBar({connectionState}: ITopBarProps) {
                 }}
             >
                 <Typography
-                    variant="h1"
-                    marginLeft={4}
+                    variant="h5"
+                    marginLeft={3}
+                    color={theme.palette.getContrastText(theme.palette.grey[100])}
                     sx={{
-                        fontSize: {
-                            xs: "1.5rem",
-                            sm: "2.0rem"
-                        },
                         flexGrow: 1, // push the connection state to the right
                     }}
                 >{APP_NAME}</Typography>
