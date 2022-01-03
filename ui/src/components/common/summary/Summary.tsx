@@ -1,8 +1,8 @@
-import { Box, Typography, Stack, CircularProgress, Fade, Collapse, } from "@mui/material";
+import { Box, Typography, Stack, CircularProgress, Collapse, } from "@mui/material";
 import _ from "lodash";
 import React, { useEffect, useState } from "react";
 import { PositionedLeaderboard } from "../leaderboard/Leaderboard";
-import { QuestionCardWithStats } from "../question/Question";
+import QuestionCardWithStats from "../question/QuestionCardWithStats";
 import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary, } from "../../../types";
 import { useAppDispatch, useAppSelector } from "../../../hooks";
 import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../../slices/participant";
@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { OptionMode } from "../question/Option";
 import ProgressBlock from "./ProgressBlock";
 import StatCard from "./StatCard";
+import theme from "../../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
 
@@ -70,7 +71,7 @@ function SummaryColumn(props: ISummaryColumnProps) {
                 orientation="vertical"
             >
                 <ColumnElementWrapper marginTop={0}>
-                    <StatCard label="Avg. answer time" value={avgAnswerTime} unit="seconds" />
+                    <StatCard label="Average answer time" value={avgAnswerTime} unit="seconds" />
                 </ColumnElementWrapper>
             </Collapse>
         </Box >
@@ -102,7 +103,7 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
                     sx={{
                         marginLeft: "auto",
                         marginRight: "auto",
-                        marginBottom: "4px"
+                        marginBottom: theme.spacing(3),
                     }}
                 />
                 <Typography>{loadingMessage}</Typography>
@@ -142,16 +143,21 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
         }
 
         renderedQuestions.push(
-            <QuestionCardWithStats
-                question={qs.question}
-                numCorrectOptions={qs.correctOptions.length}
-                options={optionsAndMode}
-                answerStats={{
-                    correctAnswerers: qs.correctAnswerers.map(x => x.name),
-                    incorrectAnswerers: qs.incorrectAnswerers.map(x => x.name),
-                    timeExpiredAnswerers: qs.timeExpiredAnswerers.map(x => x.name),
-                }}
-            />
+            <Box
+                marginTop={3}
+                marginBottom={3}
+            >
+                <QuestionCardWithStats
+                    question={qs.question}
+                    numCorrectOptions={qs.correctOptions.length}
+                    options={optionsAndMode}
+                    answerStats={{
+                        correctAnswerers: qs.correctAnswerers.map(x => x.name),
+                        incorrectAnswerers: qs.incorrectAnswerers.map(x => x.name),
+                        timeExpiredAnswerers: qs.timeExpiredAnswerers.map(x => x.name),
+                    }}
+                />
+            </Box>
         )
     }
 
@@ -162,9 +168,11 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
             top="0"
             bottom="0"
             left="50%" // NOTE: the translateX(-50%) to position in centre
+            maxWidth={theme.spacing(100)}
             sx={{
                 overflowY: "auto",
-                transform: "translateX(-50%)" // There's no direct prop for this, hence its here
+                transform: "translateX(-50%)", // There's no direct prop for this, hence its here
+                width: `calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH})`, // = fillwidth - SummaryColumnWidth - leaderboardColumnWidth
             }}
         >
             {renderedQuestions}

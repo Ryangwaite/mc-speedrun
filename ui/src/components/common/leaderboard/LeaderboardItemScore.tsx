@@ -1,4 +1,5 @@
 import { Box, Typography } from "@mui/material"
+import theme from "../../../themes/theme"
 
 interface ILeaderBoardItemScoreProps {
     score: number,
@@ -12,7 +13,7 @@ function LeaderBoardItemScore(props: ILeaderBoardItemScoreProps) {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                border: "5px solid green",
+                border: `5px solid ${theme.palette.success[700]}`,
                 borderRadius: "50%", // Circular border
                 width: borderDiameter,
                 height: borderDiameter,

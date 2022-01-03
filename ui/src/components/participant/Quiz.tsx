@@ -50,6 +50,7 @@ function QuizSection(props: IQuizSectionProps) {
                 columnGap: theme.spacing(3),
                 rowGap: theme.spacing(3),
                 margin: 3,
+                marginRight: 0,
             }}
         >
             <Box sx={{gridArea: "question-number"}}>
@@ -92,7 +93,7 @@ function PositionedQuizSection(props: IQuizSectionProps) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: `calc(100% - ${LEADERBOARD_COLUMN_WIDTH} - ${theme.spacing(3)})` // The spacing is the left margin of leaderboard
+                width: `calc(100% - ${LEADERBOARD_COLUMN_WIDTH})`,
             }}
         >
             <QuizSection {...props} />

@@ -71,7 +71,11 @@ export function LeaderBoard(props: ILeaderBoardProps) {
     })
 
     return (
-        <List>
+        <List
+            sx={{
+                margin: 3,
+            }}
+        >
             {elements}
         </List>
     )
@@ -91,7 +95,7 @@ export function PositionedLeaderboard(props: ILeaderBoardProps) {
             width={LEADERBOARD_COLUMN_WIDTH}
             sx={{
                 overflowY: "auto",
-                margin: 3,
+                // margin: 3,
             }}
         >
             <LeaderBoard {...props} />
