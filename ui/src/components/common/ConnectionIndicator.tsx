@@ -44,7 +44,7 @@ export function ConnectionIndicator({connectionState}: IConnectionIndicatorProps
                 padding={0.5}
                 marginRight={3}
                 sx={{
-                    backgroundColor: theme.palette.grey[100],
+                    backgroundColor: "transparent",
                 }}
             >
                 <CircleIcon
