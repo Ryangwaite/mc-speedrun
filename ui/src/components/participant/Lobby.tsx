@@ -49,8 +49,11 @@ function Lobby(props: ILobbyProps) {
 
             <ParticipantList
                 sx={{
-                    width: theme.spacing(50),
+                    width: "100%",
+                    maxWidth: theme.spacing(50),
                     padding: 0,
+                    paddingLeft: 3,
+                    paddingRight: 3,
                 }}
                 thisParticipant={
                     <ParticipantListJoinItem

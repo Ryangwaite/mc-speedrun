@@ -1,6 +1,6 @@
 import { WebsocketConnectionStateType } from '../../api/websocket';
 import CircleIcon from '@mui/icons-material/Circle';
-import { Fade, Stack, Typography } from '@mui/material';
+import { Fade, Stack, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import theme from '../../themes/theme';
 import { orange } from '@mui/material/colors';
 
@@ -9,6 +9,8 @@ interface IConnectionIndicatorProps {
 }
 
 export function ConnectionIndicator({connectionState}: IConnectionIndicatorProps) {
+
+    let isSmallAndUp = useMediaQuery(theme.breakpoints.up("sm"));
     
     let text
     let color
@@ -35,18 +37,10 @@ export function ConnectionIndicator({connectionState}: IConnectionIndicatorProps
             throw new Error(`Unexpected websocket connection state: '${connectionState}'`)
     }
     
-    return (
-        <Fade in={true}>
-            <Stack
-                direction="row"
-                alignItems={"center"}
-                borderRadius={4}
-                padding={0.5}
-                marginRight={3}
-                sx={{
-                    backgroundColor: "transparent",
-                }}
-            >
+    let content
+    if (isSmallAndUp) {
+        content = (
+            <>
                 <CircleIcon
                     htmlColor={color}
                     sx={{
@@ -59,6 +53,36 @@ export function ConnectionIndicator({connectionState}: IConnectionIndicatorProps
                     color={theme.palette.getContrastText(theme.palette.grey[100])}
                     marginRight={1}
                 >{text}</Typography>
+            </>
+        )
+    } else {
+        // small devices
+        content = (
+            <Tooltip title={text} placement='bottom-end'>
+                <CircleIcon
+                    htmlColor={color}
+                    sx={{
+                        marginRight: 1,
+                        marginLeft: 1,
+                    }}
+                />
+            </Tooltip>
+        )
+    }
+
+    return (
+        <Fade in={true}>
+            <Stack
+                direction="row"
+                alignItems={"center"}
+                borderRadius={4}
+                padding={0.5}
+                marginRight={3}
+                sx={{
+                    backgroundColor: "transparent",
+                }}
+            >
+                {content}
             </Stack>
         </Fade>
     )

@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, } from '@mui/material';
 import { TopBar } from './components/common/AppBar';
 import Home from './components/home/home';
 import Config from './components/host/Config';
@@ -17,10 +17,10 @@ function App() {
 
     return (
         <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="stretch"
             sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "stretch",
                 height: "100vh",
                 width: "100vw",
                 backgroundColor: theme.palette.grey[100],

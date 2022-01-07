@@ -34,7 +34,6 @@ function Option(props: IOptionProps) {
                     alignItems="center"
                     onClick={onClick}
                     sx={{
-
                         padding: 0.5,
                         // Display same border as when selected so that positioning of the element
                         // doesnt change across toggling it.

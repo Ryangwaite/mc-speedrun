@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Button, Box, Card, LinearProgress, Container, CircularProgress} from "@mui/material";
+import { Button, Box, CircularProgress} from "@mui/material";
 import { PositionedLeaderboard, LEADERBOARD_COLUMN_WIDTH } from "../common/leaderboard/Leaderboard";
 import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectLeaderboard } from "../../slices/common";
 import { useNavigate } from "react-router-dom";
 import { OptionMode } from "../common/question/Option";
-import QuestionCard from "../common/question/QuestionCard";
+import QuestionCard, { QuestionCardVariant } from "../common/question/QuestionCard";
 import QuestionNumberCard from "./QuestionNumberCard";
 import CountdownCard from "./CountdownCard";
 import theme from "../../themes/theme";
@@ -61,6 +61,7 @@ function QuizSection(props: IQuizSectionProps) {
             </Box>
             <Box sx={{gridArea: "question"}}>
                 <QuestionCard
+                    variant={QuestionCardVariant.ROW}
                     question={questionText}
                     numCorrectOptions={numCorrectOptions}
                     options={options}

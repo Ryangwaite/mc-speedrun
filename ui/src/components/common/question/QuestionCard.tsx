@@ -1,8 +1,15 @@
-import { Card, CardActions, CardContent, Typography } from "@mui/material"
+import { Box, Card, CardContent, SxProps, Theme, Typography } from "@mui/material"
 import theme from "../../../themes/theme"
 import Option, { OptionMode } from "./Option"
 
+export enum QuestionCardVariant {
+    ROW,
+    COLUMN,
+    BOX,
+}
+
 interface IQuestionCardProps {
+    variant: QuestionCardVariant,
     question: string,
     numCorrectOptions: number,
     options: {
@@ -13,7 +20,33 @@ interface IQuestionCardProps {
 }
 
 export function QuestionCard(props: IQuestionCardProps) {
-    const { question, options, numCorrectOptions, onOptionClicked} = props
+    const { variant, question, options, numCorrectOptions, onOptionClicked} = props
+
+    let variantSx: SxProps<Theme>
+    switch (variant) {
+        case QuestionCardVariant.ROW:
+            variantSx = {
+                display: "flex",
+                justifyContent: "space-evenly",
+            }
+            break
+        case QuestionCardVariant.COLUMN:
+            variantSx = {
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-evenly",
+            }
+            break
+        case QuestionCardVariant.BOX:
+            variantSx = {
+                display: "grid",
+                gridTemplateRows: "auto auto",
+                gridTemplateColumns: "auto auto",
+                rowGap: theme.spacing(1),
+                justifyItems: "start",
+            }
+            break
+    }
 
     return (
         <Card>
@@ -26,12 +59,11 @@ export function QuestionCard(props: IQuestionCardProps) {
                 <Typography variant="h5">{question}</Typography>
                 <Typography variant="caption" color={theme.palette.grey[700]}>Select {numCorrectOptions}</Typography>
             </CardContent>
-            <CardActions
+            <Box
                 sx={{
-                    display: "flex",
-                    justifyContent: "space-evenly",
                     margin: 3,
                     padding: 0,
+                    ...variantSx,
                 }}
             >
                 {options.map((option, index) => (
@@ -43,7 +75,7 @@ export function QuestionCard(props: IQuestionCardProps) {
                         mode={option.mode}
                     />))
                 }
-            </CardActions>
+            </Box>
         </Card>
     )
 }
