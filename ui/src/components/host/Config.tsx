@@ -1,8 +1,8 @@
 import { Box, Button, Card, CircularProgress, Collapse, Fab, Fade, SxProps, Theme, useMediaQuery } from "@mui/material";
 import React,{ useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
-import { IQuestionAndAnswers } from "../../types";
-import { useAppDispatch, useAppSelector } from "../../hooks";
+import { IQuestionAndAnswers, PageVariant } from "../../types";
+import { useAppDispatch, useAppSelector, usePageVariant } from "../../hooks";
 import { selectLeaderboard, selectQuizId } from "../../slices/common";
 import { selectHostQuestions, selectSetRequestQuestions, setHostConfig, setRequestQuestions } from "../../slices/host";
 import { ILeaderboardItem } from "../../types";
@@ -19,12 +19,8 @@ import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
 
 const COLUMN_WIDTH = "340px"
 
-enum ConfigPageVariant {
-    SMALL, MEDIUM, LARGE,
-}
-
 interface IConfigSectionProps {
-    variant: ConfigPageVariant,
+    variant: PageVariant,
     onUploadQuizClicked: () => void,
     onQuestionDurationChange: (duration: number) => void,
     onQuizNameChange: (name: string) => void,
@@ -64,9 +60,9 @@ function ConfigSection(props: IConfigSectionProps) {
     const collapseIn = categoryBlock !== undefined && questionDurationBlock !== undefined
 
     switch (variant) {
-        case ConfigPageVariant.SMALL:
+        case PageVariant.SMALL:
             return null
-        case ConfigPageVariant.MEDIUM:
+        case PageVariant.MEDIUM:
         return (
                 <Card
                     sx={{
@@ -110,7 +106,7 @@ function ConfigSection(props: IConfigSectionProps) {
                     </Collapse>
                 </Card>
             )
-        case ConfigPageVariant.LARGE:
+        case PageVariant.LARGE:
             return (
                 <Card
                     sx={{
@@ -142,7 +138,7 @@ function ConfigSection(props: IConfigSectionProps) {
 }
 
 interface IQuestionColumnProps {
-    variant: ConfigPageVariant,
+    variant: PageVariant,
     questionsAndAnswers: IQuestionAndAnswers[],
     loading: boolean,
 }
@@ -166,9 +162,9 @@ function QuestionColumn(props: IQuestionColumnProps) {
             }))
 
             let questionCardVariant = {
-                [ConfigPageVariant.SMALL]: QuestionCardVariant.COLUMN,
-                [ConfigPageVariant.MEDIUM]: QuestionCardVariant.BOX,
-                [ConfigPageVariant.LARGE]: QuestionCardVariant.ROW,
+                [PageVariant.SMALL]: QuestionCardVariant.COLUMN,
+                [PageVariant.MEDIUM]: QuestionCardVariant.BOX,
+                [PageVariant.LARGE]: QuestionCardVariant.ROW,
             }[variant]
 
             renderedQuestions.push(
@@ -191,10 +187,10 @@ function QuestionColumn(props: IQuestionColumnProps) {
     }
 
     switch (variant) {
-        case ConfigPageVariant.SMALL:
+        case PageVariant.SMALL:
             return null
-        case ConfigPageVariant.MEDIUM:
-        case ConfigPageVariant.LARGE:
+        case PageVariant.MEDIUM:
+        case PageVariant.LARGE:
             return (
                 <>
                     {content}
@@ -204,7 +200,7 @@ function QuestionColumn(props: IQuestionColumnProps) {
 }
 
 interface IParticipantSectionProps {
-    variant: ConfigPageVariant,
+    variant: PageVariant,
     accessCode: string,
     participants: ILeaderboardItem[],
 }
@@ -232,18 +228,18 @@ function ParticipantSection(props: IParticipantSectionProps) {
     </>
 
     switch (variant) {
-        case ConfigPageVariant.SMALL:
+        case PageVariant.SMALL:
             return null
-        case ConfigPageVariant.MEDIUM:
+        case PageVariant.MEDIUM:
             return content
-        case ConfigPageVariant.LARGE:
+        case PageVariant.LARGE:
             return content
     }
 }
 
 
 interface IConfigPageContainerProps {
-    variant: ConfigPageVariant,
+    variant: PageVariant,
     configSection: React.ReactNode | React.ReactNode[],
     questionSection: React.ReactNode | React.ReactNode[],
     participantSection: React.ReactNode | React.ReactNode[],
@@ -253,9 +249,9 @@ function ConfigPageContainer(props: IConfigPageContainerProps) {
     const { variant, configSection, questionSection, participantSection } = props
 
     switch (variant) {
-        case ConfigPageVariant.SMALL:
+        case PageVariant.SMALL:
             return null
-        case ConfigPageVariant.MEDIUM:
+        case PageVariant.MEDIUM:
             return (
                 <Box
                     sx={{
@@ -301,7 +297,7 @@ function ConfigPageContainer(props: IConfigPageContainerProps) {
                     </Box>
                 </Box>
             )
-        case ConfigPageVariant.LARGE:
+        case PageVariant.LARGE:
             return (
                 <>
                     <Box
@@ -363,8 +359,7 @@ interface IConfigProps {
 
 function Config(props: IConfigProps) {
 
-    const isLargeAndUp = useMediaQuery(theme.breakpoints.up("lg"))
-    const isSmallAndUp = useMediaQuery(theme.breakpoints.up("sm"))
+    const pageVariant = usePageVariant()
 
     // Local state
     const [quizName, setQuizName] = useState("")
@@ -466,15 +461,6 @@ function Config(props: IConfigProps) {
         questionsAndAnswers && selectedQuestionIndexes.length > 0 &&
         leaderboard.length > 0) || false
 
-    let variant: ConfigPageVariant
-    if (isLargeAndUp) {
-        variant = ConfigPageVariant.LARGE
-    } else if (isSmallAndUp) {
-        variant = ConfigPageVariant.MEDIUM
-    } else {
-        variant = ConfigPageVariant.SMALL
-    }
-
     return (
         <Box
             sx={{
@@ -490,10 +476,10 @@ function Config(props: IConfigProps) {
                 uploadErrMsg={uploadErrMsg}
             />
             <ConfigPageContainer
-                variant={variant}
+                variant={pageVariant}
                 configSection={
                     <ConfigSection
-                        variant={variant}
+                        variant={pageVariant}
                         onQuizNameChange={onQuizNameChange}
                         onUploadQuizClicked={onUploadQuizClicked}
                         onQuestionDurationChange={onQuestionDurationChange}
@@ -504,14 +490,14 @@ function Config(props: IConfigProps) {
                 }
                 questionSection={
                     <QuestionColumn
-                        variant={variant}
+                        variant={pageVariant}
                         loading={fetchingQuestions}
                         questionsAndAnswers={filteredQuestionsAndAnswers}
                     />
                 }
                 participantSection={
                     <ParticipantSection
-                        variant={variant}
+                        variant={pageVariant}
                         accessCode={quizId!}
                         participants={leaderboard}
                     />

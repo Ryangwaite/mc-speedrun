@@ -1,10 +1,9 @@
-import { Box, List } from "@mui/material";
+import { List } from "@mui/material";
 
 import { ILeaderboardItem } from "../../../types";
 import _ from "lodash";
 import LeaderBoardItem from "./LeaderboardItem";
 import LeaderBoardOmission from "./LeaderboardOmission";
-import { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../../themes/theme";
 
 interface ILeaderBoardProps {
     items: ILeaderboardItem[],
@@ -72,36 +71,10 @@ export function LeaderBoard(props: ILeaderBoardProps) {
     })
 
     return (
-        <List
-            sx={{
-                margin: 3,
-                marginTop: COLUMN_MARGIN_TOP,
-                padding: 0,
-            }}
-        >
+        <List>
             {elements}
         </List>
     )
 }
 
 export const LEADERBOARD_COLUMN_WIDTH = "340px"
-
-export function PositionedLeaderboard(props: ILeaderBoardProps) {
-
-    return (
-        <Box
-            // Position on the rhs
-            position="absolute"
-            top="0"
-            right="0"
-            bottom="0"
-            width={LEADERBOARD_COLUMN_WIDTH}
-            sx={{
-                overflowY: "auto",
-                ...scrollbarMixin,
-            }}
-        >
-            <LeaderBoard {...props} />
-        </Box>
-    )
-}

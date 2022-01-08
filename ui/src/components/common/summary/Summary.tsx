@@ -1,7 +1,7 @@
 import { Box, Typography, Stack, CircularProgress, Collapse, } from "@mui/material";
 import _ from "lodash";
 import React, { useEffect, useState } from "react";
-import { PositionedLeaderboard } from "../leaderboard/Leaderboard";
+import { LeaderBoard } from "../leaderboard/Leaderboard";
 import QuestionCardWithStats from "../question/QuestionCardWithStats";
 import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary, } from "../../../types";
 import { useAppDispatch, useAppSelector } from "../../../hooks";
@@ -278,7 +278,7 @@ function Summary(props: ISummaryProps) {
                 questionSummary={questionSummary}
                 loadingMessage={loadingMessage}
             />
-            <PositionedLeaderboard items={leaderboard} selectedUserId={userId} />
+            <LeaderBoard items={leaderboard} selectedUserId={userId} />
         </Box>
     )
 }

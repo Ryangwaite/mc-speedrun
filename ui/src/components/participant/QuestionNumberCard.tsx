@@ -1,6 +1,5 @@
-import { Card, Typography } from "@mui/material";
+import { Box, Card, Typography } from "@mui/material";
 import theme from "../../themes/theme";
-
 
 interface IQuestionNumberCardProps {
     questionNumber: number,
@@ -20,10 +19,24 @@ function QuestionNumberCard(props: IQuestionNumberCardProps) {
                 height: "100%",
             }}
         >
-            <Typography
-                variant="h4"
-                textAlign="center"
-            >Question {questionNumber}/{totalQuestions}</Typography>
+            <Box
+                display={"flex"}
+                flexDirection={"row"}
+                alignItems={"baseline"}
+                flexWrap={"wrap"}
+                justifyContent={"center"}
+            >
+                <Typography
+                    variant="h5"
+                    textAlign="center"
+                    marginRight={1}
+                    color={theme.palette.grey[600]}
+                >Question</Typography>
+                <Typography
+                    variant="h4"
+                    textAlign="center"
+                >{questionNumber}/{totalQuestions}</Typography>
+            </Box>
         </Card>
     )
 }

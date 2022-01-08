@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Button, Box, CircularProgress} from "@mui/material";
-import { PositionedLeaderboard, LEADERBOARD_COLUMN_WIDTH } from "../common/leaderboard/Leaderboard";
+import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../common/leaderboard/Leaderboard";
 import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
-import { useAppDispatch, useAppSelector } from "../../hooks";
+import { useAppDispatch, useAppSelector, usePageVariant } from "../../hooks";
 import { selectLeaderboard } from "../../slices/common";
 import { useNavigate } from "react-router-dom";
 import { OptionMode } from "../common/question/Option";
 import QuestionCard, { QuestionCardVariant } from "../common/question/QuestionCard";
 import QuestionNumberCard from "./QuestionNumberCard";
 import CountdownCard from "./CountdownCard";
-import theme from "../../themes/theme";
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
+import { PageVariant } from "../../types";
 
 const COLUMN_WIDTH = "340px"
 
@@ -20,6 +21,7 @@ interface IQuizSectionProps {
     totalSeconds: number,
     questionText: string,
     numCorrectOptions: number,
+    questionCardVariant: QuestionCardVariant,
     options: {
         text: string,
         mode: OptionMode,
@@ -33,7 +35,8 @@ function QuizSection(props: IQuizSectionProps) {
 
     const {
         questionNumber, totalQuestions, secondsRemaining, totalSeconds,
-        questionText, numCorrectOptions, options, submitDisabled
+        questionText, numCorrectOptions, questionCardVariant, options,
+        submitDisabled,
     } = props
 
     return (
@@ -45,12 +48,8 @@ function QuizSection(props: IQuizSectionProps) {
                 gridTemplateAreas: `'question-number      countdown'
                                     'question            question'
                                     'button              button'`,
-                // maxWidth: theme.spacing(100),
-                // justifyItems: "stretch",
                 columnGap: theme.spacing(3),
                 rowGap: theme.spacing(3),
-                margin: 3,
-                marginRight: 0,
             }}
         >
             <Box sx={{gridArea: "question-number"}}>
@@ -61,7 +60,7 @@ function QuizSection(props: IQuizSectionProps) {
             </Box>
             <Box sx={{gridArea: "question"}}>
                 <QuestionCard
-                    variant={QuestionCardVariant.ROW}
+                    variant={questionCardVariant}
                     question={questionText}
                     numCorrectOptions={numCorrectOptions}
                     options={options}
@@ -81,31 +80,72 @@ function QuizSection(props: IQuizSectionProps) {
     )
 }
 
-function PositionedQuizSection(props: IQuizSectionProps) {
-    return (
-        <Box
-            sx={{
-                // Position container on lhs
-                position: "absolute",
-                top: 0,
-                left: 0,
-                bottom: 0,
-                // Position content within
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: `calc(100% - ${LEADERBOARD_COLUMN_WIDTH})`,
-            }}
-        >
-            <QuizSection {...props} />
-        </Box>
-    )
+interface IQuizPageContainerProps {
+    variant: PageVariant,
+    quizSection: React.ReactNode | React.ReactNode[],
+    leaderboardSection: React.ReactNode | React.ReactNode[],
+}
+
+function QuizPageContainer(props: IQuizPageContainerProps) {
+    const { variant, quizSection, leaderboardSection } = props
+
+    switch (variant) {
+        case PageVariant.SMALL:
+            return null
+        case PageVariant.MEDIUM:
+        case PageVariant.LARGE:
+            return (
+                <>
+                    <Box
+                        sx={{
+                            // Position container on lhs
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            bottom: 0,
+                            // Position content within
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: `calc(100% - ${LEADERBOARD_COLUMN_WIDTH} - ${theme.spacing(3)})`,
+                            marginLeft: 3,
+                        }}
+                    >
+                        {quizSection}
+                    </Box>
+                    <Box
+                        // Position on the rhs
+                        position="absolute"
+                        top="0"
+                        right="0"
+                        bottom="0"
+                        width={LEADERBOARD_COLUMN_WIDTH}
+                        sx={{
+                            overflowY: "auto",
+                            ...scrollbarMixin,
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                margin: 3,
+                                marginTop: COLUMN_MARGIN_TOP,
+                                padding: 0,
+                            }}
+                        >
+                            {leaderboardSection}
+                        </Box>
+                    </Box>
+                </>
+            )
+    }
 }
 
 interface IQuizProps {
 }
 
 function Quiz(props: IQuizProps) {
+
+    const pageVariant = usePageVariant()
 
     // App State
     const userId = useAppSelector(state => selectUserId(state))!
@@ -195,8 +235,14 @@ function Quiz(props: IQuizProps) {
 
         const submitDisabled = currentQuestion.numberOfOptionsToSelect !== optionSelection.length
 
+        const questionCardVariant = {
+            [PageVariant.SMALL]: QuestionCardVariant.COLUMN,
+            [PageVariant.MEDIUM]: QuestionCardVariant.BOX,
+            [PageVariant.LARGE]: QuestionCardVariant.ROW,
+        }[pageVariant]
+
         content = (
-            <PositionedQuizSection
+            <QuizSection
                 questionNumber={currentQuestion.questionIndex + 1}
                 totalQuestions={numberOfQuestions}
                 secondsRemaining={timeRemaining}
@@ -204,12 +250,15 @@ function Quiz(props: IQuizProps) {
                 questionText={currentQuestion.question}
                 numCorrectOptions={currentQuestion.numberOfOptionsToSelect}
                 options={options}
+                questionCardVariant={questionCardVariant}
                 onOptionClicked={clickOption}
                 submitDisabled={submitDisabled}
                 onSubmit={onSubmit}
             />
         )
     }
+
+    const leaderboardSection = <LeaderBoard items={leaderboard} selectedUserId={userId} />
 
     return (
         <Box
@@ -221,8 +270,11 @@ function Quiz(props: IQuizProps) {
                 height: "100%"
             }}
         >
-            {content}
-            <PositionedLeaderboard items={leaderboard} selectedUserId={userId} />
+            <QuizPageContainer
+                variant={pageVariant}
+                quizSection={content}
+                leaderboardSection={leaderboardSection}
+            />
         </Box>
         
     )

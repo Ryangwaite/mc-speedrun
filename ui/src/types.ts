@@ -54,3 +54,7 @@ export interface IParticipantQuestionSummary {
     incorrectAnswerers: IAnswerer[],
     timeExpiredAnswerers: IAnswerer[],
 }
+
+export enum PageVariant {
+    SMALL, MEDIUM, LARGE,
+}
