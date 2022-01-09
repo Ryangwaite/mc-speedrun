@@ -16,7 +16,7 @@ function ProgressBlock(props: IProgressBlockProps) {
         // All Participants have finished
         content = <>
             <Typography
-                variant="h4"
+                variant="h5"
                 margin={3}
                 marginBottom={1.5}
                 textAlign={"center"}
@@ -27,6 +27,8 @@ function ProgressBlock(props: IProgressBlockProps) {
                 sx={{
                     marginTop: 0,
                     marginBottom: 3,
+                    marginLeft: 3,
+                    marginRight: 3,
                 }}
             >RETURN TO HOME</Button>
         </>

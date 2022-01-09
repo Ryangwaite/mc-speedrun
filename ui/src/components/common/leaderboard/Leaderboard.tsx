@@ -71,7 +71,9 @@ export function LeaderBoard(props: ILeaderBoardProps) {
     })
 
     return (
-        <List>
+        <List
+            disablePadding
+        >
             {elements}
         </List>
     )

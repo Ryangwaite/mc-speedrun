@@ -1,27 +1,28 @@
-import { Box, Typography, Stack, CircularProgress, Collapse, } from "@mui/material";
+import { Box, Typography, Stack, CircularProgress, Collapse, SxProps, Theme, } from "@mui/material";
 import _ from "lodash";
 import React, { useEffect, useState } from "react";
-import { LeaderBoard } from "../leaderboard/Leaderboard";
+import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../leaderboard/Leaderboard";
 import QuestionCardWithStats from "../question/QuestionCardWithStats";
-import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary, } from "../../../types";
-import { useAppDispatch, useAppSelector } from "../../../hooks";
+import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary, PageVariant, } from "../../../types";
+import { useAppDispatch, useAppSelector, usePageVariant } from "../../../hooks";
 import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../../slices/participant";
 import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../../../slices/common";
 import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../../../slices/host";
 import { useNavigate } from "react-router-dom";
 import { OptionMode } from "../question/Option";
 import ProgressBlock from "./ProgressBlock";
-import StatCard from "./StatCard";
+import StatCard, { StatCardSize } from "./StatCard";
 import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../../themes/theme";
+import { QuestionCardVariant } from "../question/QuestionCard";
 
 const COLUMN_WIDTH = "340px"
 
 // Wrapper for consistent gaps between elements in the summary column
-const ColumnElementWrapper = (props: { children: React.ReactNode, marginTop?: number }) => (
+const ColumnElementWrapper = (props: { children: React.ReactNode, sx?: SxProps<Theme> }) => (
     <Box
         sx={{
             margin: 3,
-            marginTop: props.marginTop,
+            ...props.sx,
         }}
         component="div"
     >
@@ -30,6 +31,7 @@ const ColumnElementWrapper = (props: { children: React.ReactNode, marginTop?: nu
 )
 
 interface ISummaryColumnProps {
+    variant: PageVariant,
     numberParticipantsComplete: number,
     totalParticipants: number,
     onReturnToHomeClicked: () => void
@@ -37,53 +39,120 @@ interface ISummaryColumnProps {
     avgAnswerTime: string,
 }
 
-function SummaryColumn(props: ISummaryColumnProps) {
-    const { numberParticipantsComplete, totalParticipants, onReturnToHomeClicked } = props
+function SummarySection(props: ISummaryColumnProps) {
+    const { variant, numberParticipantsComplete, totalParticipants, onReturnToHomeClicked } = props
     const { totalTimeElapsed, avgAnswerTime } = props
-    return (
-        <Box
-            // Position
-            position="absolute"
-            top="0"
-            left="0"
-            bottom="0"
-            // Content
-            display="flex"
-            flexDirection="column"
-            width={COLUMN_WIDTH}
-            sx={{
-                overflowY: "auto",
-            }}
-        >
-            <ColumnElementWrapper marginTop={COLUMN_MARGIN_TOP}>
-                <ProgressBlock progressCurrent={numberParticipantsComplete} progressTotal={totalParticipants} onReturnToHomeClicked={onReturnToHomeClicked} />
-            </ColumnElementWrapper>
-            <Collapse
-                in={totalTimeElapsed.length > 0}
-                orientation="vertical"
-            >
-                <ColumnElementWrapper marginTop={0}>
-                    <StatCard label="Time elapsed" value={totalTimeElapsed} unit="seconds" />
-                </ColumnElementWrapper>
-            </Collapse>
-            <Collapse
-                in={avgAnswerTime.length > 0}
-                orientation="vertical"
-            >
-                <ColumnElementWrapper marginTop={0}>
-                    <StatCard label="Average answer time" value={avgAnswerTime} unit="seconds" />
-                </ColumnElementWrapper>
-            </Collapse>
-        </Box >
+
+    const progressBlock = <ProgressBlock progressCurrent={numberParticipantsComplete} progressTotal={totalParticipants} onReturnToHomeClicked={onReturnToHomeClicked} />
+    const timeElapsedStatCard = (
+        <StatCard
+            size={variant === PageVariant.LARGE ? StatCardSize.LARGE : StatCardSize.SMALL}
+            label="Time elapsed"
+            value={totalTimeElapsed}
+            unit="seconds"
+        />
     )
+    const avgAnswerTimeLabel = variant === PageVariant.LARGE ? "Average answer time" : "Avg. answer time"
+    const avgAnswerTimeStatCard = (
+        <StatCard
+            size={variant === PageVariant.LARGE ? StatCardSize.LARGE : StatCardSize.SMALL}
+            label={avgAnswerTimeLabel}
+            value={avgAnswerTime}
+            unit="seconds"
+        />
+    )
+
+    switch (variant) {
+        case PageVariant.SMALL:
+            return null
+        case PageVariant.MEDIUM:
+            return (
+                <Box
+                    sx={{
+                        display: "grid",
+                        gridTemplateAreas: `'progress           time-elapsed'
+                                            'avg-answer-time    time-elapsed'`,
+                        gridTemplateRows: "auto auto",
+                        gridTemplateColumns: "auto auto",
+                        columnGap: 3,
+                        rowGap: 3,
+                    }}
+                >
+                    <ColumnElementWrapper
+                        sx={{
+                            margin: 0,
+                            gridArea: "progress",
+                        }}
+                    >
+                        {progressBlock}
+                    </ColumnElementWrapper>
+                    <Collapse
+                        in={totalTimeElapsed.length > 0}
+                        orientation="horizontal"
+                        sx={{
+                            gridArea: "time-elapsed",
+                            alignSelf: "center",
+                        }}
+                    >
+                        <ColumnElementWrapper
+                            sx={{
+                                margin: 0,
+                            }}
+                        >
+                            {timeElapsedStatCard}
+                        </ColumnElementWrapper>
+                    </Collapse>
+                    <Collapse
+                        in={avgAnswerTime.length > 0}
+                        orientation="vertical"
+                        sx={{
+                            gridArea: "avg-answer-time",
+                        }}
+                    >
+                        <ColumnElementWrapper
+                            sx={{
+                                margin: 0,
+                            }}
+                        >
+                            {avgAnswerTimeStatCard}
+                        </ColumnElementWrapper>
+                    </Collapse>
+                </Box>
+            )
+        case PageVariant.LARGE:
+            return (
+                <>
+                    <ColumnElementWrapper sx={{marginTop: COLUMN_MARGIN_TOP}}>
+                        {progressBlock}
+                    </ColumnElementWrapper>
+                    <Collapse
+                        in={totalTimeElapsed.length > 0}
+                        orientation="vertical"
+                    >
+                        <ColumnElementWrapper sx={{marginTop: 0}}>
+                            {timeElapsedStatCard}
+                        </ColumnElementWrapper>
+                    </Collapse>
+                    <Collapse
+                        in={avgAnswerTime.length > 0}
+                        orientation="vertical"
+                    >
+                        <ColumnElementWrapper sx={{marginTop: 0}}>
+                            {avgAnswerTimeStatCard}
+                        </ColumnElementWrapper>
+                    </Collapse>
+                </>
+            )
+    }
 }
 
 interface IQuestionSectionProps {
+    variant: PageVariant,
     questionSummary: IHostQuestionSummary[] | IParticipantQuestionSummary[],
     loadingMessage: string,
 }
 
-function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionProps) {
+function QuestionSection({ variant, questionSummary, loadingMessage }: IQuestionSectionProps) {
 
     if (questionSummary.length === 0) {
         return (
@@ -106,10 +175,18 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
                         marginBottom: theme.spacing(3),
                     }}
                 />
-                <Typography>{loadingMessage}</Typography>
+                <Typography
+                    textAlign={"center"}
+                >{loadingMessage}</Typography>
             </Stack>
         )
     }
+
+    let questionCardVariant = {
+        [PageVariant.SMALL]: QuestionCardVariant.COLUMN,
+        [PageVariant.MEDIUM]: QuestionCardVariant.BOX,
+        [PageVariant.LARGE]: QuestionCardVariant.ROW,
+    }[variant]
 
     let renderedQuestions: React.ReactNode[] = []
     for (const qs of questionSummary) {
@@ -148,6 +225,7 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
                 marginBottom={3}
             >
                 <QuestionCardWithStats
+                    variant={questionCardVariant}
                     question={qs.question}
                     numCorrectOptions={qs.correctOptions.length}
                     options={optionsAndMode}
@@ -162,28 +240,152 @@ function QuestionSection({ questionSummary, loadingMessage }: IQuestionSectionPr
     }
 
     return (
-        <Box
-            // Position
-            position="absolute"
-            top="0"
-            bottom="0"
-            left="50%" // NOTE: the translateX(-50%) to position in centre
-            maxWidth={theme.spacing(100)}
-            sx={{
-                transform: "translateX(-50%)", // There's no direct prop for this, hence its here
-                width: `calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH})`, // = fillwidth - SummaryColumnWidth - leaderboardColumnWidth
-                overflowY: "auto",
-                ...scrollbarMixin,
-            }}
-        >
+        <>
             {renderedQuestions}
-        </Box>
+        </>
     )
+}
+
+interface ISummaryPageContainerProps {
+    variant: PageVariant,
+    summarySection: React.ReactNode | React.ReactNode[],
+    questionSection: React.ReactNode | React.ReactNode[],
+    leaderboardSection: React.ReactNode | React.ReactNode[],
+}
+
+function SummaryPageContainer(props: ISummaryPageContainerProps) {
+    const {variant, summarySection, questionSection, leaderboardSection} = props
+
+    switch (variant) {
+        case PageVariant.SMALL:
+            return null
+        case PageVariant.MEDIUM:
+            return (
+                <>
+                    <Box
+                        position="absolute"
+                        top="0"
+                        left="0"
+                        bottom="0"
+                        width={`calc(100% - ${LEADERBOARD_COLUMN_WIDTH})`}
+                        display={"flex"}
+                        flexDirection={"column"}
+                        alignItems={"center"}
+                    >
+                        <Box
+                            display={"flex"}
+                            alignItems={"center"}
+                            justifyContent={"center"}
+                            marginLeft={3}
+                            marginRight={3}
+                            marginBottom={3}
+                        >
+                            {summarySection}
+                        </Box>
+                        <Box
+                            sx={{
+                                flexGrow: 1,
+                                paddingLeft: 3,
+                                width: "100%",
+                                maxWidth: theme.spacing(70),
+                                overflowY: "auto",
+                                ...scrollbarMixin,
+                            }}
+                        >
+                            {questionSection}
+                        </Box>
+                    </Box>
+                    <Box
+                        // Position on the rhs
+                        position="absolute"
+                        top="0"
+                        right="0"
+                        bottom="0"
+                        width={LEADERBOARD_COLUMN_WIDTH}
+                        sx={{
+                            overflowY: "auto",
+                            ...scrollbarMixin,
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                margin: 3,
+                                marginTop: COLUMN_MARGIN_TOP,
+                                padding: 0,
+                            }}
+                        >
+                            {leaderboardSection}
+                        </Box>
+                    </Box>
+                </>
+            )
+        case PageVariant.LARGE:
+            return (
+                <>
+                    <Box
+                        // Position
+                        position="absolute"
+                        top="0"
+                        left="0"
+                        bottom="0"
+                        // Content
+                        display="flex"
+                        flexDirection="column"
+                        width={COLUMN_WIDTH}
+                        sx={{
+                            overflowY: "auto",
+                        }}
+                    >
+                        {summarySection}
+                    </Box>
+                    <Box
+                        // Position
+                        position="absolute"
+                        top="0"
+                        bottom="0"
+                        left="50%" // NOTE: the translateX(-50%) to position in centre
+                        maxWidth={theme.spacing(100)}
+                        sx={{
+                            transform: "translateX(-50%)", // There's no direct prop for this, hence its here
+                            width: `calc(100% - ${COLUMN_WIDTH} - ${COLUMN_WIDTH})`, // = fillwidth - SummaryColumnWidth - leaderboardColumnWidth
+                            overflowY: "auto",
+                            ...scrollbarMixin,
+                        }}
+                    >
+                        {questionSection}
+                    </Box>
+                    <Box
+                        // Position on the rhs
+                        position="absolute"
+                        top="0"
+                        right="0"
+                        bottom="0"
+                        width={LEADERBOARD_COLUMN_WIDTH}
+                        sx={{
+                            overflowY: "auto",
+                            ...scrollbarMixin,
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                margin: 3,
+                                marginTop: COLUMN_MARGIN_TOP,
+                                padding: 0,
+                            }}
+                        >
+                            {leaderboardSection}
+                        </Box>
+                    </Box>
+                </>
+            )
+    }
 }
 
 interface ISummaryProps { }
 
 function Summary(props: ISummaryProps) {
+
+    const pageVariant = usePageVariant()
 
     let navigate = useNavigate();
     const dispatch = useAppDispatch()
@@ -267,18 +469,29 @@ function Summary(props: ISummaryProps) {
                 height: "100%",
             }}
         >
-            <SummaryColumn
-                numberParticipantsComplete={totalFinishedParticipants}
-                totalParticipants={leaderboard.length}
-                onReturnToHomeClicked={onReturnToHomeClicked}
-                totalTimeElapsed={totalTimeElapsed}
-                avgAnswerTime={avgAnswerTime}
+            <SummaryPageContainer
+                variant={pageVariant}
+                summarySection={
+                    <SummarySection
+                        variant={pageVariant}
+                        numberParticipantsComplete={totalFinishedParticipants}
+                        totalParticipants={leaderboard.length}
+                        onReturnToHomeClicked={onReturnToHomeClicked}
+                        totalTimeElapsed={totalTimeElapsed}
+                        avgAnswerTime={avgAnswerTime}
+                    />
+                }
+                questionSection={
+                    <QuestionSection
+                        variant={pageVariant}
+                        questionSummary={questionSummary}
+                        loadingMessage={loadingMessage}
+                    />
+                }
+                leaderboardSection={
+                    <LeaderBoard items={leaderboard} selectedUserId={userId} />
+                }
             />
-            <QuestionSection
-                questionSummary={questionSummary}
-                loadingMessage={loadingMessage}
-            />
-            <LeaderBoard items={leaderboard} selectedUserId={userId} />
         </Box>
     )
 }

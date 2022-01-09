@@ -1,9 +1,13 @@
-import { Box, List, ListItem, ListItemText, Tooltip, Typography } from "@mui/material";
+import { Box, List, ListItem, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
 import { IQuestionAnswerStats } from "../../../const";
 import theme from "../../../themes/theme";
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
+
+export enum QuestionStatsVariant {
+    VERTICAL, HORIZONTAL,
+}
 
 interface IQuestionStatsTooltipContentProps {
     type:
@@ -39,13 +43,12 @@ function QuestionStatsTooltipContent(props: IQuestionStatsTooltipContentProps) {
     )
 }
 
-interface IQuestionStatsPanelProps {
-    answerStats: IQuestionAnswerStats
+interface IVariantQuestionStatsPanel {
+    answerStats: IQuestionAnswerStats,
 }
 
-function QuestionStatsPanel(props: IQuestionStatsPanelProps) {
-
-    const { correctAnswerers, incorrectAnswerers, timeExpiredAnswerers } = props.answerStats;
+function VerticalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
+    const {correctAnswerers, incorrectAnswerers, timeExpiredAnswerers } = props.answerStats;
 
     return (
         <List
@@ -124,6 +127,112 @@ function QuestionStatsPanel(props: IQuestionStatsPanelProps) {
             </Tooltip>
         </List>
     )
+}
+
+function HorizontalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
+
+    const {correctAnswerers, incorrectAnswerers, timeExpiredAnswerers } = props.answerStats;
+
+    return (
+        <Stack
+            direction={"row"}
+        >
+            <Tooltip
+                title={
+                    <QuestionStatsTooltipContent
+                        type="Correctly answered by"
+                        names={correctAnswerers}
+                    />
+                }
+                arrow
+                placement="top"
+            >
+                <Stack
+                    direction={"row"}
+                    alignItems={"center"}
+                    marginRight={3}
+                >
+                    <CheckCircleOutlinedIcon
+                        sx={{
+                            color: theme.palette.success[900],
+                            marginRight: 1.5,
+                        }}
+                    />
+                    <ListItemText
+                        primary={correctAnswerers.length}
+                    />
+                </Stack>
+            </Tooltip>
+            <Tooltip
+                title={
+                    <QuestionStatsTooltipContent
+                        type="Incorrectly answered by"
+                        names={incorrectAnswerers}
+                    />
+                }
+                arrow
+                placement="top"
+                
+            >
+                <Stack
+                    direction={"row"}
+                    alignItems={"center"}
+                    marginRight={3}
+                >
+                    <CancelOutlinedIcon
+                        sx={{
+                            color: theme.palette.error[900],
+                            marginRight: 1.5,
+                        }}
+                    />
+                    <ListItemText
+                        primary={incorrectAnswerers.length}
+                    />
+                </Stack>
+            </Tooltip>
+            <Tooltip
+                title={
+                    <QuestionStatsTooltipContent
+                        type="Time expired for"
+                        names={timeExpiredAnswerers}
+                    />
+                }
+                arrow
+                placement="top"
+            >
+                <Stack
+                    direction={"row"}
+                    alignItems={"center"}
+                >
+                    <AccessAlarmIcon
+                        sx={{
+                            color: theme.palette.grey[900],
+                            marginRight: 1.5,
+                        }}
+                    />
+                    <ListItemText
+                        primary={timeExpiredAnswerers.length}
+                    />
+                </Stack>
+            </Tooltip>
+        </Stack>
+    )
+}
+
+interface IQuestionStatsPanelProps {
+    variant: QuestionStatsVariant,
+    answerStats: IQuestionAnswerStats,
+}
+
+function QuestionStatsPanel(props: IQuestionStatsPanelProps) {
+
+    const {variant, answerStats} = props
+
+    if (variant === QuestionStatsVariant.HORIZONTAL) {
+        return <HorizontalQuestionStatsPanel answerStats={answerStats} />
+    } else {
+        return <VerticalQuestionStatsPanel answerStats={answerStats} />
+    }
 }
 
 export default QuestionStatsPanel
