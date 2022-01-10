@@ -34,7 +34,8 @@ export function QuestionCard(props: IQuestionCardProps) {
             variantSx = {
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "space-evenly",
+                alignItems: "start",
+                gap: 1,
             }
             break
         case QuestionCardVariant.BOX:

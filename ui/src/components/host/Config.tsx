@@ -1,4 +1,4 @@
-import { Box, Button, Card, CircularProgress, Collapse, Fab, Fade, SxProps, Theme, useMediaQuery } from "@mui/material";
+import { Box, Button, Card, CircularProgress, Collapse, Drawer, SxProps, Theme, } from "@mui/material";
 import React,{ useState } from "react";
 import { uploadQuiz } from "../../api/quizUpload";
 import { IQuestionAndAnswers, PageVariant } from "../../types";
@@ -16,6 +16,7 @@ import QuestionDurationBlock from "./QuestionDurationBlock";
 import { OptionMode } from "../common/question/Option";
 import QuestionCard, { QuestionCardVariant } from "../common/question/QuestionCard";
 import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
+import StartFab from "./StartFab";
 
 const COLUMN_WIDTH = "340px"
 
@@ -61,18 +62,58 @@ function ConfigSection(props: IConfigSectionProps) {
 
     switch (variant) {
         case PageVariant.SMALL:
-            return null
+            return (
+                <Card
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                    }}
+                >
+                    <SectionElementWrapper sx={{gridArea: "question-name"}}>
+                        {quizNameBlock}
+                    </SectionElementWrapper>
+                    <SectionElementWrapper
+                        sx={{
+                            marginTop: 0,
+                        }}
+                    >
+                        {uploadButton}
+                    </SectionElementWrapper>
+                    <Collapse
+                        orientation="vertical"
+                        in={collapseIn}
+                    >
+                        <SectionElementWrapper
+                            sx={{
+                                marginTop: 0,
+                            }}
+                        >
+                            {categoryBlock}
+                        </SectionElementWrapper>
+                    </Collapse>
+                    <Collapse
+                        orientation="vertical"
+                        in={collapseIn}
+                    >
+                        <SectionElementWrapper
+                            sx={{
+                                marginTop: 0,
+                            }}
+                        >
+                            {questionDurationBlock}
+                        </SectionElementWrapper>
+                    </Collapse>
+                </Card>
+            )
         case PageVariant.MEDIUM:
         return (
                 <Card
                     sx={{
-                        display: "inline-grid",
+                        display: "grid",
                         gridTemplateColumns: `${theme.spacing(30)} ${theme.spacing(40)}`,
                         gridTemplateRows: "auto auto",
                         gridTemplateAreas: `'question-name      upload-btn'
                                             'categories         question-duration'`,
-                        margin: 3,
-                        marginTop: COLUMN_MARGIN_TOP,
                     }}
                 >
                     <SectionElementWrapper sx={{gridArea: "question-name"}}>
@@ -108,12 +149,7 @@ function ConfigSection(props: IConfigSectionProps) {
             )
         case PageVariant.LARGE:
             return (
-                <Card
-                    sx={{
-                        margin: 3,
-                        marginTop: COLUMN_MARGIN_TOP,
-                    }}
-                >
+                <Card>
                     <SectionElementWrapper>
                         {quizNameBlock}
                     </SectionElementWrapper>
@@ -188,7 +224,6 @@ function QuestionColumn(props: IQuestionColumnProps) {
 
     switch (variant) {
         case PageVariant.SMALL:
-            return null
         case PageVariant.MEDIUM:
         case PageVariant.LARGE:
             return (
@@ -207,95 +242,201 @@ interface IParticipantSectionProps {
 
 function ParticipantSection(props: IParticipantSectionProps) {
 
-    const { variant, accessCode, participants } = props
+    // This is just for the small view
+    const [participantDrawerOpen, setParticipantDrawerOpen] = useState(false)
 
-    const content = <>
-        <Card
-            sx={{
-                marginTop: COLUMN_MARGIN_TOP,
-            }}
-        >
-            <SectionElementWrapper>
-                <QuizAccessCode accessCode={accessCode} />
-            </SectionElementWrapper>
-        </Card>
-        <ParticipantList
-            otherParticipants={participants}
-            sx={{
-                marginTop: 3,
-            }}
-        />
-    </>
+    const { variant, accessCode, participants } = props
 
     switch (variant) {
         case PageVariant.SMALL:
-            return null
+            return (
+                <>
+                    <Card
+                        sx={{
+                            marginTop: COLUMN_MARGIN_TOP,
+                        }}
+                    >
+                        <SectionElementWrapper>
+                            <QuizAccessCode
+                                accessCode={accessCode}
+                                showMenu={true}
+                                menuBadge={participants.length.toString()}
+                                menuClicked={() => setParticipantDrawerOpen(true)}
+                            />
+                        </SectionElementWrapper>
+                    </Card>
+                    <Drawer
+                        anchor="right"
+                        open={participantDrawerOpen}
+                        onClose={() => setParticipantDrawerOpen(false)}
+                        PaperProps={{
+                            sx: {
+                                backgroundColor: theme.palette.grey[100],
+                            }
+                        }}
+                    >
+                        <ParticipantList
+                            otherParticipants={participants}
+                            sx={{
+                                padding: 3,
+                                width: COLUMN_WIDTH,
+                            }}
+                        />
+                    </Drawer>
+                    
+                </>
+            )
         case PageVariant.MEDIUM:
-            return content
         case PageVariant.LARGE:
-            return content
+            return (
+                <>
+                    <Card
+                        sx={{
+                            marginTop: COLUMN_MARGIN_TOP,
+                        }}
+                    >
+                        <SectionElementWrapper>
+                            <QuizAccessCode
+                                accessCode={accessCode}
+                                showMenu={false}
+                                menuBadge=""
+                                menuClicked={() => null}
+                            />
+                        </SectionElementWrapper>
+                    </Card>
+                    <ParticipantList
+                        otherParticipants={participants}
+                        sx={{
+                            marginTop: 3,
+                        }}
+                    />
+                </>
+            )
     }
 }
-
 
 interface IConfigPageContainerProps {
     variant: PageVariant,
     configSection: React.ReactNode | React.ReactNode[],
     questionSection: React.ReactNode | React.ReactNode[],
     participantSection: React.ReactNode | React.ReactNode[],
+    startFab: React.ReactNode | React.ReactNode[],
 }
 
 function ConfigPageContainer(props: IConfigPageContainerProps) {
-    const { variant, configSection, questionSection, participantSection } = props
+    const { variant, configSection, questionSection, participantSection, startFab } = props
 
     switch (variant) {
         case PageVariant.SMALL:
-            return null
-        case PageVariant.MEDIUM:
             return (
-                <Box
-                    sx={{
-                        position: "absolute",
-                        top: 0,
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        overflowY: "auto",
-                        ...scrollbarMixin,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                    }}
-                >
-                    <Box>
-                        {configSection}
-                    </Box>
+                <>
                     <Box
-                        display={"flex"}
-                        flexDirection={"row"}
                         sx={{
-                            alignItems: "stretch",
-                            justifyContent: "stretch",
+                            position: "absolute",
+                            top: 0,
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            overflowY: "auto",
+                            ...scrollbarMixin,
                         }}
                     >
                         <Box
-                            sx={{
-                                marginLeft: 3,
-                                marginRight: 1.5,
-                            }}
+                            marginLeft={3}
+                            marginRight={3}
+                        >
+                            {participantSection}
+                        </Box>
+                        <Box
+                            margin={3}
+                        >
+                            {configSection}
+                        </Box>
+                        <Box
+                            marginLeft={3}
+                            marginRight={3}
                         >
                             {questionSection}
                         </Box>
                         <Box
-                            sx={{
-                                marginLeft: 1.5,
-                                marginRight: 3,
-                            }}
+                            height={100}
                         >
-                            {participantSection}
+                            {/* Spacer so the start button doesn't overlap any content at the bottom of the screen */}
                         </Box>
                     </Box>
-                </Box>
+                    <Box
+                        sx={{
+                            // Centre in the middle of the participants column
+                            position: "fixed",
+                            bottom: theme.spacing(5),
+                            left: "50%", // NOTE: the translateX(-50%) to position in centre
+                            transform: "translateX(-50%)",
+                        }}
+                    >
+                        {startFab}
+                    </Box>
+                </>
+            )
+        case PageVariant.MEDIUM:
+            return (
+                <>
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            top: 0,
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            overflowY: "auto",
+                            ...scrollbarMixin,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Box
+                            margin={3}
+                            marginTop={COLUMN_MARGIN_TOP}
+                        >
+                            {configSection}
+                        </Box>
+                        <Box
+                            display={"flex"}
+                            flexDirection={"row"}
+                            sx={{
+                                alignItems: "stretch",
+                                justifyContent: "stretch",
+                            }}
+                        >
+                            <Box
+                                sx={{
+                                    marginLeft: 3,
+                                    marginRight: 1.5,
+                                }}
+                            >
+                                {questionSection}
+                            </Box>
+                            <Box
+                                sx={{
+                                    marginLeft: 1.5,
+                                    marginRight: 3,
+                                }}
+                            >
+                                {participantSection}
+                            </Box>
+                        </Box>
+                    </Box>
+                    <Box
+                        sx={{
+                            // Centre in the middle of the participants column
+                            position: "fixed",
+                            bottom: theme.spacing(5),
+                            right: `calc(170px - ${theme.spacing(8)})`, // = half column width - half button width,
+                        }}
+                    >
+                        {startFab}
+                    </Box>
+                </>
             )
         case PageVariant.LARGE:
             return (
@@ -310,6 +451,8 @@ function ConfigPageContainer(props: IConfigPageContainerProps) {
                         display="flex"
                         flexDirection="column"
                         maxWidth={COLUMN_WIDTH}
+                        margin={3}
+                        marginTop={COLUMN_MARGIN_TOP}
                         sx={{
                             overflowY: "auto",
                         }}
@@ -347,6 +490,16 @@ function ConfigPageContainer(props: IConfigPageContainerProps) {
                         }}
                     >
                         {participantSection}
+                    </Box>
+                    <Box
+                        sx={{
+                            // Centre in the middle of the participants column
+                            position: "fixed",
+                            bottom: theme.spacing(5),
+                            right: `calc(170px - ${theme.spacing(8)})`, // = half column width - half button width,
+                        }}
+                    >
+                        {startFab}
                     </Box>
                 </>
             )
@@ -502,26 +655,13 @@ function Config(props: IConfigProps) {
                         participants={leaderboard}
                     />
                 }
+                startFab={
+                    <StartFab
+                        enabled={startButtonEnabled}
+                        onStartClicked={onStartClicked}
+                    />
+                }
             />
-            <Fade in={startButtonEnabled}>
-                <Fab
-                    variant="extended"
-                    color="primary"
-                    disabled={!startButtonEnabled}
-                    onClick={onStartClicked}
-                    sx={{
-                        width: theme.spacing(16),
-                        borderRadius: 4,
-                        // Centre in the middle of the participants column
-                        position: "fixed",
-                        bottom: theme.spacing(5),
-                        right: `calc(170px - ${theme.spacing(8)})`, // = half column width - half button width,
-                        display: startButtonEnabled ? "inherit" : "none" // hide the button when not enabled
-                    }}
-                >
-                    Start
-                </Fab>
-            </Fade>
         </Box>
     )
 }

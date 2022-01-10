@@ -6,11 +6,10 @@ import theme from '../../themes/theme';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { ReactComponent as Logo } from '../../logo.drawio.svg';
 
-export const APP_BAR_HEIGHT = "50px"
-
 const appbarStyles: SxProps<Theme> = {
     boxShadow: 0, // no drop shadow
     backgroundColor: "transparent",
+    height: theme.spacing(8),
 }
 
 interface ITopBarProps {
