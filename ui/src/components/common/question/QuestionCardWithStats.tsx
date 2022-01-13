@@ -32,7 +32,54 @@ function QuestionCardWithStats(props: IQuestionCardWithStatsProps) {
     let content
     switch (variant) {
         case QuestionCardVariant.COLUMN:
-            content = null
+            content = (
+                <Box
+                    display={"flex"}
+                    flexDirection={"column"}
+                >
+                    <Box
+                        flexGrow={1}
+                    >
+                        <CardContent
+                            sx={{
+                                padding: 0,
+                                marginRight: 3,
+                                marginLeft: 3,
+                                marginTop: 3,
+                            }}
+                        >
+                            <Typography variant="h5">{question}</Typography>
+                            <Typography variant="caption" color={theme.palette.grey[700]}>Select {numCorrectOptions}</Typography>
+                        </CardContent>
+                        <Box
+                            display={"flex"}
+                            flexDirection={"column"}
+                            alignItems={"start"}
+                            gap={1}
+                            margin={3}
+                        >
+                            {optionElements}
+                        </Box>
+                    </Box>
+                    <Divider
+                        flexItem
+                        orientation="horizontal"
+                        sx={{
+                            height: "100%",
+                            marginLeft: 3,
+                            marginRight: 3,
+                        }}
+                    />
+                    <Box
+                        marginTop={3}
+                        marginBottom={3}
+                        marginLeft="auto"
+                        marginRight="auto"
+                    >
+                        <QuestionStatsPanel variant={QuestionStatsVariant.HORIZONTAL} answerStats={props.answerStats} />
+                    </Box>
+                </Box>
+            )
             break
         case QuestionCardVariant.BOX:
             content = (

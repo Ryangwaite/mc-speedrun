@@ -1,9 +1,9 @@
-import { Box, Typography, Stack, CircularProgress, Collapse, SxProps, Theme, } from "@mui/material";
+import { Box, Typography, Stack, CircularProgress, Collapse, SxProps, Theme, IconButton, Badge, Drawer, } from "@mui/material";
 import _ from "lodash";
 import React, { useEffect, useState } from "react";
 import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../leaderboard/Leaderboard";
 import QuestionCardWithStats from "../question/QuestionCardWithStats";
-import { ClientType, IHostQuestionSummary, IParticipantQuestionSummary, PageVariant, } from "../../../types";
+import { ClientType, IHostQuestionSummary, ILeaderboardItem, IParticipantQuestionSummary, PageVariant, } from "../../../types";
 import { useAppDispatch, useAppSelector, usePageVariant } from "../../../hooks";
 import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../../slices/participant";
 import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../../../slices/common";
@@ -14,6 +14,8 @@ import ProgressBlock from "./ProgressBlock";
 import StatCard, { StatCardSize } from "./StatCard";
 import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../../themes/theme";
 import { QuestionCardVariant } from "../question/QuestionCard";
+import LeaderBoardItem from "../leaderboard/LeaderboardItem";
+import MenuIcon from '@mui/icons-material/Menu';
 
 const COLUMN_WIDTH = "340px"
 
@@ -64,7 +66,23 @@ function SummarySection(props: ISummaryColumnProps) {
 
     switch (variant) {
         case PageVariant.SMALL:
-            return null
+            return (
+                <Box
+                    display={"flex"}
+                    flexDirection={"column"}
+                >
+                    {progressBlock}
+                    <Box
+                        display={"flex"}
+                        flexDirection={"row"}
+                        columnGap={3}
+                        marginTop={3}
+                    >
+                        {timeElapsedStatCard}
+                        {avgAnswerTimeStatCard}
+                    </Box>
+                </Box>
+            )
         case PageVariant.MEDIUM:
             return (
                 <Box
@@ -246,6 +264,81 @@ function QuestionSection({ variant, questionSummary, loadingMessage }: IQuestion
     )
 }
 
+interface ILeaderboardSectionProps {
+    variant: PageVariant,
+    clientType: ClientType,
+    items: ILeaderboardItem[],
+    selectedUserId: string,
+}
+
+function LeaderboardSection(props: ILeaderboardSectionProps) {
+    // This is just for the small view
+    const [leaderboardDrawerOpen, setLeaderboardDrawerOpen] = useState(false)
+
+    const {variant, clientType, items, selectedUserId} = props
+
+    switch (variant) {
+        case PageVariant.SMALL:
+            const sortedItems = _.sortBy(items, x => x.score).reverse()
+            let userPosition: number
+            let selectedUser: ILeaderboardItem
+            if (clientType === ClientType.PARTICIPANT) {
+                for (let i = 0; i < sortedItems.length; i++) {
+                    if (sortedItems[i].userId === selectedUserId) {
+                        userPosition = i + 1
+                        selectedUser = sortedItems[i]
+                    }
+                }
+            } else {
+                // Just show the 1st place user
+                userPosition = 1
+                selectedUser = sortedItems[0]
+            }
+
+            return (
+                <>
+                    <Stack direction={"row"}>
+                        <Box
+                            flexGrow={1}
+                            marginRight={1.5}
+                        >
+                            <LeaderBoardItem key={0} position={userPosition!} selected={clientType === ClientType.PARTICIPANT} item={selectedUser!} />
+                        </Box>
+                        <IconButton
+                            aria-label="menu"
+                            onClick={() => setLeaderboardDrawerOpen(true)}
+                            sx={{alignSelf: "center"}}
+                        >
+                            <Badge badgeContent={items.length} color="primary">
+                                <MenuIcon />
+                            </Badge>
+                        </IconButton>
+                    </Stack>
+                    <Drawer
+                        anchor="right"
+                        open={leaderboardDrawerOpen}
+                        onClose={() => setLeaderboardDrawerOpen(false)}
+                        PaperProps={{
+                            sx: {
+                                backgroundColor: theme.palette.grey[100],
+                            }
+                        }}
+                    >
+                        <Box
+                            padding={3}
+                            width={COLUMN_WIDTH}
+                        >
+                            <LeaderBoard items={items} selectedUserId={selectedUserId} />
+                        </Box>
+                    </Drawer>
+                </>
+            )
+        case PageVariant.MEDIUM:
+        case PageVariant.LARGE:
+            return <LeaderBoard items={items} selectedUserId={selectedUserId} />
+    }
+}
+
 interface ISummaryPageContainerProps {
     variant: PageVariant,
     summarySection: React.ReactNode | React.ReactNode[],
@@ -258,7 +351,40 @@ function SummaryPageContainer(props: ISummaryPageContainerProps) {
 
     switch (variant) {
         case PageVariant.SMALL:
-            return null
+            return (
+                <Box
+                    sx={{
+                        position: "absolute",
+                        top: 0,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        overflowY: "auto",
+                        ...scrollbarMixin,
+                    }}
+                >
+                    <Box
+                        marginTop={COLUMN_MARGIN_TOP}
+                        marginLeft={3}
+                        marginRight={3}
+                    >
+                        {summarySection}
+                    </Box>
+                    <Box
+                        marginTop={3}
+                        marginLeft={3}
+                        marginRight={3}
+                    >
+                        {leaderboardSection}
+                    </Box>
+                    <Box
+                        margin={3}
+                        marginTop={2}
+                    >
+                        {questionSection}
+                    </Box>
+                </Box>
+            )
         case PageVariant.MEDIUM:
             return (
                 <>
@@ -489,7 +615,12 @@ function Summary(props: ISummaryProps) {
                     />
                 }
                 leaderboardSection={
-                    <LeaderBoard items={leaderboard} selectedUserId={userId} />
+                    <LeaderboardSection
+                        variant={pageVariant}
+                        clientType={clientType}
+                        items={leaderboard}
+                        selectedUserId={userId}
+                    />
                 }
             />
         </Box>
