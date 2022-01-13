@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Box, CircularProgress} from "@mui/material";
+import { Button, Box, CircularProgress, Stack, IconButton, Badge, Drawer} from "@mui/material";
 import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../common/leaderboard/Leaderboard";
 import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
 import { useAppDispatch, useAppSelector, usePageVariant } from "../../hooks";
@@ -10,18 +10,21 @@ import QuestionCard, { QuestionCardVariant } from "../common/question/QuestionCa
 import QuestionNumberCard from "./QuestionNumberCard";
 import CountdownCard from "./CountdownCard";
 import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
-import { PageVariant } from "../../types";
+import { ILeaderboardItem, PageVariant } from "../../types";
+import LeaderBoardItem from "../common/leaderboard/LeaderboardItem";
+import MenuIcon from '@mui/icons-material/Menu';
+import _ from "lodash";
 
 const COLUMN_WIDTH = "340px"
 
 interface IQuizSectionProps {
+    variant: PageVariant,
     questionNumber: number,
     totalQuestions: number,
     secondsRemaining: number,
     totalSeconds: number,
     questionText: string,
     numCorrectOptions: number,
-    questionCardVariant: QuestionCardVariant,
     options: {
         text: string,
         mode: OptionMode,
@@ -34,50 +37,164 @@ interface IQuizSectionProps {
 function QuizSection(props: IQuizSectionProps) {
 
     const {
-        questionNumber, totalQuestions, secondsRemaining, totalSeconds,
-        questionText, numCorrectOptions, questionCardVariant, options,
-        submitDisabled,
+        variant, questionNumber, totalQuestions, secondsRemaining,
+        totalSeconds, questionText, numCorrectOptions, 
+        options, submitDisabled,
     } = props
 
-    return (
-        <Box
-            sx={{
-                display: "grid",
-                gridTemplateColumns: `calc(50% - ${theme.spacing(1.5)}) calc(50% - ${theme.spacing(1.5)})`, // NOTE: This needs to sum to 100% including columnGap
-                gridTemplateRows: `${theme.spacing(15)} auto auto`,
-                gridTemplateAreas: `'question-number      countdown'
-                                    'question            question'
-                                    'button              button'`,
-                columnGap: theme.spacing(3),
-                rowGap: theme.spacing(3),
-            }}
-        >
-            <Box sx={{gridArea: "question-number"}}>
-                <QuestionNumberCard questionNumber={questionNumber} totalQuestions={totalQuestions} />
-            </Box>
-            <Box sx={{gridArea: "countdown"}}>
-                <CountdownCard secondsRemaining={secondsRemaining} totalSeconds={totalSeconds} />
-            </Box>
-            <Box sx={{gridArea: "question"}}>
-                <QuestionCard
-                    variant={questionCardVariant}
-                    question={questionText}
-                    numCorrectOptions={numCorrectOptions}
-                    options={options}
-                    onOptionClicked={props.onOptionClicked}
-                />
-            </Box>
-                <Button
-                    variant="contained"
-                    disabled={submitDisabled}
-                    onClick={props.onSubmit}
-                    sx={{
-                        gridArea: "button",
-                        justifySelf: "center",
-                    }}
-                >Submit</Button>
-        </Box>
+    const questionCardVariant = {
+        [PageVariant.SMALL]: QuestionCardVariant.COLUMN,
+        [PageVariant.MEDIUM]: QuestionCardVariant.BOX,
+        [PageVariant.LARGE]: QuestionCardVariant.ROW,
+    }[variant]
+
+    const questionNumberCard = <QuestionNumberCard questionNumber={questionNumber} totalQuestions={totalQuestions} />
+    const countdownCard = <CountdownCard secondsRemaining={secondsRemaining} totalSeconds={totalSeconds} />
+    const questionCard = (
+        <QuestionCard
+            variant={questionCardVariant}
+            question={questionText}
+            numCorrectOptions={numCorrectOptions}
+            options={options}
+            onOptionClicked={props.onOptionClicked}
+        />
     )
+    const submitButton = (
+        <Button
+            variant="contained"
+            disabled={submitDisabled}
+            onClick={props.onSubmit}
+        >Submit</Button>
+    )
+
+    switch (variant) {
+        case PageVariant.SMALL:
+            return (
+                <Stack
+                    display={"flex"}
+                    flexDirection={"column"}
+                    alignItems={"center"}
+                >
+                    <Box
+                        marginBottom={3}
+                        width={"100%"}
+                        height={theme.spacing(7)}
+                    >
+                        {questionNumberCard}
+                    </Box>
+                    <Box
+                        marginBottom={3}
+                        width={"100%"}
+                        height={theme.spacing(10)}
+                    >
+                        {countdownCard}
+                    </Box>
+                    <Box
+                        marginBottom={3}
+                    >
+                        {questionCard}
+                    </Box>
+                    {submitButton}
+                </Stack>
+            )
+        case PageVariant.MEDIUM:
+        case PageVariant.LARGE:
+            return (
+                <Box
+                    sx={{
+                        display: "grid",
+                        gridTemplateColumns: `calc(50% - ${theme.spacing(1.5)}) calc(50% - ${theme.spacing(1.5)})`, // NOTE: This needs to sum to 100% including columnGap
+                        gridTemplateRows: `${theme.spacing(15)} auto auto`,
+                        gridTemplateAreas: `'question-number      countdown'
+                                            'question            question'
+                                            'button              button'`,
+                        columnGap: theme.spacing(3),
+                        rowGap: theme.spacing(3),
+                    }}
+                >
+                    <Box sx={{gridArea: "question-number"}}>
+                        {questionNumberCard}
+                    </Box>
+                    <Box sx={{gridArea: "countdown"}}>
+                        {countdownCard}
+                    </Box>
+                    <Box sx={{gridArea: "question"}}>
+                        {questionCard}
+                    </Box>
+                    <Box sx={{gridArea: "button", justifySelf: "center",}}>
+                        {submitButton}
+                    </Box>
+                </Box>
+            )
+    }
+}
+
+interface ILeaderboardSectionProps {
+    variant: PageVariant,
+    items: ILeaderboardItem[],
+    selectedUserId: string,
+}
+
+function LeaderboardSection(props: ILeaderboardSectionProps) {
+    // This is just for the small view
+    const [leaderboardDrawerOpen, setLeaderboardDrawerOpen] = useState(false)
+
+    const {variant, items, selectedUserId} = props
+
+    switch (variant) {
+        case PageVariant.SMALL:
+            const sortedItems = _.sortBy(items, x => x.score).reverse()
+            let userPosition: number
+            let selectedUser: ILeaderboardItem
+            for (let i = 0; i < sortedItems.length; i++) {
+                if (sortedItems[i].userId === selectedUserId) {
+                    userPosition = i + 1
+                    selectedUser = sortedItems[i]
+                }
+            }
+            
+            return (
+                <>
+                    <Stack direction={"row"}>
+                        <Box
+                            flexGrow={1}
+                            marginRight={1.5}
+                        >
+                            <LeaderBoardItem key={0} position={userPosition!} selected={true} item={selectedUser!} />
+                        </Box>
+                        <IconButton
+                            aria-label="menu"
+                            onClick={() => setLeaderboardDrawerOpen(true)}
+                            sx={{alignSelf: "center"}}
+                        >
+                            <Badge badgeContent={items.length} color="primary">
+                                <MenuIcon />
+                            </Badge>
+                        </IconButton>
+                    </Stack>
+                    <Drawer
+                        anchor="right"
+                        open={leaderboardDrawerOpen}
+                        onClose={() => setLeaderboardDrawerOpen(false)}
+                        PaperProps={{
+                            sx: {
+                                backgroundColor: theme.palette.grey[100],
+                            }
+                        }}
+                    >
+                        <Box
+                            padding={3}
+                            width={COLUMN_WIDTH}
+                        >
+                            <LeaderBoard items={items} selectedUserId={selectedUserId} />
+                        </Box>
+                    </Drawer>
+                </>
+            )
+        case PageVariant.MEDIUM:
+        case PageVariant.LARGE:
+            return <LeaderBoard items={items} selectedUserId={selectedUserId} />
+    }
 }
 
 interface IQuizPageContainerProps {
@@ -91,7 +208,24 @@ function QuizPageContainer(props: IQuizPageContainerProps) {
 
     switch (variant) {
         case PageVariant.SMALL:
-            return null
+            return (
+                <>
+                    <Box
+                        marginTop={COLUMN_MARGIN_TOP}
+                        marginLeft={3}
+                        marginRight={3}
+                        marginBottom={2}
+                    >
+                        {leaderboardSection}
+                    </Box>
+                    <Box
+                        marginLeft={3}
+                        marginRight={3}
+                    >
+                        {quizSection}
+                    </Box>
+                </>
+            )
         case PageVariant.MEDIUM:
         case PageVariant.LARGE:
             return (
@@ -235,14 +369,9 @@ function Quiz(props: IQuizProps) {
 
         const submitDisabled = currentQuestion.numberOfOptionsToSelect !== optionSelection.length
 
-        const questionCardVariant = {
-            [PageVariant.SMALL]: QuestionCardVariant.COLUMN,
-            [PageVariant.MEDIUM]: QuestionCardVariant.BOX,
-            [PageVariant.LARGE]: QuestionCardVariant.ROW,
-        }[pageVariant]
-
         content = (
             <QuizSection
+                variant={pageVariant}
                 questionNumber={currentQuestion.questionIndex + 1}
                 totalQuestions={numberOfQuestions}
                 secondsRemaining={timeRemaining}
@@ -250,7 +379,6 @@ function Quiz(props: IQuizProps) {
                 questionText={currentQuestion.question}
                 numCorrectOptions={currentQuestion.numberOfOptionsToSelect}
                 options={options}
-                questionCardVariant={questionCardVariant}
                 onOptionClicked={clickOption}
                 submitDisabled={submitDisabled}
                 onSubmit={onSubmit}
@@ -258,7 +386,7 @@ function Quiz(props: IQuizProps) {
         )
     }
 
-    const leaderboardSection = <LeaderBoard items={leaderboard} selectedUserId={userId} />
+    const leaderboardSection = <LeaderboardSection variant={pageVariant} selectedUserId={userId} items={leaderboard} />
 
     return (
         <Box

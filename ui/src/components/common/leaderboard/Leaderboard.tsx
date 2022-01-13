@@ -21,9 +21,7 @@ export function LeaderBoard(props: ILeaderBoardProps) {
      */
     const selectedUserId = props.selectedUserId
 
-    // 
     const items = _.sortBy(props.items, x => x.score).reverse()
-    // items.sort((a: ILeaderboardItem, b: ILeaderboardItem) => b.score - a.score) // sort highest to lowest
 
     let renderInstructions: ({item: ILeaderboardItem, position: number}|LeaderBoardOmissionToken)[] = []
     if (items.length <= 9) {
