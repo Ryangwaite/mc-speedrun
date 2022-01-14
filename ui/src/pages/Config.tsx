@@ -1,22 +1,22 @@
 import { Box, Button, Card, CircularProgress, Collapse, Drawer, SxProps, Theme, } from "@mui/material";
 import React,{ useState } from "react";
-import { uploadQuiz } from "../../api/quizUpload";
-import { IQuestionAndAnswers, PageVariant } from "../../types";
-import { useAppDispatch, useAppSelector, usePageVariant } from "../../hooks";
-import { selectLeaderboard, selectQuizId } from "../../slices/common";
-import { selectHostQuestions, selectSetRequestQuestions, setHostConfig, setRequestQuestions } from "../../slices/host";
-import { ILeaderboardItem } from "../../types";
-import ParticipantList from "../common/participantList/ParticipantList";
+import { uploadQuiz } from "../api/quizUpload";
+import { IQuestionAndAnswers, PageVariant } from "../types";
+import { useAppDispatch, useAppSelector, usePageVariant } from "../hooks";
+import { selectLeaderboard, selectQuizId } from "../slices/common";
+import { selectHostQuestions, selectSetRequestQuestions, setHostConfig, setRequestQuestions } from "../slices/host";
+import { ILeaderboardItem } from "../types";
+import ParticipantList from "../components/common/participantList/ParticipantList";
 import _ from "lodash";
-import UploadModal from "./UploadModal";
-import QuizNameBlock from "./QuizNameBlock";
-import QuizAccessCode from "./QuizAccessCode";
-import CategoriesBlock from "./CategoriesBlock";
-import QuestionDurationBlock from "./QuestionDurationBlock";
-import { OptionMode } from "../common/question/Option";
-import QuestionCard, { QuestionCardVariant } from "../common/question/QuestionCard";
-import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
-import StartFab from "./StartFab";
+import UploadModal from "../components/host/UploadModal";
+import QuizNameBlock from "../components/host/QuizNameBlock";
+import QuizAccessCode from "../components/host/QuizAccessCode";
+import CategoriesBlock from "../components/host/CategoriesBlock";
+import QuestionDurationBlock from "../components/host/QuestionDurationBlock";
+import { OptionMode } from "../components/common/question/Option";
+import QuestionCard, { QuestionCardVariant } from "../components/common/question/QuestionCard";
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../themes/theme";
+import StartFab from "../components/host/StartFab";
 
 const COLUMN_WIDTH = "340px"
 

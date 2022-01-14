@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Button, Box, CircularProgress, Stack, IconButton, Badge, Drawer} from "@mui/material";
-import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../common/leaderboard/Leaderboard";
-import { selectCurrentQuestion, selectNumberOfQuestions, selectQuestionDuration, selectRequestQuestion, selectUserId, setQuestionAnswer, setQuestionAnswerTimeout, setRequestQuestion } from "../../slices/participant";
-import { useAppDispatch, useAppSelector, usePageVariant } from "../../hooks";
-import { selectLeaderboard } from "../../slices/common";
-import { useNavigate } from "react-router-dom";
-import { OptionMode } from "../common/question/Option";
-import QuestionCard, { QuestionCardVariant } from "../common/question/QuestionCard";
-import QuestionNumberCard from "./QuestionNumberCard";
-import CountdownCard from "./CountdownCard";
-import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
-import { ILeaderboardItem, PageVariant } from "../../types";
-import LeaderBoardItem from "../common/leaderboard/LeaderboardItem";
 import MenuIcon from '@mui/icons-material/Menu';
+import { Badge, Box, Button, CircularProgress, Drawer, IconButton, Stack } from "@mui/material";
 import _ from "lodash";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from '../components/common/leaderboard/Leaderboard';
+import LeaderBoardItem from '../components/common/leaderboard/LeaderboardItem';
+import { OptionMode } from '../components/common/question/Option';
+import QuestionCard, { QuestionCardVariant } from '../components/common/question/QuestionCard';
+import CountdownCard from '../components/participant/CountdownCard';
+import QuestionNumberCard from '../components/participant/QuestionNumberCard';
+import { usePageVariant, useAppSelector, useAppDispatch } from '../hooks';
+import { selectLeaderboard } from '../slices/common';
+import { selectUserId, selectQuestionDuration, selectNumberOfQuestions, selectRequestQuestion, selectCurrentQuestion, setQuestionAnswerTimeout, setQuestionAnswer, setRequestQuestion } from '../slices/participant';
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from '../themes/theme';
+import { PageVariant, ILeaderboardItem } from '../types';
 
 const COLUMN_WIDTH = "340px"
 

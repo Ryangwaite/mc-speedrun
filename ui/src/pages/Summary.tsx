@@ -1,20 +1,20 @@
 import { Box, Typography, Stack, CircularProgress, Collapse, SxProps, Theme, IconButton, Badge, Drawer, } from "@mui/material";
 import _ from "lodash";
 import React, { useEffect, useState } from "react";
-import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../leaderboard/Leaderboard";
-import QuestionCardWithStats from "../question/QuestionCardWithStats";
-import { ClientType, IHostQuestionSummary, ILeaderboardItem, IParticipantQuestionSummary, PageVariant, } from "../../../types";
-import { useAppDispatch, useAppSelector, usePageVariant } from "../../../hooks";
-import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../../../slices/participant";
-import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../../../slices/common";
-import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../../../slices/host";
+import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from "../components/common/leaderboard/Leaderboard";
+import QuestionCardWithStats from "../components/common/question/QuestionCardWithStats";
+import { ClientType, IHostQuestionSummary, ILeaderboardItem, IParticipantQuestionSummary, PageVariant, } from "../types";
+import { useAppDispatch, useAppSelector, usePageVariant } from "../hooks";
+import { resetParticipantState, selectParticipantAvgAnswerTime, selectParticipantQuizSummary, selectParticipantTotalTimeElapsed, selectUserId } from "../slices/participant";
+import { resetCommonState, selectClientType, selectLeaderboard, selectTotalFinishedParticipants } from "../slices/common";
+import { resetHostState, selectHostAvgAnswerTime, selectHostQuizSummary, selectHostTotalTimeElapsed } from "../slices/host";
 import { useNavigate } from "react-router-dom";
-import { OptionMode } from "../question/Option";
-import ProgressBlock from "./ProgressBlock";
-import StatCard, { StatCardSize } from "./StatCard";
-import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../../themes/theme";
-import { QuestionCardVariant } from "../question/QuestionCard";
-import LeaderBoardItem from "../leaderboard/LeaderboardItem";
+import { OptionMode } from "../components/common/question/Option";
+import ProgressBlock from "../components/common/summary/ProgressBlock";
+import StatCard, { StatCardSize } from "../components/common/summary/StatCard";
+import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../themes/theme";
+import { QuestionCardVariant } from "../components/common/question/QuestionCard";
+import LeaderBoardItem from "../components/common/leaderboard/LeaderboardItem";
 import MenuIcon from '@mui/icons-material/Menu';
 
 const COLUMN_WIDTH = "340px"

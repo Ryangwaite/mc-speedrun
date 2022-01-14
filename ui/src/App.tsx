@@ -1,15 +1,16 @@
 import { Box, } from '@mui/material';
 import { TopBar } from './components/common/AppBar';
 import Home from './components/home/home';
-import Config from './components/host/Config';
-import Summary from './components/common/summary/Summary';
-
-import Lobby from './components/participant/Lobby';
-import Quiz from './components/participant/Quiz';
-import { Route, Routes } from 'react-router-dom';
+import Config from './pages/Config';
+import Summary from './pages/Summary';
+import { Route, Routes, } from 'react-router-dom';
 import { selectWebsocketConnectionState } from './slices/common';
 import { useAppSelector } from './hooks';
 import theme from './themes/theme';
+import ProtectedElement from './components/ProtectedElement';
+import Lobby from './pages/Lobby';
+import Quiz from './pages/Quiz';
+import NotFound from './pages/NotFound';
 
 function App() {
 
@@ -30,11 +31,12 @@ function App() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 {/* Participants Screens */}
-                <Route path="/lobby" element={<Lobby />} />
-                <Route path="/quiz" element={<Quiz />} />
+                <Route path="/lobby" element={<ProtectedElement><Lobby /></ProtectedElement>} />
+                <Route path="/quiz" element={<ProtectedElement><Quiz /></ProtectedElement>} />
                 {/* Host Screens */}
-                <Route path="/config" element={<Config />} />
-                <Route path="/summary" element={<Summary />} />
+                <Route path="/config" element={<ProtectedElement><Config /></ProtectedElement>} />
+                <Route path="/summary" element={<ProtectedElement><Summary /></ProtectedElement>} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </Box>
     )

@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Box, Typography} from "@mui/material";
-import ParticipantList from "../common/participantList/ParticipantList";
-import { useAppDispatch, useAppSelector } from "../../hooks";
-import { selectUserId, selectUsername, setUsername } from "../../slices/participant";
-import { selectLeaderboard } from "../../slices/common";
-import ParticipantListJoinItem from "../common/participantList/ParticipantListJoinItem";
-import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../../themes/theme";
+import ParticipantList from "../components/common/participantList/ParticipantList";
+import ParticipantListJoinItem from "../components/common/participantList/ParticipantListJoinItem";
+import { useAppDispatch, useAppSelector } from "../hooks";
+import { selectLeaderboard } from "../slices/common";
+import { selectUserId, selectUsername, setUsername } from "../slices/participant";
+import theme, { scrollbarMixin, COLUMN_MARGIN_TOP } from "../themes/theme";
+
 interface ILobbyProps {
     // participants // will add this eventually
 }
