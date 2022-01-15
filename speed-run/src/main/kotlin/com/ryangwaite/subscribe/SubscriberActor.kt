@@ -66,7 +66,7 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                     )
                 }
 
-                val avgAnswerTimeMillis = (answerDurations.average() * 1000).roundToInt()
+                val avgAnswerTimeMillis = if (answerDurations.size > 0) (answerDurations.average() * 1000).roundToInt() else 0
                 val totalTimeElapsed = Instant.now().epochSecond - datastore.getQuizStartTime(quizId).epochSecond
 
                 connectionManager.send(ForwardMsgToHost(quizId, NotifyHostQuizSummaryMsg(
