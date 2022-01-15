@@ -1,10 +1,20 @@
-import { Box, TextField, Typography } from "@mui/material"
+import { TextField, Typography } from "@mui/material"
 
 interface IQuestionDurationBlockProps {
+    questionDuration: number,
     onDurationChanged: (duration: number) => void
 }
 
 function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
+
+    const {questionDuration, onDurationChanged} = props
+
+    function textFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const nextValue = parseInt(event.target.value)
+        if (nextValue >= 0 || isNaN(nextValue)) {
+            onDurationChanged(nextValue)
+        }
+    }
 
     return (
         <>
@@ -17,9 +27,10 @@ function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
                 InputLabelProps={{
                     shrink: true,
                 }}
-                onChange={(event) => props.onDurationChanged(parseInt(event.target.value))}
+                value={questionDuration}
+                onChange={textFieldChange}
                 sx={{
-                    marginTop: 1.5
+                    marginTop: 1.5,
                 }}
             />
         </>

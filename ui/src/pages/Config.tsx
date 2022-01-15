@@ -23,7 +23,9 @@ const COLUMN_WIDTH = "340px"
 interface IConfigSectionProps {
     variant: PageVariant,
     onUploadQuizClicked: () => void,
+    questionDuration: number,
     onQuestionDurationChange: (duration: number) => void,
+    quizName: string,
     onQuizNameChange: (name: string) => void,
     categories?: string[],
     selectedCategories?: string[],
@@ -46,15 +48,20 @@ const SectionElementWrapper = (props: { children: React.ReactNode, sx?: SxProps<
 
 function ConfigSection(props: IConfigSectionProps) {
 
-    const { variant, onQuestionDurationChange, onQuizNameChange, categories, selectedCategories, categoriesCheckListener } = props
+    const {
+        variant,
+        questionDuration, onQuestionDurationChange,
+        quizName, onQuizNameChange,
+        categories, selectedCategories, categoriesCheckListener
+    } = props
 
     // Only show these elements when the quiz has been uploaded to the backend, which is signalled
     // by the categories being present
     const categoryBlock = categories
         ? (<CategoriesBlock categories={categories} selectedCategories={selectedCategories!} checkListener={categoriesCheckListener} />)
         : undefined
-    const questionDurationBlock = categories ? <QuestionDurationBlock onDurationChanged={onQuestionDurationChange} /> : undefined
-    const quizNameBlock = <QuizNameBlock onQuizNameChange={onQuizNameChange} />
+    const questionDurationBlock = categories ? <QuestionDurationBlock questionDuration={questionDuration} onDurationChanged={onQuestionDurationChange} /> : undefined
+    const quizNameBlock = <QuizNameBlock quizName={quizName} onQuizNameChange={onQuizNameChange} />
     const uploadButton = <Button variant="contained" component="label" onClick={props.onUploadQuizClicked}>Upload Quiz</Button>
 
     // Flag for animating in
@@ -633,8 +640,10 @@ function Config(props: IConfigProps) {
                 configSection={
                     <ConfigSection
                         variant={pageVariant}
+                        quizName={quizName}
                         onQuizNameChange={onQuizNameChange}
                         onUploadQuizClicked={onUploadQuizClicked}
+                        questionDuration={questionDuration}
                         onQuestionDurationChange={onQuestionDurationChange}
                         categories={categories}
                         selectedCategories={selectedCategories}
