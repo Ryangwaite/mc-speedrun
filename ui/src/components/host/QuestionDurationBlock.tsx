@@ -16,6 +16,8 @@ function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
         }
     }
 
+    const value = isNaN(questionDuration) ? "" : questionDuration
+
     return (
         <>
             <Typography variant="h6" color="grey.600">Question Duration</Typography>
@@ -27,7 +29,7 @@ function QuestionDurationBlock(props: IQuestionDurationBlockProps) {
                 InputLabelProps={{
                     shrink: true,
                 }}
-                value={questionDuration}
+                value={value}
                 onChange={textFieldChange}
                 sx={{
                     marginTop: 1.5,
