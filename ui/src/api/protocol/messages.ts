@@ -59,8 +59,8 @@ export function participantAnswerTimeout(questionIndex: number) {
 export type ParticipantAnswerTimeoutMsgType = ReturnType<typeof participantAnswerTimeout>
 
 /********************* INBOUND *********************/
-export const BROADCAST_LEADERBOARD = "BROADCAST-LEADERBOARD"
-export interface BroadcastLeaderboardMsgType {
+export const LEADERBOARD = "LEADERBOARD"
+export interface LeaderboardMsgType {
     leaderboard: ILeaderboardItem[]
 }
 

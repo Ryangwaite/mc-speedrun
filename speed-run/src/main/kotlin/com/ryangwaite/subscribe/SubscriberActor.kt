@@ -4,7 +4,6 @@ import com.ryangwaite.connection.ConnectionManagerMsg
 import com.ryangwaite.connection.ForwardMsgToAll
 import com.ryangwaite.connection.ForwardMsgToHost
 import com.ryangwaite.connection.ForwardMsgToParticipant
-import com.ryangwaite.loader.QuizLoader
 import com.ryangwaite.models.Answerer
 import com.ryangwaite.models.HostQuestionSummary
 import com.ryangwaite.models.ParticipantQuestionSummary
@@ -20,7 +19,6 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import kotlin.math.roundToInt
-import kotlin.math.roundToLong
 import kotlin.system.measureTimeMillis
 
 data class Subscription(
@@ -41,7 +39,7 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
         when (msg) {
             SubscriptionMessages.`LEADERBOARD-UPDATED` -> {
                 val leaderboard = datastore.getLeaderboard(quizId)
-                connectionManager.send(ForwardMsgToAll(quizId, BroadcastLeaderboardMsg(leaderboard)))
+                connectionManager.send(ForwardMsgToAll(quizId, LeaderboardMsg(leaderboard)))
             }
             SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY` -> {
                 var questionSummary: List<VerboseQuestionSummary>

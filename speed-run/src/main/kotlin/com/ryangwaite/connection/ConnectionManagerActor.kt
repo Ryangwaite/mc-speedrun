@@ -173,6 +173,18 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 addConnection(connection)
 
                 val job = launch {
+                    // If this connection is a participant, let them know the current leaderboard.
+                    // This allows them to know the other users in the quiz before their name is entered
+                    // NOTE: This send() in here blocks the caller, hence it's done in this coroutinescope as opposed to
+                    //       directly in the Actors scope
+                    val userId = (msg.connection as? ParticipantConnection)?.userId
+                    if (userId != null) {
+                        val quizId = msg.connection.quizId
+                        val leaderboard = datastore.getLeaderboard(quizId)
+                        channel.send(ForwardMsgToParticipant(quizId, userId, LeaderboardMsg(leaderboard)))
+                    }
+
+                    // Setup processing of all websocket inbound packets for this connection
                     try {
                         for (frame in connection.socketSession.incoming) {
                             frame as? Frame.Text ?: continue

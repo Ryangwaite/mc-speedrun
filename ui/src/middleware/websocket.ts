@@ -2,7 +2,7 @@ import { PayloadAction } from "@reduxjs/toolkit";
 import { AnyAction, Middleware, MiddlewareAPI, Dispatch } from "redux"
 import { push } from "redux-first-history";
 import { getJwtTokenClaims } from "../api/auth";
-import { BroadcastLeaderboardMsgType, BroadcastParticipantFinishedMsgType, BroadcastStartMsgType, BROADCAST_LEADERBOARD, BROADCAST_PARTICIPANT_FINISHED, BROADCAST_QUIZ_FINISHED, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
+import { BroadcastParticipantFinishedMsgType, BroadcastStartMsgType, BROADCAST_PARTICIPANT_FINISHED, BROADCAST_QUIZ_FINISHED, BROADCAST_START, HostConfigMsgType, HOST_CONFIG, LEADERBOARD, LeaderboardMsgType, NotifyHostQuizSummaryMsgType, NotifyParticipantQuizSummaryMsgType, NOTIFY_HOST_QUIZ_SUMMARY, NOTIFY_PARTICIPANT_QUIZ_SUMMARY, ParticipantAnswerMsgType, ParticipantAnswerTimeoutMsgType, ParticipantConfigMsgType, PARTICIPANT_ANSWER, PARTICIPANT_ANSWER_TIMEOUT, PARTICIPANT_CONFIG, ResponseHostQuestionsMsgType, ResponseHostQuizSummaryMsgType, ResponseParticipantQuestionMsgType, RESPONSE_HOST_QUESTIONS, RESPONSE_HOST_QUIZ_SUMMARY, RESPONSE_PARTICIPANT_QUESTION } from "../api/protocol/messages";
 import Packet from "../api/protocol/packet";
 import WrappedWebsocket, { WebsocketConnectionStateType } from "../api/websocket";
 import { selectClientType, setLeaderboard, setStartTime, setTotalFinishedParticipants, setWebsocketConnectionState } from "../slices/common";
@@ -74,8 +74,8 @@ function buildWebsocketMiddleware(): Middleware<{}, RootState> {
 
         let msg
         switch (packet.type) {
-            case BROADCAST_LEADERBOARD:
-                msg = packet.payload as BroadcastLeaderboardMsgType
+            case LEADERBOARD:
+                msg = packet.payload as LeaderboardMsgType
                 store.dispatch(setLeaderboard(msg.leaderboard))
                 break
             case RESPONSE_HOST_QUESTIONS:

@@ -31,27 +31,10 @@ class testPacket {
     }
 
     @Test
-    fun `test serialize REQUEST-HOST-QUIZ-SUMMARY packet`() {
-        val msg = Packet(ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY`, RequestHostQuizSummaryMsg())
-        val serializedMsg = Json.encodeToString(msg)
-        assertEquals(
-            """{"type":"REQUEST-HOST-QUIZ-SUMMARY","payload":{}}""",
-            serializedMsg
-        )
-    }
-
-    @Test
-    fun `test deserialize REQUEST-HOST-QUIZ-SUMMARY packet`() {
-        val json = """{"type":"REQUEST-HOST-QUIZ-SUMMARY","payload":{}}"""
-        val deserializedPacket = Json.decodeFromString<Packet>(json)
-        assertIs<RequestHostQuizSummaryMsg>(deserializedPacket.payload)
-        assertEquals(ProtocolMsg.Type.`REQUEST-HOST-QUIZ-SUMMARY`, deserializedPacket.type)
-    }
-
-    @Test
-    fun `test serialize RESPONSE-HOST-QUIZ-SUMMARY packet`() {
-        val msg = Packet(ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY`, ResponseHostQuizSummaryMsg(
+    fun `test serialize NOTIFY-HOST-QUIZ-SUMMARY packet`() {
+        val msg = Packet(ProtocolMsg.Type.`NOTIFY-HOST-QUIZ-SUMMARY`, NotifyHostQuizSummaryMsg(
             1234,
+            6543521,
             listOf(
                 HostQuestionSummary(
                     "question 1",
@@ -82,22 +65,22 @@ class testPacket {
         ))
         val serializedMsg = Json.encodeToString(msg)
         assertEquals(
-            """{"type":"RESPONSE-HOST-QUIZ-SUMMARY","payload":{"totalTimeElapsed":1234,"questions":[{"question":"question 1","options":["option1","option2","option3","option4"],"correctOptions":[1],"correctAnswerers":[{"userId":"userid1","name":"participant1"},{"userId":"userid2","name":"participant2"}],"incorrectAnswerers":[{"userId":"userid3","name":"participant3"},{"userId":"userid4","name":"participant4"}],"timeExpiredAnswerers":[{"userId":"userid5","name":"participant5"},{"userId":"userid6","name":"participant6"}]},{"question":"question 2","options":["optionA","optionB","optionC","optionD"],"correctOptions":[1,3],"correctAnswerers":[],"incorrectAnswerers":[],"timeExpiredAnswerers":[]}]}}""",
+            """{"type":"NOTIFY-HOST-QUIZ-SUMMARY","payload":{"totalTimeElapsed":1234,"avgAnswerTime":6543521,"questions":[{"question":"question 1","options":["option1","option2","option3","option4"],"correctOptions":[1],"correctAnswerers":[{"userId":"userid1","name":"participant1"},{"userId":"userid2","name":"participant2"}],"incorrectAnswerers":[{"userId":"userid3","name":"participant3"},{"userId":"userid4","name":"participant4"}],"timeExpiredAnswerers":[{"userId":"userid5","name":"participant5"},{"userId":"userid6","name":"participant6"}]},{"question":"question 2","options":["optionA","optionB","optionC","optionD"],"correctOptions":[1,3],"correctAnswerers":[],"incorrectAnswerers":[],"timeExpiredAnswerers":[]}]}}""",
             serializedMsg
         )
     }
 
     @Test
-    fun `test deserialize RESPONSE-HOST-QUIZ-SUMMARY packet`() {
-        val json = """{"type":"RESPONSE-HOST-QUIZ-SUMMARY","payload":{"totalTimeElapsed":1234,"questions":[{"question":"question 1","options":["option1","option2","option3","option4"],"correctOptions":[1],"correctAnswerers":[{"userId":"userid1","name":"participant1"},{"userId":"userid2","name":"participant2"}],"incorrectAnswerers":[{"userId":"userid3","name":"participant3"},{"userId":"userid4","name":"participant4"}],"timeExpiredAnswerers":[{"userId":"userid5","name":"participant5"},{"userId":"userid6","name":"participant6"}]},{"question":"question 2","options":["optionA","optionB","optionC","optionD"],"correctOptions":[1,3],"correctAnswerers":[],"incorrectAnswerers":[],"timeExpiredAnswerers":[]}]}}"""
+    fun `test deserialize NOTIFY-HOST-QUIZ-SUMMARY packet`() {
+        val json = """{"type":"NOTIFY-HOST-QUIZ-SUMMARY","payload":{"totalTimeElapsed":1234,"avgAnswerTime":6543521,"questions":[{"question":"question 1","options":["option1","option2","option3","option4"],"correctOptions":[1],"correctAnswerers":[{"userId":"userid1","name":"participant1"},{"userId":"userid2","name":"participant2"}],"incorrectAnswerers":[{"userId":"userid3","name":"participant3"},{"userId":"userid4","name":"participant4"}],"timeExpiredAnswerers":[{"userId":"userid5","name":"participant5"},{"userId":"userid6","name":"participant6"}]},{"question":"question 2","options":["optionA","optionB","optionC","optionD"],"correctOptions":[1,3],"correctAnswerers":[],"incorrectAnswerers":[],"timeExpiredAnswerers":[]}]}}"""
         val deserializedPacket = Json.decodeFromString<Packet>(json)
-        assertIs<ResponseHostQuizSummaryMsg>(deserializedPacket.payload)
-        assertEquals(ProtocolMsg.Type.`RESPONSE-HOST-QUIZ-SUMMARY`, deserializedPacket.type)
+        assertIs<NotifyHostQuizSummaryMsg>(deserializedPacket.payload)
+        assertEquals(ProtocolMsg.Type.`NOTIFY-HOST-QUIZ-SUMMARY`, deserializedPacket.type)
     }
 
     @Test
-    fun `test serialize BROADCAST-LEADERBOARD packet`() {
-        val msg = Packet(ProtocolMsg.Type.`BROADCAST-LEADERBOARD`, BroadcastLeaderboardMsg(
+    fun `test serialize LEADERBOARD packet`() {
+        val msg = Packet(ProtocolMsg.Type.LEADERBOARD, LeaderboardMsg(
             leaderboard = listOf(
                 LeaderboardItem("userid1", "participant1", 9999),
                 LeaderboardItem("userid2", "participant2", 8888),
@@ -106,16 +89,16 @@ class testPacket {
         ))
         val serializedMsg = Json.encodeToString(msg)
         assertEquals(
-            """{"type":"BROADCAST-LEADERBOARD","payload":{"leaderboard":[{"userId":"userid1","name":"participant1","score":9999},{"userId":"userid2","name":"participant2","score":8888},{"userId":"userid3","name":"participant3","score":7777}]}}""",
+            """{"type":"LEADERBOARD","payload":{"leaderboard":[{"userId":"userid1","name":"participant1","score":9999},{"userId":"userid2","name":"participant2","score":8888},{"userId":"userid3","name":"participant3","score":7777}]}}""",
             serializedMsg
         )
     }
 
     @Test
-    fun `test deserialize BROADCAST-LEADERBOARD packet`() {
-        val json = """{"type":"BROADCAST-LEADERBOARD","payload":{"leaderboard":[{"userId":"userid1","name":"participant1","score":9999},{"userId":"userid2","name":"participant2","score":8888},{"userId":"userid3","name":"participant3","score":7777}]}}"""
+    fun `test deserialize LEADERBOARD packet`() {
+        val json = """{"type":"LEADERBOARD","payload":{"leaderboard":[{"userId":"userid1","name":"participant1","score":9999},{"userId":"userid2","name":"participant2","score":8888},{"userId":"userid3","name":"participant3","score":7777}]}}"""
         val deserializedPacket = Json.decodeFromString<Packet>(json)
-        assertIs<BroadcastLeaderboardMsg>(deserializedPacket.payload)
-        assertEquals(ProtocolMsg.Type.`BROADCAST-LEADERBOARD`, deserializedPacket.type)
+        assertIs<LeaderboardMsg>(deserializedPacket.payload)
+        assertEquals(ProtocolMsg.Type.LEADERBOARD, deserializedPacket.type)
     }
 }

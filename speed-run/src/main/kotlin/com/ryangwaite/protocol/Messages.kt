@@ -29,7 +29,7 @@ sealed class ProtocolMsg {
         // Messages which are sent from the server to the host and all participants which a response is not sent back for
         `BROADCAST-PARTICIPANT-CONFIG`,
         `BROADCAST-START`,
-        `BROADCAST-LEADERBOARD`,
+        `LEADERBOARD`,
         `BROADCAST-PARTICIPANT-FINISHED`,
         `BROADCAST-QUIZ-FINISHED`,
     }
@@ -113,7 +113,7 @@ data class BroadcastStartMsg(
 ): ProtocolMsg()
 
 @Serializable
-data class BroadcastLeaderboardMsg(
+data class LeaderboardMsg(
     val leaderboard: List<LeaderboardItem>
 ): ProtocolMsg()
 

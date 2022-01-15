@@ -34,7 +34,7 @@ data class Packet(
                 is ResponseParticipantQuestionMsg -> ProtocolMsg.Type.`RESPONSE-PARTICIPANT-QUESTION`
                 is BroadcastParticipantConfigMsg -> ProtocolMsg.Type.`BROADCAST-PARTICIPANT-CONFIG`
                 is BroadcastStartMsg -> ProtocolMsg.Type.`BROADCAST-START`
-                is BroadcastLeaderboardMsg -> ProtocolMsg.Type.`BROADCAST-LEADERBOARD`
+                is LeaderboardMsg -> ProtocolMsg.Type.`LEADERBOARD`
                 is BroadcastParticipantFinishedMsg -> ProtocolMsg.Type.`BROADCAST-PARTICIPANT-FINISHED`
                 is BroadcastQuizFinishedMsg -> ProtocolMsg.Type.`BROADCAST-QUIZ-FINISHED`
             }
@@ -72,7 +72,7 @@ object PacketSerializer: KSerializer<Packet> {
             is ResponseParticipantQuestionMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, ResponseParticipantQuestionMsg.serializer(), value.payload)
             is BroadcastParticipantConfigMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastParticipantConfigMsg.serializer(), value.payload)
             is BroadcastStartMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastStartMsg.serializer(), value.payload)
-            is BroadcastLeaderboardMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastLeaderboardMsg.serializer(), value.payload)
+            is LeaderboardMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, LeaderboardMsg.serializer(), value.payload)
             is BroadcastParticipantFinishedMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastParticipantFinishedMsg.serializer(), value.payload)
             is BroadcastQuizFinishedMsg -> compositeEnc.encodeSerializableElement(descriptor, 1, BroadcastQuizFinishedMsg.serializer(), value.payload)
         }
@@ -102,7 +102,7 @@ object PacketSerializer: KSerializer<Packet> {
             ProtocolMsg.Type.`RESPONSE-PARTICIPANT-QUESTION` -> ResponseParticipantQuestionMsg.serializer()
             ProtocolMsg.Type.`BROADCAST-PARTICIPANT-CONFIG` -> BroadcastParticipantConfigMsg.serializer()
             ProtocolMsg.Type.`BROADCAST-START` -> BroadcastStartMsg.serializer()
-            ProtocolMsg.Type.`BROADCAST-LEADERBOARD` -> BroadcastLeaderboardMsg.serializer()
+            ProtocolMsg.Type.`LEADERBOARD` -> LeaderboardMsg.serializer()
             ProtocolMsg.Type.`BROADCAST-PARTICIPANT-FINISHED` -> BroadcastParticipantFinishedMsg.serializer()
             ProtocolMsg.Type.`BROADCAST-QUIZ-FINISHED` -> BroadcastQuizFinishedMsg.serializer()
         }
