@@ -1,4 +1,4 @@
-import {AppBar, Box, SxProps, Toolbar, Typography} from '@mui/material';
+import {AppBar, SxProps, Toolbar, Typography} from '@mui/material';
 import { Theme } from '@mui/system';
 import { WebsocketConnectionStateType } from '../../api/websocket';
 import { APP_NAME } from '../../const';

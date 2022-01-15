@@ -1,5 +1,4 @@
 import { Card, LinearProgress, Typography } from "@mui/material"
-import theme from "../../themes/theme"
 
 interface ICountdownCardProps {
     secondsRemaining: number,

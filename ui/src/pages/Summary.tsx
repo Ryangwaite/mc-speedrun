@@ -241,6 +241,7 @@ function QuestionSection({ variant, questionSummary, loadingMessage }: IQuestion
             <Box
                 marginTop={COLUMN_MARGIN_TOP}
                 marginBottom={3}
+                key={qs.question}
             >
                 <QuestionCardWithStats
                     variant={questionCardVariant}
@@ -551,12 +552,10 @@ function Summary(props: ISummaryProps) {
         }
 
         const timeout = setTimeout(() => {
-            console.debug("Timeout fired")
             setHostTotalTimeElapsed(hostTotalTimeElapsed + 1)
         }, 1000) // in 1 second
         return function cleanup() {
             clearTimeout(timeout)
-            console.debug("Cleaned up timeout")
         }
     }, [hostTotalTimeElapsed, totalFinishedParticipants, leaderboard])
 

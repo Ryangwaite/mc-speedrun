@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { Action, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { IHostQuestionSummary, IQuestionAndAnswers } from "../types";

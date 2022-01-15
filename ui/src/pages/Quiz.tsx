@@ -298,11 +298,8 @@ function Quiz(props: IQuizProps) {
 
     // Make the countdown functional
     useEffect(() => {
-        console.debug("Initialized new timeout")
         const timeout = setTimeout(() => {
-            console.debug("Timeout fired")
             setTimeRemaining(timeRemaining - 1)
-            console.log(`Time remaining is: ${timeRemaining}`)
             if (timeRemaining === 0) {
                 dispatch(setQuestionAnswerTimeout({questionIndex: currentQuestion.questionIndex}))
                 transitionToNextQuestion()
@@ -310,7 +307,6 @@ function Quiz(props: IQuizProps) {
         }, 1000)
         return function cleanup() {
             clearTimeout(timeout)
-            console.debug("Cleaned up countdown timer")
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timeRemaining])

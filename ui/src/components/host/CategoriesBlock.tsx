@@ -1,5 +1,4 @@
 import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material"
-import { Box } from "@mui/system"
 
 interface ICategoriesBlockProps {
     categories: string[],
@@ -13,7 +12,6 @@ function CategoriesBlock(props: ICategoriesBlockProps): JSX.Element {
 
     const handleCheckChange = (event: React.ChangeEvent<HTMLInputElement>, category: string) => {
         const newCheckState = event.target.checked
-        console.log("Categories block handleCheckChange new check state:", newCheckState)
         checkListener(category, newCheckState)
     }
 

@@ -5,7 +5,6 @@ import { getOrdinal } from "../../../utilities";
 import LeaderBoardItemScore from "./LeaderboardItemScore";
 
 interface ILeaderBoardItemProps {
-    key: number,
     item: ILeaderboardItem,
     position: number,
     selected: boolean,
@@ -23,7 +22,6 @@ function LeaderBoardItem(props: ILeaderBoardItemProps) {
                 marginBottom: "10px",
                 background: selected ? theme.palette.primary[50] : undefined // A random light green colour only first selected
             }}
-            key={props.key}
         >
             <ListItem
                 secondaryAction={<LeaderBoardItemScore score={score} />}

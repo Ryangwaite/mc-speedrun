@@ -1,6 +1,6 @@
 import { Box, } from '@mui/material';
 import { TopBar } from './components/common/AppBar';
-import Home from './components/home/home';
+import Home from './pages/Home';
 import Config from './pages/Config';
 import Summary from './pages/Summary';
 import { Route, Routes, } from 'react-router-dom';

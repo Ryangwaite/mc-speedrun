@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { createSlice, PayloadAction, Action } from "@reduxjs/toolkit";
 import { ClientType, ILeaderboardItem } from "../types";
 import { RootState } from "../store";

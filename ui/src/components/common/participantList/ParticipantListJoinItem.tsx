@@ -17,7 +17,6 @@ function ParticipantListJoinItem(props: IParticipantListJoinItemProps) {
     function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value
         setNameField(value)
-        console.debug(`Name field changed to '${value}'`)
     }
 
     function onKeyDown(event: React.KeyboardEvent) {

@@ -1,16 +1,16 @@
-import { Box, Divider, Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { Theme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useNavigate } from "react-router-dom";
-import { getJwtTokenClaims, getParticipantJwtTokenClaims, postHostQuiz, postJoinQuiz } from "../../api/auth";
-import { websocketConnect } from "../../middleware/websocket";
-import { useAppDispatch } from "../../hooks";
-import { setUserId } from "../../slices/participant";
-import { setClientType, setQuizId } from "../../slices/common";
-import { ClientType } from "../../types";
-import TextButtonCard from "./TextButtonCard";
-import ButtonCard from "./ButtonCard";
-import ResponsiveDivider from "./ResponsiveDivider";
+import { getJwtTokenClaims, getParticipantJwtTokenClaims, postHostQuiz, postJoinQuiz } from "../api/auth";
+import { websocketConnect } from "../middleware/websocket";
+import { useAppDispatch } from "../hooks";
+import { setUserId } from "../slices/participant";
+import { setClientType, setQuizId } from "../slices/common";
+import { ClientType } from "../types";
+import TextButtonCard from "../components/home/TextButtonCard";
+import ButtonCard from "../components/home/ButtonCard";
+import ResponsiveDivider from "../components/home/ResponsiveDivider";
 
 interface IHomeProps {
     // TODO

@@ -212,6 +212,7 @@ function QuestionColumn(props: IQuestionColumnProps) {
 
             renderedQuestions.push(
                 <Box
+                    key={question}
                     marginTop={COLUMN_MARGIN_TOP}
                     marginBottom={3}
                 >
@@ -550,6 +551,7 @@ function Config(props: IConfigProps) {
     let filteredQuestionsAndAnswers: IQuestionAndAnswers[] = []
     let selectedQuestionIndexes: number[] = []
     if (questionsAndAnswers && selectedCategories) {
+        // eslint-disable-next-line array-callback-return
         filteredQuestionsAndAnswers = questionsAndAnswers.filter((qAndA, index) => {
             if (selectedCategories.includes(qAndA.category)) {
                 selectedQuestionIndexes.push(index)
@@ -559,7 +561,6 @@ function Config(props: IConfigProps) {
     }
 
     function onQuizNameChange(name: string) {
-        console.debug(`Quiz name change to: ${name}`)
         setQuizName(name)
     }
 
@@ -595,12 +596,10 @@ function Config(props: IConfigProps) {
         } else {
             _.remove(newSelectedCategories, x => x === category)
         }
-        console.log("newSelectedCategories = ", newSelectedCategories)
         setSelectedCategories(newSelectedCategories)
     }
 
     function onQuestionDurationChange(duration: number) {
-        console.debug(`Question duration changed to: ${duration}`)
         setQuestionDuration(duration)
     }
 
