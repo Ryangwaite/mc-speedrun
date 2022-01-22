@@ -1,136 +1,135 @@
-[
-    {
-      "question": "What does 'www' stand for in a web browser?",
-      "category": "technology",
-      "options": [
-        "world wide web",
-        "worlds widest website",
-        "who what when",
-        "i dont know"
-      ],
-      "answers": [
-        0
-      ]
-    },
-    {
-      "question": "Which of these databases are relational?",
-      "category": "technology",
-      "options": [
-        "DynamoDB",
-        "Athena",
-        "Redshift",
-        "Redis"
-      ],
-      "answers": [
-        2
-      ]
-    },
-    {
-      "question": "Which of these is not a fiat currency?",
-      "category": "finance",
-      "options": [
-        "USD",
-        "AUD",
-        "BTC",
-        "CNY"
-      ],
-      "answers": [
-        2
-      ]
-    },
-    {
-      "question": "Which of these are backend web service frameworks?",
-      "category": "technology",
-      "options": [
-        "flask",
-        "react",
-        "ktor",
-        "vue"
-      ],
-      "answers": [
-        0,
-        2
-      ]
-    },
-    {
-      "question": "Which company had the highest market cap at the end of 2021?",
-      "category": "finance",
-      "options": [
-        "Telstra",
-        "Suncorp",
-        "Walmart",
-        "Apple"
-      ],
-      "answers": [
-        3
-      ]
-    },
-    {
-      "question": "Which asset class are generally considered defensive?",
-      "category": "finance",
-      "options": [
-        "Property",
-        "Stock",
-        "Bonds",
-        "Cash"
-      ],
-      "answers": [
-        2,
-        3
-      ]
-    },
-    {
-      "question": "What is the heaviest animal?",
-      "category": "animals",
-      "options": [
-        "Chicken",
-        "Elephant",
-        "Rice",
-        "Cat"
-      ],
-      "answers": [
-        1
-      ]
-    },
-    {
-      "question": "Which of the following are macro-nutrients?",
-      "category": "health",
-      "options": [
-        "Protein",
-        "Calcium",
-        "Fat",
-        "Water"
-      ],
-      "answers": [
-        0,
-        2
-      ]
-    },
-    {
-      "question": "How many limbs do dogs have?",
-      "category": "health",
-      "options": [
-        "1",
-        "2",
-        "3",
-        "4"
-      ],
-      "answers": [
-        3
-      ]
-    },
-    {
-      "question": "Which exercises train legs?",
-      "category": "health",
-      "options": [
-        "Squats",
-        "Deadlifts",
-        "Bench Press",
-        "Barbell Rows"
-      ],
-      "answers": [
-        0,
-        1
-      ]
-    }
-  ]
+[{
+    "question": "What does 'www' stand for in a web browser?",
+    "category": "technology",
+    "options": [
+      "world wide web",
+      "worlds widest website",
+      "who what when",
+      "i dont know"
+    ],
+    "answers": [
+      0
+    ]
+  },
+  {
+    "question": "Which of these databases are relational?",
+    "category": "technology",
+    "options": [
+      "DynamoDB",
+      "Athena",
+      "Redshift",
+      "Redis"
+    ],
+    "answers": [
+      2
+    ]
+  },
+  {
+    "question": "Which of these is not a fiat currency?",
+    "category": "finance",
+    "options": [
+      "USD",
+      "AUD",
+      "BTC",
+      "CNY"
+    ],
+    "answers": [
+      2
+    ]
+  },
+  {
+    "question": "Which of these are backend web service frameworks?",
+    "category": "technology",
+    "options": [
+      "flask",
+      "react",
+      "ktor",
+      "vue"
+    ],
+    "answers": [
+      0,
+      2
+    ]
+  },
+  {
+    "question": "Which company had the highest market cap at the end of 2021?",
+    "category": "finance",
+    "options": [
+      "Telstra",
+      "Suncorp",
+      "Walmart",
+      "Apple"
+    ],
+    "answers": [
+      3
+    ]
+  },
+  {
+    "question": "Which asset class are generally considered defensive?",
+    "category": "finance",
+    "options": [
+      "Property",
+      "Stock",
+      "Bonds",
+      "Cash"
+    ],
+    "answers": [
+      2,
+      3
+    ]
+  },
+  {
+    "question": "What is the heaviest animal?",
+    "category": "animals",
+    "options": [
+      "Chicken",
+      "Elephant",
+      "Rice",
+      "Cat"
+    ],
+    "answers": [
+      1
+    ]
+  },
+  {
+    "question": "Which of the following are macro-nutrients?",
+    "category": "health",
+    "options": [
+      "Protein",
+      "Calcium",
+      "Fat",
+      "Water"
+    ],
+    "answers": [
+      0,
+      2
+    ]
+  },
+  {
+    "question": "How many limbs do dogs have?",
+    "category": "health",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "answers": [
+      3
+    ]
+  },
+  {
+    "question": "Which exercises train legs?",
+    "category": "health",
+    "options": [
+      "Squats",
+      "Deadlifts",
+      "Bench Press",
+      "Barbell Rows"
+    ],
+    "answers": [
+      0,
+      1
+    ]
+  }
+]
