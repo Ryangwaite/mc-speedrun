@@ -6,6 +6,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/Ryangwaite/mc-speedrun/question-set-loader/logfmt"
+	log "github.com/sirupsen/logrus"
 )
 
 // TODO: Add logging
@@ -77,11 +80,19 @@ func FileUploadRoute(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+
 func main() {
+
+	log.SetLevel(log.DebugLevel)
+	log.SetOutput(os.Stdout)
+	log.SetFormatter(logfmt.NewUtcLogFormatter())
+
 	http.HandleFunc("/upload/quiz", FileUploadRoute)
 
-	err := http.ListenAndServe(":8082", nil)
+	port := 8082
+	log.Info(fmt.Sprintf("Listening on port %d", port))
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to start server. Error: %s", err.Error()))
+		log.Panic(fmt.Sprintf("Failed to start server. Error: %s", err.Error()))
 	}
 }
