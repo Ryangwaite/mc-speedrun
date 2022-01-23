@@ -15,7 +15,7 @@ export async function uploadQuiz(quizFile: File, token: string) {
 
     // TODO: Implement the backend for this
     // const {quizId} = getJwtTokenClaims(token)
-    // const url = `${getQuizUploadBaseUrl()}/upload/${quizId}/quiz`
+    // const url = `${getQuizUploadBaseUrl()}/upload/quiz`
     // fetch(url, {
     //     headers: {
     //         "Authorization": `Bearer ${token}`
