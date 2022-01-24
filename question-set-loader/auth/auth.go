@@ -5,12 +5,13 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// TODO: Receive all of the following from config/env vars
-const jwtSecret = "dockercomposesecret"
-const jwtIssuer = "http://sign-on/"
-const jwtAudience = "http://0.0.0.0/"
+type JwtParams struct {
+	Secret string
+	Issuer string
+	Audience string
+}
 
-func ValidateJwt(tokenString string) (quizId string, err error) {
+func ValidateJwt(tokenString string, jwtParams JwtParams) (quizId string, err error) {
 	
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 
@@ -20,10 +21,10 @@ func ValidateJwt(tokenString string) (quizId string, err error) {
 
 		// Validate claims
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			if claims["aud"] != jwtAudience {
+			if claims["aud"] != jwtParams.Audience {
 				return nil, fmt.Errorf("invalid audience '%s'", claims["aud"])
 			}
-			if claims["iss"] != jwtIssuer {
+			if claims["iss"] != jwtParams.Issuer {
 				return nil, fmt.Errorf("invalid issuer '%s'", claims["iss"])
 			}
 			if claims["isHost"] != true {
@@ -36,7 +37,7 @@ func ValidateJwt(tokenString string) (quizId string, err error) {
 			return nil, fmt.Errorf("couldn't read claims")
 		}
 
-		return []byte(jwtSecret), nil
+		return []byte(jwtParams.Secret), nil
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to parse token: Error: %s", err.Error())
