@@ -71,7 +71,7 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 
 	qAndA, err := quiz.QuizFileFromBytes(&fileBytes)
 	if err != nil {
-		http.Error(w, "Uploaded file is invalid", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Uploaded file is invalid for quiz '%s'", quizId), http.StatusBadRequest)
 		return
 	}
 	
@@ -85,5 +85,4 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 	log.Info(fmt.Sprintf("Wrote quiz to '%s'", writePath))
 
 	w.WriteHeader(http.StatusCreated)
-
 }

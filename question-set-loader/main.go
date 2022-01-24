@@ -30,7 +30,7 @@ func main() {
 		},
 	}
 
-	http.HandleFunc("/upload/quiz", upload.Quiz)
+	http.HandleFunc("/upload/quiz", handler.LoggerMiddleware(upload.Quiz))
 
 	port := 8082
 	log.Info(fmt.Sprintf("Listening on port %d", port))
