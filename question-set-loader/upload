@@ -38,6 +38,8 @@ to question-set-loader.
     q_set_loader_url = f"http://{parsed_args.address}/upload/quiz"
     print(f"Uploading '{file_path}' to '{q_set_loader_url}' with token '{jwt_token}'...")
     response = requests.post(q_set_loader_url, headers={"Authorization": f"Bearer {jwt_token}"}, files={"file": open(file_path, "rb")})
+    if response.status_code != 201:
+        sys.exit(f"Failed to upload: {response.text}")
     print("Done")
 
 

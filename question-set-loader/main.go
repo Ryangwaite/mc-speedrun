@@ -1,42 +1,43 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/Ryangwaite/mc-speedrun/question-set-loader/auth"
 	"github.com/Ryangwaite/mc-speedrun/question-set-loader/logfmt"
+	"github.com/Ryangwaite/mc-speedrun/question-set-loader/quiz"
 	log "github.com/sirupsen/logrus"
 )
 
-// TODO: Add logging
-
 const MaxFileSize int64 = 10 * (1 << 20)
 
-type QuestionAndAnswers struct {
-	Question	string		`json:"question"`
-	Category	string		`json:"category"`
-	Options		[]string	`json:"options"`
-	Answers		[]int		`json:"answers"`
-}
-
-func IsQuizFileValid(fileBytes *[]byte) (isValid bool, err error) {
-
-	var questionsAndAnswers []QuestionAndAnswers
-	if err := json.Unmarshal(*fileBytes, &questionsAndAnswers); err != nil {
-		return false, fmt.Errorf("failed to deserialize quiz file: Error: %s", err.Error())
+func FileUploadRoute(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Absent 'Authorization' header", http.StatusUnauthorized)
+		return
 	}
 
-	// Successfully deserialized the file so its valid
-	return true, nil
+	authHeaderParts := strings.Fields(authHeader)
+	if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
+		http.Error(w, fmt.Sprintf("Invalid 'Authorization' header value '%s'", authHeader), http.StatusUnauthorized)
+		return
+	}
 
-}
+	jwtToken := authHeaderParts[1]
+	quizId, err := auth.ValidateJwt(jwtToken)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid token '%s'", jwtToken), http.StatusUnauthorized)
+		return
+	}
 
-func FileUploadRoute(w http.ResponseWriter, r *http.Request) {
+	log.Info(fmt.Sprintf("Quiz id is '%s'", quizId))
 
-	err := r.ParseMultipartForm(MaxFileSize) // set in memory limit equal to max file size
+	err = r.ParseMultipartForm(MaxFileSize) // set in memory limit equal to max file size
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
@@ -59,6 +60,11 @@ func FileUploadRoute(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	if _, err := quiz.IsQuizFileValid(&fileBytes); err != nil {
+		http.Error(w, "Uploaded file is invalid", http.StatusBadRequest)
+		return
+	}
 	
 	// Save the file to disk
 	outFile, err := os.OpenFile("/tmp/uploaded-quiz.json", os.O_WRONLY | os.O_CREATE, 0666)
@@ -71,10 +77,12 @@ func FileUploadRoute(w http.ResponseWriter, r *http.Request) {
 	// Set the pointer back to the start so that the following copy copies the entire contents
 	if _, err := inFile.Seek(0, io.SeekStart); err != nil {
 		http.Error(w, "failed to seek to the start of uploaded file: " + err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	if _, err := io.Copy(outFile, inFile); err != nil {
 		http.Error(w, "failed to store file locally. Error: " + err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)

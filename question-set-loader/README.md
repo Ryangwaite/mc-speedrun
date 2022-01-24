@@ -2,7 +2,7 @@
 
 ## Development tips
 
-To upload a file via curl run:
+To upload a file run:
 ```bash
-curl -F 'file=@example-1.json' localhost:8082/upload/quiz
+./upload -f ../sample-quizzes/example-2.json localhost:8082
 ```
