@@ -30,6 +30,33 @@ services:
       - JWT_AUDIENCE=http://0.0.0.0/
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - QUIZ_DIRECTORY=/quiz-questions
+    volumes:
+      - type: volume
+        source: quiz-questions
+        target: /quiz-questions
+        read_only: true
+        volume:
+          nocopy: true
+  question-set-loader:
+    image: question-set-loader
+    build:
+      # question-set-loader/ as context and dockerfile path relative to it
+      context: ../question-set-loader/
+      dockerfile: Dockerfile
+    environment:
+      - PORT=80
+      - JWT_SECRET=dockercomposesecret
+      - JWT_ISSUER=http://sign-on/
+      - JWT_AUDIENCE=http://0.0.0.0/
+      - LOADER_DST_DIR=/quiz-questions/
+    volumes:
+      - type: volume
+        source: quiz-questions
+        target: /quiz-questions
+        read_only: false
+        volume:
+          nocopy: true
   reverse-proxy:
     depends_on:
       # Depends on all backend services that nginx proxies to since the resolver
@@ -37,6 +64,7 @@ services:
       # the container name.
       - sign-on
       - speed-run
+      - question-set-loader
     image: reverse-proxy
     build:
       # Repo root as context and dockerfile path relative to it
@@ -47,3 +75,7 @@ services:
         - REACT_APP__SIGN_ON_URL=http://localhost:80
     ports:
       - "80:80"
+volumes:
+  quiz-questions:
+    driver: local
+    name: mc-speedrun-quiz-questions
