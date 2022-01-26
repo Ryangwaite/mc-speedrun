@@ -41,7 +41,15 @@ function UploadModal(props: IUploadModalProps): JSX.Element {
     }
 
     const uploadErrMsgComponent = !fileSelected && props.uploadErrMsg
-        ? <Typography color="red" variant="caption" marginBottom={3}>{props.uploadErrMsg}</Typography>
+        ? <Typography
+            maxWidth={"100%"}
+            color="red"
+            variant="caption"
+            marginBottom={3}
+            sx={{
+                wordWrap: "break-word"
+            }}
+        >{props.uploadErrMsg}</Typography>
         : undefined
 
     const fileInputId = "upload-quiz-input"

@@ -29,6 +29,7 @@ func main() {
 	log.Info("Loaded config: " + fmt.Sprintf("%#v", config))
 
 	upload := handler.Upload {
+		DevelopmentMode: config.Server.Development,
 		SaveDirectory: config.Loader.DestinationDirectory,
 		JwtParams: config.Jwt,
 	}

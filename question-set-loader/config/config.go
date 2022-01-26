@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Server struct {
 		Port int
+		Development bool
 	}
 	Jwt struct {
 		Secret	string
@@ -37,6 +38,7 @@ func Load(path string) (Config, error) {
 
 	// Pair up env vars with the fields in config
 	viper.BindEnv("server.port", "PORT")
+	viper.BindEnv("server.development", "DEVELOPMENT_MODE")
 	viper.BindEnv("jwt.secret", "JWT_SECRET")
 	viper.BindEnv("jwt.issuer", "JWT_ISSUER")
 	viper.BindEnv("jwt.audience", "JWT_AUDIENCE")
@@ -45,6 +47,7 @@ func Load(path string) (Config, error) {
 	// Set add fields to be required
 	var missingFlag missing
 	viper.SetDefault("server.port", missingFlag)
+	viper.SetDefault("server.development", missingFlag)
 	viper.SetDefault("jwt.secret", missingFlag)
 	viper.SetDefault("jwt.issuer", missingFlag)
 	viper.SetDefault("jwt.audience", missingFlag)
@@ -58,7 +61,7 @@ func Load(path string) (Config, error) {
 
 	// Validate that there were no missing required keys
 	keys := []string {
-		"server.port",
+		"server.port", "server.development",
 		"jwt.secret", "jwt.issuer", "jwt.audience",
 		"loader.destination_directory",
 	}
@@ -70,6 +73,7 @@ func Load(path string) (Config, error) {
 
 	// Everythings present and been validated - pull it out
 	loadedConfig.Server.Port					= viper.GetInt("server.port")
+	loadedConfig.Server.Development				= viper.GetBool("server.development")
 	loadedConfig.Jwt.Secret						= viper.GetString("jwt.secret")
 	loadedConfig.Jwt.Issuer						= viper.GetString("jwt.issuer")
 	loadedConfig.Jwt.Audience					= viper.GetString("jwt.audience")

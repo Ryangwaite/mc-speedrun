@@ -6,11 +6,6 @@
 FROM node:10.14.1-alpine as build-ui
 COPY ui/ /home/ui/
 
-# Hostnames of upstream services to hardcode into the build
-ARG REACT_APP__SIGN_ON_URL="http://0.0.0.0:8080"
-
-RUN echo "REACT_APP__SIGN_ON_URL=${REACT_APP__SIGN_ON_URL}" >> /home/ui/.env.production
-
 WORKDIR /home/ui
 RUN npm install
 RUN npm run build

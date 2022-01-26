@@ -6,6 +6,7 @@ import { WebsocketConnectionStateType } from "../api/websocket";
 interface ICommonState {
     clientType: ClientType,
     connection: WebsocketConnectionStateType,
+    token?: string,
     leaderboard: ILeaderboardItem[],
     totalFinishedParticipants: number,
     quizId?: string,
@@ -35,6 +36,10 @@ export const commonSlice = createSlice({
             const connectionState = action.payload
             state.connection = connectionState
         },
+        setToken: (state, action: PayloadAction<string>) => {
+            const token = action.payload
+            state.token = token
+        },
         setQuizId: (state, action: PayloadAction<string>) => {
             const quizId = action.payload
             state.quizId = quizId
@@ -56,13 +61,14 @@ export const commonSlice = createSlice({
 
 export const {
     resetCommonState, setClientType,
-    setWebsocketConnectionState, setLeaderboard,
-    setQuizId, setTotalFinishedParticipants,
-    setStartTime
+    setWebsocketConnectionState, setToken,
+    setLeaderboard, setQuizId,
+    setTotalFinishedParticipants, setStartTime
 } = commonSlice.actions
 
 export const selectClientType = (state: RootState) => state.common.clientType
 export const selectWebsocketConnectionState = (state: RootState) => state.common.connection
+export const selectToken = (state: RootState) => state.common.token
 export const selectQuizId = (state: RootState) => state.common.quizId
 export const selectLeaderboard = (state: RootState) => state.common.leaderboard
 export const selectTotalFinishedParticipants = (state: RootState) => state.common.totalFinishedParticipants

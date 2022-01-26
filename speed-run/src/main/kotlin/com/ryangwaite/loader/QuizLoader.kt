@@ -76,13 +76,11 @@ object QuizLoader : IQuizLoader {
     }
 
     /**
-     * Loads file from disk with minimal validation. Full validation is performed by
-     * question-set-loader lambda upon upload.
+     * Loads file from disk with minimal validation. Full validation is performed by the
+     * question-set-loader service upon upload.
      */
     private fun loadFromDisk(quizId: String): List<QuestionAndAnswers> {
-//        val quizFile = File(this.quizDirectoryPath,"$quizId.json")
-        // TODO: Replace with proper reference to file once question-set-loader is built
-        val quizFile = File(this.quizDirectoryPath,"example-1.json")
+        val quizFile = File(this.quizDirectoryPath,"$quizId.json")
         if (!quizFile.exists()) {
             throw FileNotFoundException("File not found for quiz '$quizId' at path '${quizFile.path}'")
         }

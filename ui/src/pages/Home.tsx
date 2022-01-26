@@ -6,7 +6,7 @@ import { getJwtTokenClaims, getParticipantJwtTokenClaims, postHostQuiz, postJoin
 import { websocketConnect } from "../middleware/websocket";
 import { useAppDispatch } from "../hooks";
 import { setUserId } from "../slices/participant";
-import { setClientType, setQuizId } from "../slices/common";
+import { setClientType, setQuizId, setToken } from "../slices/common";
 import { ClientType } from "../types";
 import TextButtonCard from "../components/home/TextButtonCard";
 import ButtonCard from "../components/home/ButtonCard";
@@ -50,6 +50,7 @@ function Home(props: IHomeProps) {
 
             dispatch(setClientType(ClientType.HOST))
             dispatch(setQuizId(quizId))
+            dispatch(setToken(token))
             dispatch(websocketConnect(token))
 
             navigate(`/config`)

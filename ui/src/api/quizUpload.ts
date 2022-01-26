@@ -1,8 +1,7 @@
-import { getJwtTokenClaims } from "./auth"
 
 /**
  * Gets the base URL from the evironment for contacting the sign-on service
- * CORs will need to be enable so that any requests succeed.
+ * CORs needs to be enabled also.
  * @returns 
  */
 function getQuizUploadBaseUrl(): string {
@@ -13,20 +12,17 @@ export async function uploadQuiz(quizFile: File, token: string) {
     const formData = new FormData()
     formData.append("file", quizFile)
 
-    // TODO: Implement the backend for this
-    // const {quizId} = getJwtTokenClaims(token)
-    // const url = `${getQuizUploadBaseUrl()}/upload/quiz`
-    // fetch(url, {
-    //     headers: {
-    //         "Authorization": `Bearer ${token}`
-    //     },
-    //     method: "POST",
-    //     body: formData,
-    // })
-    // return 201 on success else 4xx on failure which is the result of parsing on the server side
+    const url = `${getQuizUploadBaseUrl()}/upload/quiz`
+    console.log("Upload url is, ", url)
+    const response = await fetch(url, {
+        headers: {
+            "Authorization": `Bearer ${token}`
+        },
+        method: "POST",
+        body: formData,
+    })
 
-    // Sleep for 500ms to simulate network latency
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // throw new Error("File was incorrectly formatted") // comment out to show error behaviour
+    if (!response.ok) {
+        throw new Error(`Upload failed: ${await response.text()}`)
+    }
 }

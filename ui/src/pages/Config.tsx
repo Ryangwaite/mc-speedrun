@@ -3,7 +3,7 @@ import React,{ useState } from "react";
 import { uploadQuiz } from "../api/quizUpload";
 import { IQuestionAndAnswers, PageVariant } from "../types";
 import { useAppDispatch, useAppSelector, usePageVariant } from "../hooks";
-import { selectLeaderboard, selectQuizId } from "../slices/common";
+import { selectLeaderboard, selectQuizId, selectToken } from "../slices/common";
 import { selectHostQuestions, selectSetRequestQuestions, setHostConfig, setRequestQuestions } from "../slices/host";
 import { ILeaderboardItem } from "../types";
 import ParticipantList from "../components/common/participantList/ParticipantList";
@@ -530,6 +530,7 @@ function Config(props: IConfigProps) {
     const [selectedCategories, setSelectedCategories] = useState<string[]>()
 
     // App State
+    const token = useAppSelector(state => selectToken(state))!
     const quizId = useAppSelector(state => selectQuizId(state))
     const leaderboard = useAppSelector(state => selectLeaderboard(state))
     const fetchingQuestions = useAppSelector(state => selectSetRequestQuestions(state))
@@ -570,7 +571,7 @@ function Config(props: IConfigProps) {
 
     async function onModalUploadClicked(file: File) {
         try {
-            await uploadQuiz(file, "REPLACE WITH TOKEN")
+            await uploadQuiz(file, token)
             // If everything was a succcess
             setUploadErrMsg(undefined)
             setModalOpen(false)

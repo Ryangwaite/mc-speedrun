@@ -14,11 +14,36 @@ import (
 const MaxFileSize int64 = 10 * (1 << 20)
 
 type Upload struct {
+	DevelopmentMode bool
 	SaveDirectory string
 	auth.JwtParams
 }
 
 func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
+
+	if u.DevelopmentMode {
+		// Enable CORS from any host
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Handle CORS pre-flight request from browsers . See https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#preflighted_requests
+		if r.Method == "OPTIONS" {
+			requestMethod := r.Header.Get("Access-Control-Request-Method")
+			origin := r.Header.Get("Origin")
+			if requestMethod == "POST" {
+				// Let the clients subsequent request through
+				w.Header().Set("Access-Control-Allow-Headers", "Authorization")
+				w.WriteHeader(http.StatusNoContent)
+				log.Info(fmt.Sprintf("Received preflight request from origin '%s'", origin))
+				return
+			}
+		}
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, fmt.Sprintf("Unexpected HTTP method '%s'", r.Method), http.StatusUnauthorized)
+		return
+	}
 
 	// Authentication
 
