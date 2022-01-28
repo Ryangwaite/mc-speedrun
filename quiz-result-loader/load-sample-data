@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import redis                # pip install redis
+from tqdm import tqdm       # pip install tqdm
+from dataclasses import dataclass
+
+
+@dataclass
+class Item():
+    key: str
+    value: any
+    rtype: str  # Redis type
+
+
+quiz_id = "sampledata1"
+user1_id = "2c3ca3d2"
+user2_id = "ee14ccb2"
+
+contents = [
+    Item(key=f"{quiz_id}:quizName", value="example", rtype="string"),
+    Item(key=f"{quiz_id}:questionDuration", value="10", rtype="string"),
+    Item(key=f"{quiz_id}:selectedQuestionIndexes", value=['3', '4', '5'], rtype="list"),
+    Item(key=f"{quiz_id}:selectedCategories", value=['Food'], rtype="list"),
+    Item(key=f"{quiz_id}:startTime", value="1643273678", rtype="string"),
+    Item(key=f"{quiz_id}:stopTime", value="1643273701", rtype="string"),
+    Item(key=f"{quiz_id}:leaderboard", value={'ee14ccb2': 35.0, '2c3ca3d2': 80.0}, rtype="zset"),
+    Item(key=f"{quiz_id}:userIds", value=['2c3ca3d2', 'ee14ccb2'], rtype="list"),
+
+    Item(key=f"{quiz_id}:{user1_id}:username", value="user1", rtype="string"),
+    Item(key=f"{quiz_id}:{user1_id}:stopTime", value="1643273706", rtype="string"),
+    Item(key=f"{quiz_id}:{user1_id}:answer:3", value='{"selectedOptionIndexes":[1],"answeredInDuration":8}', rtype="string"),
+    Item(key=f"{quiz_id}:{user1_id}:answer:4", value='{"selectedOptionIndexes":[],"answeredInDuration":11}', rtype="string"),
+    Item(key=f"{quiz_id}:{user1_id}:answer:5", value='{"selectedOptionIndexes":[1],"answeredInDuration":2}', rtype="string"),
+
+    Item(key=f"{quiz_id}:{user2_id}:username", value="user2", rtype="string"),
+    Item(key=f"{quiz_id}:{user2_id}:stopTime", value="1643273701", rtype="string"),
+    Item(key=f"{quiz_id}:{user2_id}:answer:3", value='{"selectedOptionIndexes":[0],"answeredInDuration":2}', rtype="string"),
+    Item(key=f"{quiz_id}:{user2_id}:answer:4", value='{"selectedOptionIndexes":[2,0],"answeredInDuration":3}', rtype="string"),
+    Item(key=f"{quiz_id}:{user2_id}:answer:5", value='{"selectedOptionIndexes":[],"answeredInDuration":11}', rtype="string"),
+]
+
+client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+
+# Empty out any pre-existing content
+client.delete(*[i.key for i in contents])
+
+pbar = tqdm(contents)
+for item in pbar:
+    key, value, rtype = item.key, item.value, item.rtype
+    pbar.set_description(f"Adding key='{key}' value='{value}'")
+
+    if rtype == "string":
+        client.set(key, value)      # Read back out with 'GET key'
+    elif rtype == "list":
+        client.lpush(key, *value)   # Read back out with 'LRANGE key 0 -1'
+    elif rtype == "zset":
+        client.zadd(key, value)     # Read back out with 'LRANGE key 0 -1'
+    else:
+        raise TypeError(f"Unexpected type '{type(value)}'")
+
+client.close()
+
+print("Done")
