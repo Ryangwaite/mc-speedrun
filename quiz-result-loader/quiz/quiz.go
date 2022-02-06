@@ -23,6 +23,7 @@ type Participant struct {
 }
 
 type Quiz struct {
+	Id						string				`dynamodbav:"id"`
 	Name					string
 	QuestionDuration		time.Duration
 	StartTime				time.Time

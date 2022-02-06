@@ -7,6 +7,9 @@ services:
   redis:
     ports:
       - "6379:6379"
+  dynamodb-local:
+    ports:
+      - "8000:8000"
   sign-on:
     ports:
       - "8080:80"
@@ -20,3 +23,5 @@ services:
   question-set-loader:
     ports:
       - "8082:80"
+    environment:
+      - DEVELOPMENT_MODE=true

@@ -23,7 +23,9 @@ type redisExtractor struct {
 
 func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, error) {
 
-	quiz := q.Quiz{}
+	quiz := q.Quiz{
+		Id: quizId,
+	}
 
 	quizName, err := r.getQuizName(ctx, quizId)
 	if err != nil {

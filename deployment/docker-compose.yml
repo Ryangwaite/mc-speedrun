@@ -2,6 +2,10 @@ version: '3.9'
 services:
   redis:
     image: redis:6.2.6-alpine
+  dynamodb-local:
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory -port 8000"
+    image: "amazon/dynamodb-local:latest"
+    working_dir: /home/dynamodblocal
   sign-on:
     depends_on:
       - redis

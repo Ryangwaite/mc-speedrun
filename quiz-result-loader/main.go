@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
+	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
 )
 
@@ -57,5 +58,9 @@ func main() {
 	fmt.Printf("Complete loaded quiz: %+v\n", completeQuiz)
 
 	//// Load ////
+	loader := load.NewDynamodDbLoader()
+	if err := loader.Load(context.TODO(), completeQuiz); err != nil {
+		panic(err)
+	}
 
 }
