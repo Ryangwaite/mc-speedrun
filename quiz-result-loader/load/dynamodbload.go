@@ -3,7 +3,6 @@ package load
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -12,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	log "github.com/sirupsen/logrus"
 )
 
 // The name of the quiz table to load quizzes into
@@ -56,15 +56,13 @@ func NewDynamodDbLoader(options DynamoDbLoaderOptions) Loader {
 }
 
 func (d dynamoDbLoader) Load(ctx context.Context, quiz quiz.Quiz) error {
-	fmt.Println("Load was called")
-
 	if !d.quizTableExists(ctx) {
-		fmt.Println("Quiz table doesn't yet exist - creating it.")
+		log.Info("Quiz table doesn't yet exist - creating it.")
 		if err := d.createQuizTable(ctx); err != nil {
-			fmt.Println(err)
+			return err
 		}
 	} else {
-		fmt.Println("Quiz table already exists - not creating.")
+		log.Debug("Quiz table already exists - not creating.")
 	}
 
 	if err := d.putQuiz(ctx, quiz); err != nil {
@@ -127,7 +125,7 @@ func (d dynamoDbLoader) putQuiz(ctx context.Context, quiz quiz.Quiz) error {
 		return fmt.Errorf("failed to put item: %v", err)
 	}
 
-	fmt.Println("Quiz successfully putted")
+	log.Infof("Quiz '%s' loaded", quiz.Id)
 
 	return nil
 }

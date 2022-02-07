@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"strconv"
 
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/config"
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
+	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/logfmt"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
+	log "github.com/sirupsen/logrus"
 )
 
 func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.QuestionAndAnswers) (quiz.Quiz, error) {
@@ -31,12 +34,16 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 
 func main() {
 
+	log.SetLevel(log.DebugLevel)
+	log.SetOutput(os.Stdout)
+	log.SetFormatter(logfmt.NewUtcLogFormatter())
+
 	config, err := config.Load("./config.ini")
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("Loaded config: %+v\n", config)
+	log.Infof("Loaded config: %+v\n", config)
 
 	var ctx = context.Background()
 
@@ -58,14 +65,14 @@ func main() {
 	// NOTE: This extracted quiz doesn't have completed questions
 	extractedQuiz, err := extractor.Extract(ctx, quizId)
 	if err != nil {
-		panic("Failed to load: " + err.Error())
+		log.Panic("Failed to extract: " + err.Error())
 	}
 
 	completeQuiz, err := combineExtractedQuizAndQuestions(extractedQuiz, questions)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
-	fmt.Printf("Complete loaded quiz: %+v\n", completeQuiz)
+	log.Debugf("Complete loaded quiz: %+v\n", completeQuiz)
 
 	//// Load ////
 	loader := load.NewDynamodDbLoader(load.DynamoDbLoaderOptions{
@@ -75,6 +82,6 @@ func main() {
 		SecretAccessKey: config.DynamoDB.SecretAccessKey,
 	})
 	if err := loader.Load(context.TODO(), completeQuiz); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
