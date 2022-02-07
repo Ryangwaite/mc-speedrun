@@ -21,6 +21,17 @@ type redisExtractor struct {
 	rdb *redis.Client
 }
 
+func NewRedisExtractor(o RedisExtractorOptions) Extractor {
+	rdb := redis.NewClient(&redis.Options{
+		Addr: o.Addr,
+		Password: o.Password,
+	})
+
+	return redisExtractor {
+		rdb: rdb,
+	}
+}
+
 func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, error) {
 
 	quiz := q.Quiz{
@@ -86,17 +97,6 @@ func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, err
 	quiz.Questions = questions
 
 	return quiz, nil
-}
-
-func NewRedisExtractor(o RedisExtractorOptions) Extractor {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: o.Addr,
-		Password: o.Password,
-	})
-
-	return redisExtractor {
-		rdb: rdb,
-	}
 }
 
 type loadError struct {

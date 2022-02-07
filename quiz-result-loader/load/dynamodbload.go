@@ -17,8 +17,42 @@ import (
 // The name of the quiz table to load quizzes into
 var quizTableName string = "quiz"
 
+type DynamoDbLoaderOptions struct {
+	Region 				string
+	EndpointUrl			string
+	AccessKeyID			string
+	SecretAccessKey		string
+}
+
 type dynamoDbLoader struct {
 	client *dynamodb.Client
+}
+
+func NewDynamodDbLoader(options DynamoDbLoaderOptions) Loader {
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(options.Region),
+		// Use dynamodb-local
+		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+			func(s, r string, o ...interface{}) (aws.Endpoint, error) {
+				return aws.Endpoint{URL: options.EndpointUrl}, nil
+			},
+		)),
+		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
+			Value: aws.Credentials{
+				// These don't matter for dynmaodb-local
+				AccessKeyID: options.AccessKeyID,
+				SecretAccessKey: options.SecretAccessKey,
+			},
+		}),
+	)
+
+	if err != nil {
+		log.Panic("Failed to load default AWS config. Error: " + err.Error())
+	}
+	
+	return dynamoDbLoader{
+		client: dynamodb.NewFromConfig(cfg),
+	}
 }
 
 func (d dynamoDbLoader) Load(ctx context.Context, quiz quiz.Quiz) error {
@@ -38,33 +72,6 @@ func (d dynamoDbLoader) Load(ctx context.Context, quiz quiz.Quiz) error {
 	}
 
 	return nil
-}
-
-func NewDynamodDbLoader() Loader {
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("us-east-2"),
-		// Use dynamodb-local
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: "http://localhost:8000"}, nil
-			},
-		)),
-		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
-			Value: aws.Credentials{
-				// These don't matter for dynmaodb-local
-				AccessKeyID: "dynamodblocalkeyid",
-				SecretAccessKey: "dynamodblocalsecretaccesskey",
-			},
-		}),
-	)
-
-	if err != nil {
-		log.Panic("Failed to load default AWS config. Error: " + err.Error())
-	}
-	
-	return dynamoDbLoader{
-		client: dynamodb.NewFromConfig(cfg),
-	}
 }
 
 func (d dynamoDbLoader) quizTableExists(ctx context.Context) bool {

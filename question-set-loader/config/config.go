@@ -34,7 +34,7 @@ func (e *missingConfigError) Error() string {
 // Loads the config from the path specified and applys any overrides
 // from environment variables. Missing settings return an error
 func Load(path string) (Config, error) {
-	viper.SetConfigFile("./config.ini")
+	viper.SetConfigFile(path)
 
 	// Pair up env vars with the fields in config
 	viper.BindEnv("server.port", "PORT")

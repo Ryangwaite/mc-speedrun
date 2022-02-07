@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"strconv"
 
+	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/config"
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
@@ -28,18 +30,26 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 }
 
 func main() {
+
+	config, err := config.Load("./config.ini")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Loaded config: %+v\n", config)
+
 	var ctx = context.Background()
 
 	//// Extract ////
 
 	extractor := extract.NewRedisExtractor(extract.RedisExtractorOptions{
-		Addr: "localhost:6379",
+		Addr: fmt.Sprintf("%s:%d", config.Redis.Host, config.Redis.Port),
 		Password: "",
 	})
 
 	quizId := "sampledata1"
 
-	questionSetPath := "/tmp/question-sets/" + quizId + ".json"
+	questionSetPath := path.Join(config.QuestionSet.Path, quizId + ".json")
 	questions, err := quiz.LoadQuestionsFromFile(questionSetPath)
 	if err != nil {
 		panic(err)
@@ -58,9 +68,13 @@ func main() {
 	fmt.Printf("Complete loaded quiz: %+v\n", completeQuiz)
 
 	//// Load ////
-	loader := load.NewDynamodDbLoader()
+	loader := load.NewDynamodDbLoader(load.DynamoDbLoaderOptions{
+		Region: config.DynamoDB.Region,
+		EndpointUrl: config.DynamoDB.EndpointUrl,
+		AccessKeyID: config.DynamoDB.AccessKeyID,
+		SecretAccessKey: config.DynamoDB.SecretAccessKey,
+	})
 	if err := loader.Load(context.TODO(), completeQuiz); err != nil {
 		panic(err)
 	}
-
 }
