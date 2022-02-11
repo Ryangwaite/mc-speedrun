@@ -17,6 +17,7 @@ import (
 // The name of the quiz table to load quizzes into
 var quizTableName string = "quiz"
 
+type marshalledQuiz map[string]types.AttributeValue
 type DynamoDbLoaderOptions struct {
 	Region 				string
 	EndpointUrl			string
@@ -55,17 +56,31 @@ func NewDynamodDbLoader(options DynamoDbLoaderOptions) Loader {
 	}
 }
 
+// Loads the quiz to the "quiz" table in dynamodb. If this table doesn't exist
+// then it's created before loading
 func (d dynamoDbLoader) Load(ctx context.Context, quiz quiz.Quiz) error {
+
+	// Marshall asynchronously
+	mQuizCh := make(chan struct{q marshalledQuiz; err error})
+	defer close(mQuizCh)
+	go func() {
+		q, err := marshalQuiz(quiz)
+		mQuizCh <- struct{q marshalledQuiz; err error}{q, err}
+	}()
+
 	if !d.quizTableExists(ctx) {
 		log.Info("Quiz table doesn't yet exist - creating it.")
 		if err := d.createQuizTable(ctx); err != nil {
 			return err
 		}
-	} else {
-		log.Debug("Quiz table already exists - not creating.")
 	}
 
-	if err := d.putQuiz(ctx, quiz); err != nil {
+	mQuiz := <-mQuizCh
+	if mQuiz.err != nil {
+		return mQuiz.err
+	}
+
+	if err := d.putQuiz(ctx, mQuiz.q); err != nil {
 		return err
 	}
 
@@ -109,23 +124,22 @@ func (d dynamoDbLoader) createQuizTable(ctx context.Context) error {
 	return err
 }
 
-func (d dynamoDbLoader) putQuiz(ctx context.Context, quiz quiz.Quiz) error {
+// Marshalls the provided quiz into the correct format for storing in
+// a dynamodb table
+func marshalQuiz(quiz quiz.Quiz) (marshalledQuiz, error) {
+	return attributevalue.MarshalMap(quiz)
+}
 
-	marshelledItem, err := attributevalue.MarshalMap(quiz)
-	if err != nil {
-		return fmt.Errorf("failed to DynamoDB marshal record: %v", err)
-	}
-
+// Stores the marshalled quiz in the dynamodb table
+func (d dynamoDbLoader) putQuiz(ctx context.Context, mQuiz marshalledQuiz) error {
 	input := dynamodb.PutItemInput{
 		TableName: aws.String(quizTableName),
-		Item: marshelledItem,
+		Item: mQuiz,
 	}
 
 	if _, err := d.client.PutItem(ctx, &input); err != nil {
 		return fmt.Errorf("failed to put item: %v", err)
 	}
-
-	log.Infof("Quiz '%s' loaded", quiz.Id)
 
 	return nil
 }
