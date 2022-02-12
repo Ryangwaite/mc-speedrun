@@ -8,8 +8,10 @@ docker-compose up
 
 ## Architecture
 
+![docker-compose architecture](architecture-docker-compose.drawio.png)
 
 
+All services are hosted in individual docker containers.
 
 ## Troubleshooting
 
