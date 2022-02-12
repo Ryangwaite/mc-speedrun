@@ -12,7 +12,7 @@ services:
     image: sign-on
     build:
       # sign-on/ as context and dockerfile path relative to it
-      context: ../sign-on/
+      context: ../../sign-on/
       dockerfile: Dockerfile
     environment:
       - SIGN_ON_PORT=80
@@ -25,7 +25,7 @@ services:
     image: speed-run
     build:
       # speed-run/ as context and dockerfile path relative to it
-      context: ../speed-run/
+      context: ../../speed-run/
       dockerfile: Dockerfile
     environment:
       - SPEED_RUN_PORT=80
@@ -46,7 +46,7 @@ services:
     image: question-set-loader
     build:
       # question-set-loader/ as context and dockerfile path relative to it
-      context: ../question-set-loader/
+      context: ../../question-set-loader/
       dockerfile: Dockerfile
     environment:
       - PORT=80
