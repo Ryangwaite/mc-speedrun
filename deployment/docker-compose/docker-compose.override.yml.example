@@ -7,6 +7,14 @@ services:
   redis:
     ports:
       - "6379:6379"
+  quiz-completion-queue:
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=passwd
+    ports:
+      - "5672:5672"
+      # Managment console
+      - "8001:15672"
   dynamodb-local:
     ports:
       - "8000:8000"

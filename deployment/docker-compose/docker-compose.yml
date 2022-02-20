@@ -6,6 +6,11 @@ services:
     command: "-jar DynamoDBLocal.jar -sharedDb -inMemory -port 8000"
     image: "amazon/dynamodb-local:latest"
     working_dir: /home/dynamodblocal
+  quiz-completion-queue:
+    image: rabbitmq:management
+    # environment:
+    #   - RABBITMQ_DEFAULT_USER=admin
+    #   - RABBITMQ_DEFAULT_PASS=passwd
   sign-on:
     depends_on:
       - redis

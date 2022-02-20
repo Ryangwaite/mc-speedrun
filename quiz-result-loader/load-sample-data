@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
+import datetime
+import json
+import os
+import shutil
+import uuid
 import redis                # pip install redis
+import pika                 # pip install pika
 from tqdm import tqdm       # pip install tqdm
 from dataclasses import dataclass
 
@@ -39,25 +45,78 @@ contents = [
     Item(key=f"{quiz_id}:{user2_id}:answer:5", value='{"selectedOptionIndexes":[],"answeredInDuration":11}', rtype="string"),
 ]
 
-client = redis.Redis(host="localhost", port="6379", decode_responses=True)
 
-# Empty out any pre-existing content
-client.delete(*[i.key for i in contents])
+def publish_event(host: str, port: str, username: str, password: str):
+    # TODO: Use cloudevents format once SDK support has been added for both producer and consumers. At the moment
+    # loosely modelled after it.
+    event = {
+        "type": "com.ryangwaite.mc-speedrun.quiz.complete.v1",  
+        "source": "/mc-speedrun/quiz-complete",
+        "id": str(uuid.uuid4()),
+        "time": str(datetime.datetime.now(datetime.timezone.utc).isoformat()),              # RFC-3339 formatted time
+        "data": {
+            "quizId": quiz_id,
+        }
+    }
 
-pbar = tqdm(contents)
-for item in pbar:
-    key, value, rtype = item.key, item.value, item.rtype
-    pbar.set_description(f"Adding key='{key}' value='{value}'")
+    event_serialized = json.dumps(event)
 
-    if rtype == "string":
-        client.set(key, value)      # Read back out with 'GET key'
-    elif rtype == "list":
-        client.lpush(key, *value)   # Read back out with 'LRANGE key 0 -1'
-    elif rtype == "zset":
-        client.zadd(key, value)     # Read back out with 'LRANGE key 0 -1'
-    else:
-        raise TypeError(f"Unexpected type '{type(value)}'")
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+        host=host,
+        port=port,
+        credentials=pika.PlainCredentials(
+            username=username,
+            password=password,
+        )
+    ))
 
-client.close()
+    channel = connection.channel()
+    channel.queue_declare(queue="quiz-complete")
 
-print("Done")
+    channel.basic_publish(
+        exchange="",  # Use the default one
+        routing_key="quiz-complete",
+        body=event_serialized,
+        properties=pika.BasicProperties(
+            delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
+        )
+    )
+    connection.close()
+
+
+def main():
+    client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+
+    print("Clearing out existing redis content...")
+    client.delete(*[i.key for i in contents])
+
+    print("Done. Populating redis...")
+
+    pbar = tqdm(contents)
+    for item in pbar:
+        key, value, rtype = item.key, item.value, item.rtype
+        pbar.set_description(f"Adding key='{key}' value='{value}'")
+
+        if rtype == "string":
+            client.set(key, value)      # Read back out with 'GET key'
+        elif rtype == "list":
+            client.lpush(key, *value)   # Read back out with 'LRANGE key 0 -1'
+        elif rtype == "zset":
+            client.zadd(key, value)     # Read back out with 'LRANGE key 0 -1'
+        else:
+            raise TypeError(f"Unexpected type '{type(value)}'")
+
+    client.close()
+
+    print("Done. Copying quiz file to location...")
+    os.makedirs("/tmp/question-sets", exist_ok=True)
+    shutil.copy("../sample-quizzes/example-2.json", f"/tmp/question-sets/{quiz_id}.json")
+
+    print("Done. Publishing message to rabbitmq...")
+
+    publish_event("localhost", 5672, "admin", "passwd")
+
+    print("Done")
+
+if __name__ == "__main__":
+    main()
