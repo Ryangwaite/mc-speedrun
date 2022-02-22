@@ -2,8 +2,9 @@ package subscribe
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
 
@@ -76,7 +77,24 @@ func (r rabbitMqReceiver) Start(ctx context.Context, quizCh QuizCh) error {
 	for {
 		select {
 		case msg := <-msgs:
-			fmt.Println("Received msg with body: " + string(msg.Body))
+			var event QuizCompleteEvent
+			err := json.Unmarshal(msg.Body, &event)
+			if err != nil {
+				// TODO: Send to  RabbitMQ dead letter queue
+				log.Warnf("Unable to parse '%s', Error: %s", string(msg.Body), err.Error())
+				continue
+			}
+
+			quizId := event.Data.QuizId
+			if quizId == "" {
+				log.Warnf("Empty quizId for event : '%s'", string(msg.Body))
+				// TODO: Send to RabbitMQ dead letter queue
+				continue
+			}
+
+			// Successfully pulled out the quizID
+			quizCh<-quizId
+
 		case <-ctx.Done():
 			if ctx.Err() != nil {
 				return ctx.Err()

@@ -3,7 +3,11 @@
 import datetime
 import json
 import os
+import random
 import shutil
+import string
+import sys
+from typing import List
 import uuid
 import redis                # pip install redis
 import pika                 # pip install pika
@@ -18,35 +22,36 @@ class Item():
     rtype: str  # Redis type
 
 
-quiz_id = "sampledata1"
-user1_id = "2c3ca3d2"
-user2_id = "ee14ccb2"
+def build_contents(quiz_id: str) -> List[Item]:
 
-contents = [
-    Item(key=f"{quiz_id}:quizName", value="example", rtype="string"),
-    Item(key=f"{quiz_id}:questionDuration", value="10", rtype="string"),
-    Item(key=f"{quiz_id}:selectedQuestionIndexes", value=['3', '4', '5'], rtype="list"),
-    Item(key=f"{quiz_id}:selectedCategories", value=['Food'], rtype="list"),
-    Item(key=f"{quiz_id}:startTime", value="1643273678", rtype="string"),
-    Item(key=f"{quiz_id}:stopTime", value="1643273701", rtype="string"),
-    Item(key=f"{quiz_id}:leaderboard", value={'ee14ccb2': 35.0, '2c3ca3d2': 80.0}, rtype="zset"),
-    Item(key=f"{quiz_id}:userIds", value=['2c3ca3d2', 'ee14ccb2'], rtype="list"),
+    user1_id = "".join(random.sample(string.ascii_letters, 8))
+    user2_id = "".join(random.sample(string.ascii_letters, 8))
 
-    Item(key=f"{quiz_id}:{user1_id}:username", value="user1", rtype="string"),
-    Item(key=f"{quiz_id}:{user1_id}:stopTime", value="1643273706", rtype="string"),
-    Item(key=f"{quiz_id}:{user1_id}:answer:3", value='{"selectedOptionIndexes":[1],"answeredInDuration":8}', rtype="string"),
-    Item(key=f"{quiz_id}:{user1_id}:answer:4", value='{"selectedOptionIndexes":[],"answeredInDuration":11}', rtype="string"),
-    Item(key=f"{quiz_id}:{user1_id}:answer:5", value='{"selectedOptionIndexes":[1],"answeredInDuration":2}', rtype="string"),
+    return [
+        Item(key=f"{quiz_id}:quizName", value="example", rtype="string"),
+        Item(key=f"{quiz_id}:questionDuration", value="10", rtype="string"),
+        Item(key=f"{quiz_id}:selectedQuestionIndexes", value=['3', '4', '5'], rtype="list"),
+        Item(key=f"{quiz_id}:selectedCategories", value=['Food'], rtype="list"),
+        Item(key=f"{quiz_id}:startTime", value="1643273678", rtype="string"),
+        Item(key=f"{quiz_id}:stopTime", value="1643273701", rtype="string"),
+        Item(key=f"{quiz_id}:leaderboard", value={'ee14ccb2': 35.0, '2c3ca3d2': 80.0}, rtype="zset"),
+        Item(key=f"{quiz_id}:userIds", value=['2c3ca3d2', 'ee14ccb2'], rtype="list"),
 
-    Item(key=f"{quiz_id}:{user2_id}:username", value="user2", rtype="string"),
-    Item(key=f"{quiz_id}:{user2_id}:stopTime", value="1643273701", rtype="string"),
-    Item(key=f"{quiz_id}:{user2_id}:answer:3", value='{"selectedOptionIndexes":[0],"answeredInDuration":2}', rtype="string"),
-    Item(key=f"{quiz_id}:{user2_id}:answer:4", value='{"selectedOptionIndexes":[2,0],"answeredInDuration":3}', rtype="string"),
-    Item(key=f"{quiz_id}:{user2_id}:answer:5", value='{"selectedOptionIndexes":[],"answeredInDuration":11}', rtype="string"),
-]
+        Item(key=f"{quiz_id}:{user1_id}:username", value="user1", rtype="string"),
+        Item(key=f"{quiz_id}:{user1_id}:stopTime", value="1643273706", rtype="string"),
+        Item(key=f"{quiz_id}:{user1_id}:answer:3", value='{"selectedOptionIndexes":[1],"answeredInDuration":8}', rtype="string"),
+        Item(key=f"{quiz_id}:{user1_id}:answer:4", value='{"selectedOptionIndexes":[],"answeredInDuration":11}', rtype="string"),
+        Item(key=f"{quiz_id}:{user1_id}:answer:5", value='{"selectedOptionIndexes":[1],"answeredInDuration":2}', rtype="string"),
+
+        Item(key=f"{quiz_id}:{user2_id}:username", value="user2", rtype="string"),
+        Item(key=f"{quiz_id}:{user2_id}:stopTime", value="1643273701", rtype="string"),
+        Item(key=f"{quiz_id}:{user2_id}:answer:3", value='{"selectedOptionIndexes":[0],"answeredInDuration":2}', rtype="string"),
+        Item(key=f"{quiz_id}:{user2_id}:answer:4", value='{"selectedOptionIndexes":[2,0],"answeredInDuration":3}', rtype="string"),
+        Item(key=f"{quiz_id}:{user2_id}:answer:5", value='{"selectedOptionIndexes":[],"answeredInDuration":11}', rtype="string"),
+    ]
 
 
-def publish_event(host: str, port: str, username: str, password: str):
+def publish_event(host: str, port: str, username: str, password: str, quiz_id: str):
     # TODO: Use cloudevents format once SDK support has been added for both producer and consumers. At the moment
     # loosely modelled after it.
     event = {
@@ -84,15 +89,23 @@ def publish_event(host: str, port: str, username: str, password: str):
     connection.close()
 
 
-def main():
+def main(args):
+
+    if len(args) == 0 or not args[0]:
+        sys.exit(f"Invalid args '{args}'")
+
+    quiz_id = args[0]
+
     client = redis.Redis(host="localhost", port="6379", decode_responses=True)
 
-    print("Clearing out existing redis content...")
-    client.delete(*[i.key for i in contents])
+    redis_contents = build_contents(quiz_id)
+
+    print("Clearing out existing redis contents...")
+    client.delete(*[i.key for i in redis_contents])
 
     print("Done. Populating redis...")
 
-    pbar = tqdm(contents)
+    pbar = tqdm(redis_contents)
     for item in pbar:
         key, value, rtype = item.key, item.value, item.rtype
         pbar.set_description(f"Adding key='{key}' value='{value}'")
@@ -114,9 +127,10 @@ def main():
 
     print("Done. Publishing message to rabbitmq...")
 
-    publish_event("localhost", 5672, "admin", "passwd")
+    publish_event("localhost", 5672, "admin", "passwd", quiz_id)
 
     print("Done")
 
+
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

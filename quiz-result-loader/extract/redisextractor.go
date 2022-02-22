@@ -228,10 +228,11 @@ func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, err
 type loadError struct {
 	attribute	string
 	key 		string
+	reason		string
 }
 
 func (e loadError) Error() string {
-	return fmt.Sprintf("failed to load %s from key '%s'", e.attribute, e.key)
+	return fmt.Sprintf("failed to load %s from key '%s'. Reason: %s", e.attribute, e.key, e.reason)
 }
 
 //// Redis Utility functions ////
@@ -239,7 +240,7 @@ func (e loadError) Error() string {
 func (r redisExtractor) getString(ctx context.Context, key string, onErrorAttribute string) (string, error) {
 	val, err := r.rdb.Get(ctx, key).Result()
 	if err != nil {
-		return "", loadError{attribute:onErrorAttribute, key: key}
+		return "", loadError{attribute:onErrorAttribute, key: key, reason: err.Error()}
 	}
 	return val, nil
 }
@@ -247,7 +248,7 @@ func (r redisExtractor) getString(ctx context.Context, key string, onErrorAttrib
 func (r redisExtractor) getTime(ctx context.Context, key string, onErrorAttribute string) (time.Time, error) {
 	val, err := r.rdb.Get(ctx, key).Result()
 	if err != nil {
-		return time.Time{}, errors.New("Couldn't get time for key " + key)
+		return time.Time{}, fmt.Errorf("couldn't get time for key '%s' Error: %s", key, err.Error())
 	}
 	epochSecs, err := strconv.Atoi(val)
 	if err != nil {
@@ -265,7 +266,7 @@ func (r redisExtractor) getQuestionDuration(ctx context.Context, quizId string) 
 	key := quizId + ":questionDuration"
 	val, err := r.rdb.Get(ctx, key).Result()
 	if err != nil {
-		return time.Duration(0), loadError{attribute: "question duration", key: key}
+		return time.Duration(0), loadError{attribute: "question duration", key: key, reason: err.Error()}
 	}
 
 	duration, err := strconv.Atoi(val)
@@ -282,7 +283,8 @@ func (r redisExtractor) getSelectedQuestionIndexes(ctx context.Context, quizId s
 	if err != nil {
 		return []int{}, loadError{
 			attribute: "selected question indexes",
-			key: key, 
+			key: key,
+			reason: err.Error(),
 		}
 	}
 
@@ -317,7 +319,7 @@ func (r redisExtractor) getLeaderboard(ctx context.Context, quizId string) (map[
 	key := quizId + ":leaderboard"
 	val, err := r.rdb.ZRangeWithScores(ctx, key, 0, -1).Result()
 	if err != nil {
-		return map[string]int{}, loadError{attribute: "leaderboard", key: key}
+		return map[string]int{}, loadError{attribute: "leaderboard", key: key, reason: err.Error()}
 	}
 
 	leaderboard := make(map[string]int)
@@ -354,7 +356,7 @@ func (r redisExtractor) getQuestion(ctx context.Context, quizId string, userIds 
 		key := fmt.Sprintf("%s:%s:answer:%d", quizId, userId, questionIndex)
 		rawValue, err := r.rdb.Get(ctx, key).Result()
 		if err != nil {
-			return question, loadError{attribute: "question answer", key: key}
+			return question, loadError{attribute: "question answer", key: key, reason: err.Error()}
 		}
 		// The contents are a json blob e.g. '{"selectedOptionIndexes":[1],"answeredInDuration":8}'
 		var parsedValue questionAnswerBlob
