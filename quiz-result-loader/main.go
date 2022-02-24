@@ -10,7 +10,6 @@ import (
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/worker"
 
-	// "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/logfmt"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/subscribe"
 	log "github.com/sirupsen/logrus"
@@ -18,7 +17,7 @@ import (
 
 func main() {
 
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(logfmt.NewUtcLogFormatter())
 
@@ -58,7 +57,7 @@ func main() {
 	quizCh := make(chan string, 10)
 
 	go func() {
-		worker.WorkerPool(ctx, extractor, loader, config.QuestionSet.Path, quizCh, 1)
+		worker.WorkerPool(ctx, extractor, loader, config.QuestionSet.Path, quizCh, 10)
 	}()
 
 	// Block forever waiting on subscription messages

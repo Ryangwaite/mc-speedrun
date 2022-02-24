@@ -34,7 +34,7 @@ def build_contents(quiz_id: str) -> List[Item]:
         Item(key=f"{quiz_id}:selectedCategories", value=['Food'], rtype="list"),
         Item(key=f"{quiz_id}:startTime", value="1643273678", rtype="string"),
         Item(key=f"{quiz_id}:stopTime", value="1643273701", rtype="string"),
-        Item(key=f"{quiz_id}:leaderboard", value={'ee14ccb2': 35.0, '2c3ca3d2': 80.0}, rtype="zset"),
+        Item(key=f"{quiz_id}:leaderboard", value={user1_id: 35.0, user2_id: 80.0}, rtype="zset"),
         Item(key=f"{quiz_id}:userIds", value=['2c3ca3d2', 'ee14ccb2'], rtype="list"),
 
         Item(key=f"{quiz_id}:{user1_id}:username", value="user1", rtype="string"),
@@ -100,24 +100,27 @@ def main(args):
 
     redis_contents = build_contents(quiz_id)
 
-    print("Clearing out existing redis contents...")
-    client.delete(*[i.key for i in redis_contents])
+    # print("Clearing out existing redis contents...")
+    # client.delete(*[i.key for i in redis_contents])
 
     print("Done. Populating redis...")
 
-    pbar = tqdm(redis_contents)
-    for item in pbar:
-        key, value, rtype = item.key, item.value, item.rtype
-        pbar.set_description(f"Adding key='{key}' value='{value}'")
+    with client.pipeline() as pipe:
+        pbar = tqdm(redis_contents)
+        for item in pbar:
+            key, value, rtype = item.key, item.value, item.rtype
+            pbar.set_description(f"Adding key='{key}' value='{value}'")
 
-        if rtype == "string":
-            client.set(key, value)      # Read back out with 'GET key'
-        elif rtype == "list":
-            client.lpush(key, *value)   # Read back out with 'LRANGE key 0 -1'
-        elif rtype == "zset":
-            client.zadd(key, value)     # Read back out with 'LRANGE key 0 -1'
-        else:
-            raise TypeError(f"Unexpected type '{type(value)}'")
+            if rtype == "string":
+                pipe.set(key, value)      # Read back out with 'GET key'
+            elif rtype == "list":
+                pipe.lpush(key, *value)   # Read back out with 'LRANGE key 0 -1'
+            elif rtype == "zset":
+                pipe.zadd(key, value)     # Read back out with 'LRANGE key 0 -1'
+            else:
+                raise TypeError(f"Unexpected type '{type(value)}'")
+        pipe.execute()
+    
 
     client.close()
 

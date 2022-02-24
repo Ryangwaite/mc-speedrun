@@ -5,10 +5,12 @@ import (
 	"errors"
 	"path"
 	"strconv"
-	log "github.com/sirupsen/logrus"
+	"time"
+
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	load "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
+	log "github.com/sirupsen/logrus"
 )
 
 func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.QuestionAndAnswers) (quiz.Quiz, error) {
@@ -27,7 +29,7 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 	return extractedQuiz, nil
 }
 
-func worker(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string, job <-chan string, workerNum int) {
+func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string, job <-chan string, workerNum int) {
 	for {
 		var quizId string
 
@@ -38,7 +40,8 @@ func worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 		case quizId = <-job:
 		}
 
-		log.Debugf("Worker %d processing quiz '%s'", workerNum, quizId)
+		log.Infof("Worker %d started processing quiz '%s'", workerNum, quizId)
+		startTime := time.Now()
 
 		//// Extract ////
 		questionSetPath := path.Join(questionSetBasePath, quizId + ".json")
@@ -64,9 +67,11 @@ func worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 		log.Debugf("Complete loaded quiz: %+v\n", completeQuiz)
 
 		//// Load ////
-		if err := loader.Load(context.TODO(), completeQuiz); err != nil {
+		if err := loader.Load(ctx, completeQuiz); err != nil {
 			log.Panic(err)
 		}
+		elapsedTime := time.Since(startTime)
+		log.Infof("Worker %d finished processing quiz '%s' in %dms", workerNum, quizId, elapsedTime.Milliseconds())
 	}
 }
 
@@ -75,7 +80,7 @@ func WorkerPool(ctx context.Context, extractor extract.Extractor, loader load.Lo
 	for i:=0; i < numWorkers; i++ {
 		i := i
 		go func() {
-			worker(ctx, extractor, loader, questionSetBasePath, job, i)
+			Worker(ctx, extractor, loader, questionSetBasePath, job, i)
 		}()
 	}
 
