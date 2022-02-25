@@ -7,10 +7,16 @@ import (
 )
 
 type Config struct {
+	RabbitMQ struct {
+		Host string
+		Port int
+		Username string
+		Password string
+		QueueName string
+	}
 	Redis struct {
 		Host string
 		Port int
-		// TODO: Add subscription key in here
 	}
 	QuestionSet struct {
 		Path string
@@ -39,6 +45,11 @@ func Load(path string) (Config, error) {
 	viper.SetConfigFile(path)
 
 	// Pair up env vars with the fields in config
+	viper.BindEnv("rabbit-mq.host", "RABBITMQ_HOST")
+	viper.BindEnv("rabbit-mq.port", "RABBITMQ_PORT")
+	viper.BindEnv("rabbit-mq.username", "RABBITMQ_USERNAME")
+	viper.BindEnv("rabbit-mq.password", "RABBITMQ_PASSWORD")
+	viper.BindEnv("rabbit-mq.queue_name", "RABBITMQ_QUEUE_NAME")
 	viper.BindEnv("redis.host", "REDIS_HOST")
 	viper.BindEnv("redis.port", "REDIS_PORT")
 	viper.BindEnv("question-set.path", "QUESTION_SET_PATH")
@@ -49,6 +60,11 @@ func Load(path string) (Config, error) {
 
 	// Set all fields to be required
 	var missingFlag missing
+	viper.SetDefault("rabbit-mq.host", missingFlag)
+	viper.SetDefault("rabbit-mq.port", missingFlag)
+	viper.SetDefault("rabbit-mq.username", missingFlag)
+	viper.SetDefault("rabbit-mq.password", missingFlag)
+	viper.SetDefault("rabbit-mq.queue_name", missingFlag)
 	viper.SetDefault("redis.host", missingFlag)
 	viper.SetDefault("redis.port", missingFlag)
 	viper.SetDefault("question-set.path", missingFlag)
@@ -65,6 +81,8 @@ func Load(path string) (Config, error) {
 
 	// Validate that there were no missing required keys
 	keys := []string {
+		"rabbit-mq.host","rabbit-mq.port","rabbit-mq.username",
+		"rabbit-mq.password","rabbit-mq.queue_name",
 		"redis.host", "redis.port",
 		"question-set.path",
 		"dynamodb.region", "dynamodb.endpoint_url",
@@ -77,6 +95,11 @@ func Load(path string) (Config, error) {
 	}
 
 	// Everythings present and been validated - pull it out
+	loadedConfig.RabbitMQ.Host = viper.GetString("rabbit-mq.host")
+	loadedConfig.RabbitMQ.Port = viper.GetInt("rabbit-mq.port")
+	loadedConfig.RabbitMQ.Username = viper.GetString("rabbit-mq.username")
+	loadedConfig.RabbitMQ.Password = viper.GetString("rabbit-mq.password")
+	loadedConfig.RabbitMQ.QueueName = viper.GetString("rabbit-mq.queue_name")
 	loadedConfig.Redis.Host = viper.GetString("redis.host")
 	loadedConfig.Redis.Port = viper.GetInt("redis.port")
 	loadedConfig.QuestionSet.Path = viper.GetString("question-set.path")

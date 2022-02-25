@@ -29,7 +29,7 @@ type dynamoDbLoader struct {
 	client *dynamodb.Client
 }
 
-func NewDynamodDbLoader(options DynamoDbLoaderOptions) Loader {
+func NewDynamodDbLoader(options DynamoDbLoaderOptions) (Loader, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(options.Region),
 		// Use dynamodb-local
@@ -46,14 +46,13 @@ func NewDynamodDbLoader(options DynamoDbLoaderOptions) Loader {
 			},
 		}),
 	)
-
 	if err != nil {
-		log.Panic("Failed to load default AWS config. Error: " + err.Error())
+		return dynamoDbLoader{}, err
 	}
 	
 	return dynamoDbLoader{
 		client: dynamodb.NewFromConfig(cfg),
-	}
+	}, nil
 }
 
 // Loads the quiz to the "quiz" table in dynamodb. If this table doesn't exist

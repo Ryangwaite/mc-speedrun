@@ -33,22 +33,24 @@ func main() {
 		Addr: fmt.Sprintf("%s:%d", config.Redis.Host, config.Redis.Port),
 		Password: "",
 	})
-	loader := load.NewDynamodDbLoader(load.DynamoDbLoaderOptions{
+	loader, err := load.NewDynamodDbLoader(load.DynamoDbLoaderOptions{
 		Region: config.DynamoDB.Region,
 		EndpointUrl: config.DynamoDB.EndpointUrl,
 		AccessKeyID: config.DynamoDB.AccessKeyID,
 		SecretAccessKey: config.DynamoDB.SecretAccessKey,
 	})
+	if err != nil {
+		log.Panic("Failed to load default AWS config. Error: " + err.Error())
+	}
 
 	var ctx = context.Background()
 
-	// TODO: Move the hardcoded config here to Config
 	subscriber, err := subscribe.NewRabbitMqReceiver(subscribe.RabbitMqReceiverOptions{
-		Host: "localhost",
-		Port: 5672,
-		Username: "admin",
-		Password: "passwd",
-		QueueName: "quiz-complete",
+		Host: config.RabbitMQ.Host,
+		Port: config.RabbitMQ.Port,
+		Username: config.RabbitMQ.Username,
+		Password: config.RabbitMQ.Password,
+		QueueName: config.RabbitMQ.QueueName,
 	})
 	if err != nil {
 		log.Panicf("Failed to initialize RabbitMQ receiver: %s", err.Error())
