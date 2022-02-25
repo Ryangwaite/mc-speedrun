@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/config"
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
@@ -43,7 +44,14 @@ func main() {
 		log.Panic("Failed to load default AWS config. Error: " + err.Error())
 	}
 
-	var ctx = context.Background()
+	// Stop the context (workers and everything) when ctrl-c is pressed
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		// Stops diverting signals to the context as soon as it completes
+		<-ctx.Done()
+		stop()
+	}()
 
 	subscriber, err := subscribe.NewRabbitMqReceiver(subscribe.RabbitMqReceiverOptions{
 		Host: config.RabbitMQ.Host,
@@ -59,12 +67,12 @@ func main() {
 	quizCh := make(chan string, 10)
 
 	go func() {
-		worker.WorkerPool(ctx, extractor, loader, config.QuestionSet.Path, quizCh, 10)
+		// Block forever waiting on subscription messages
+		subscriber.Start(ctx, quizCh)
 	}()
 
-	// Block forever waiting on subscription messages
-	subscriber.Start(ctx, quizCh)
+	// Start the workers and block waiting for them to finish (when the ctx is cancelled)
+	worker.WorkerPool(ctx, extractor, loader, config.QuestionSet.Path, quizCh, 10)
 
-	fmt.Println("I shouldn't see this")
-	
+	fmt.Println("Done")
 }

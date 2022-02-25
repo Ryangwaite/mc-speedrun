@@ -5,6 +5,7 @@ import (
 	"errors"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
@@ -29,7 +30,8 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 	return extractedQuiz, nil
 }
 
-func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string, job <-chan string, workerNum int) {
+func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
+		job <-chan string, workerNum int) {
 	for {
 		var quizId string
 
@@ -47,7 +49,7 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 		questionSetPath := path.Join(questionSetBasePath, quizId + ".json")
 		questions, err := quiz.LoadQuestionsFromFile(questionSetPath)
 		if err != nil {
-			log.Warnf("Failed to load question from file for")
+			log.Warnf("Failed to load question from file for quiz '%s'", quizId)
 		}
 
 		log.Debugf("Worker %d loaded questions from file for quiz '%s'", workerNum, quizId)
@@ -75,16 +77,21 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 	}
 }
 
-func WorkerPool(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string, job <-chan string, numWorkers int) {
+func WorkerPool(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
+		job <-chan string, numWorkers int) {
+
+	var wg sync.WaitGroup
 
 	for i:=0; i < numWorkers; i++ {
 		i := i
+		wg.Add(1)
 		go func() {
 			Worker(ctx, extractor, loader, questionSetBasePath, job, i)
+			wg.Done()
 		}()
 	}
 
-	// Run forever till the context completes
-	<-ctx.Done()
+	// Run forever till the workers complete which is when the passed context is cancelled
+	wg.Wait()
 	log.Info("worker pool stopped")
 }
