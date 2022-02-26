@@ -10,7 +10,6 @@ import (
 
 	q "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
 	"github.com/go-redis/redis/v8"
-	"golang.org/x/sync/errgroup"
 )
 
 type RedisExtractorOptions struct {
@@ -35,194 +34,244 @@ func NewRedisExtractor(o RedisExtractorOptions) Extractor {
 
 func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, error) {
 
-	errs, ctx := errgroup.WithContext(ctx)
+	// Give the extract operation 1 second to complete
+	ctx, cancel := context.WithTimeout(ctx, 1 * time.Second)
+	defer cancel()
 
 	// Extract all the needed items in parallel - count the amount retrieved in parallel for the aggregation phase
 	itemsFetched := 0
 
-	quizNameCh := make(chan string, 1)
-	errs.Go(func() error {
-		defer close(quizNameCh)
-		quizName, err := r.getQuizName(ctx, quizId)
-		if err != nil {
-			return err
-		}
-		itemsFetched++
-		quizNameCh <- quizName
-		return nil
-	})
+	quizNameCh := make(chan string) // closed by function below
+	quizNameErrCh := make(chan error)
+	go r.extractQuizName(ctx, quizId, quizNameCh, quizNameErrCh)
+	itemsFetched++
+
+	questionDurationCh := make(chan time.Duration) // closed by function below
+	questionDurationErrCh := make(chan error)
+	go r.extractQuestionDuration(ctx, quizId, questionDurationCh, questionDurationErrCh)
+	itemsFetched++
 	
+	startTimeCh := make(chan time.Time)
+	stopTimeCh := make(chan time.Time)
+	quizTimesErrCh := make(chan error)
+	go r.extractQuizTimes(ctx, quizId, startTimeCh, stopTimeCh, quizTimesErrCh)
+	itemsFetched += 2
 
-	questionDurationCh := make(chan time.Duration, 1)
-	errs.Go(func() error {
-		defer close(questionDurationCh)
-		duration, err := r.getQuestionDuration(ctx, quizId)
-		if err != nil {
-			return err
-		}
-		itemsFetched++
-		questionDurationCh <- duration
-		return nil
-	})
+	leaderboardCh := make(chan map[string]int)
+	leaderboardErrCh := make(chan error)
+	go r.extractLeaderboard(ctx, quizId, leaderboardCh, leaderboardErrCh)
+
+	// Wait for the leaderboard to be fetched before moving on
+	leaderboard := <-leaderboardCh
+
+	participantsCh := make(chan []q.Participant)
+	participantsErrCh := make(chan error)
+	go r.extractParticipants(ctx, quizId, leaderboard, participantsCh, participantsErrCh)
+	itemsFetched++
 	
-	startTimeCh := make(chan time.Time, 1)
-	stopTimeCh := make(chan time.Time, 1)
-	errs.Go(func() error {
-		defer close(startTimeCh)
-		defer close(stopTimeCh)
-		startTime, stopTime, err := r.getQuizTimes(ctx, quizId)
-		if err != nil {
-			return err
-		}
-		itemsFetched += 2
-		startTimeCh <- startTime
-		stopTimeCh <- stopTime
-		return nil
-	})
+	questionsCh := make(chan []q.QuestionSummary)
+	questionsErrCh := make(chan error)
+	go r.extractQuestions(ctx, quizId, leaderboard, questionsCh, questionsErrCh)
+	itemsFetched++
 
-	leaderboardMapResultCh := make(chan map[string]int, 1)
-	errs.Go(func() error {
-		defer close(leaderboardMapResultCh)
-		leaderboardMap, err := r.getLeaderboard(ctx, quizId)
-		if err != nil {
-			return err
-		}
-		leaderboardMapResultCh<-leaderboardMap
-		return nil
-	})
 
-	// Wait for the leaderboard to be fetch before moving on
-	leaderboardMap := <-leaderboardMapResultCh
-
-	allParticipantsCh := make(chan []q.Participant, 1)
-	errs.Go(func() error {
-		defer close(allParticipantsCh)
-
-		participantsCh := make(chan q.Participant, len(leaderboardMap))
-		defer close(participantsCh)
-
-		for uId, s := range leaderboardMap {
-			// Closure over these vars for each iteration
-			userId := uId
-			score := s
-			// Fetch the users name in parallel...
-			nameChan := make(chan string, 1)
-			errs.Go(func() error {
-				defer close(nameChan)
-				name, err := r.getUsername(ctx, quizId, userId)
-				if err != nil {
-					return err
-				}
-				nameChan<-name
-				return nil
-			})
-			// ... with users stop time...
-			stopTimeChan := make(chan time.Time, 1)
-			errs.Go(func() error {
-				stopTime, err := r.getUserStopTime(ctx, quizId, userId)
-				if err != nil {
-					return err
-				}
-				stopTimeChan<-stopTime
-				return nil
-			})
-			// ... and aggregate the results
-			go func() {
-				p := q.Participant{
-					UserId: userId,
-					Score: score,
-				}
-				for i := 0; i < 2; i++ {
-					select{
-					case p.Name = <-nameChan: 
-					case p.StopTime = <-stopTimeChan:
-					}
-				}
-				participantsCh<-p
-			}()
-		}
-
-		// Aggregate all of the pariticipants
-		var participants []q.Participant
-		for p := range participantsCh {
-			participants = append(participants, p)
-
-			if len(participants) == len(leaderboardMap) {
-				// Thats all of them received
-				break
+	// Fan-in all the error channels to 1
+	errorCh := make(chan error)
+	go func() {
+		defer close(errorCh)
+		var err error
+		var more bool
+		for {
+			select {
+			case err, more = <-quizNameErrCh:
+			case err, more = <-questionDurationErrCh:
+			case err, more = <-quizTimesErrCh:
+			case err, more = <-leaderboardErrCh:
+			case err, more = <-participantsErrCh:
+			case err, more = <-questionsErrCh:
+			case <-ctx.Done():
+				// Stop when the context is done i.e. because the quiz was extracted successfully.
+				return
+			}
+			if more {
+				errorCh <- err
+				return
 			}
 		}
+	}()
 
-		itemsFetched += 1
-		allParticipantsCh<-participants
-
-		return nil
-	})
+	// Aggregrate everything into one quiz
+	quizCh := make(chan q.Quiz)
+	go func() {
+		defer close(quizCh)
+		quiz := q.Quiz{
+			Id: quizId,
+			Name: <-quizNameCh,
+			QuestionDuration: <-questionDurationCh,
+			StartTime: <-startTimeCh,
+			StopTime: <-stopTimeCh,
+			Participants: <-participantsCh,
+			Questions: <-questionsCh,
+		}
+		quizCh<-quiz
+	}()
 	
-	allQuestionsCh := make(chan []q.QuestionSummary, 1)
-	errs.Go(func() error {
-		defer close(allQuestionsCh)
-		selectedQuestionIndexes, err := r.getSelectedQuestionIndexes(ctx, quizId)
-		if err != nil {
-			return err
-		}
-		questionSummaryCh := make(chan q.QuestionSummary)
-		defer close(questionSummaryCh)
-		
-		// Pull out just the userIds
-		var userIds []string
-		for userId := range leaderboardMap { userIds = append(userIds, userId) }
+	select {
+	case quiz := <-quizCh:
+		return quiz, nil
+	case err := <-errorCh:
+		return q.Quiz{}, err
+	}
+}
 
-		for _, qIndex := range selectedQuestionIndexes {
-			i := qIndex // Closure remade each iteration
-			errs.Go(func() error {
-				qSummary, err := r.getQuestion(ctx, quizId, userIds, i)
-				if err != nil {
-					return err
-				}
-				questionSummaryCh<-qSummary
-				return nil
-			})
-		}
+func (r redisExtractor) extractQuizName(ctx context.Context, quizId string, quizNameCh chan<-string, errorCh chan<-error) {
+	defer close(quizNameCh)
+	defer close(errorCh)
+	quizName, err := r.getQuizName(ctx, quizId)
+	if err != nil { // don't add the message to channel if the ctx was cancelled
+		errorCh <- err
+		return
+	}
+	quizNameCh <- quizName
+}
 
-		// Aggregate all the questions
-		var questionSummaries []q.QuestionSummary
-		for qs := range questionSummaryCh {
-			questionSummaries = append(questionSummaries, qs)
+func (r redisExtractor) extractQuestionDuration(ctx context.Context, quizId string, questionDurationCh chan<-time.Duration, errorCh chan<-error) {
+	defer close(questionDurationCh)
+	defer close(errorCh)
+	duration, err := r.getQuestionDuration(ctx, quizId)
+	if err != nil {
+		errorCh <- err
+		return
+	}
+	questionDurationCh <- duration
+}
 
-			if len(questionSummaries) == len(selectedQuestionIndexes) {
-				// Thats all of them
-				break
+func (r redisExtractor) extractQuizTimes(ctx context.Context, quizId string, startTimeCh chan<-time.Time, stopTimeCh chan<-time.Time, errorCh chan<-error) {
+	defer close(startTimeCh)
+	defer close(stopTimeCh)
+	defer close(errorCh)
+	startTime, stopTime, err := r.getQuizTimes(ctx, quizId)
+	if err != nil {
+		errorCh <- err
+		return
+	}
+	startTimeCh <- startTime
+	stopTimeCh <- stopTime
+}
+
+func (r redisExtractor) extractLeaderboard(ctx context.Context, quizId string, leaderboardCh chan<-map[string]int, errorCh chan<-error) {
+	defer close(leaderboardCh)
+	defer close(errorCh)
+	leaderboard, err := r.getLeaderboard(ctx, quizId)
+	if err != nil {
+		errorCh <- err
+		return
+	}
+	leaderboardCh<-leaderboard
+}
+
+func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, leaderboard map[string]int, participantsCh chan<-[]q.Participant, errorCh chan<-error) {
+	defer close(participantsCh)
+	defer close(errorCh)
+
+	participantCh := make(chan q.Participant, len(leaderboard))
+	defer close(participantCh)
+
+	for uId, s := range leaderboard {
+		// Closure over these vars for each iteration
+		userId := uId
+		score := s
+		// Fetch the users name in parallel...
+		nameChan := make(chan string, 1)
+		go func() {
+			defer close(nameChan)
+			name, err := r.getUsername(ctx, quizId, userId)
+			if err != nil {
+				errorCh <- err
+				return
 			}
+			nameChan<-name
+		}()
+		// ... with users stop time...
+		stopTimeChan := make(chan time.Time, 1)
+		go func() {
+			defer close(stopTimeChan)
+			stopTime, err := r.getUserStopTime(ctx, quizId, userId)
+			if err != nil {
+				errorCh <- err
+				return
+			}
+			stopTimeChan<-stopTime
+		}()
+		// ... and aggregate the results
+		go func() {
+			p := q.Participant{
+				UserId: userId,
+				Score: score,
+			}
+			for i := 0; i < 2; i++ {
+				select{
+				case p.Name = <-nameChan: 
+				case p.StopTime = <-stopTimeChan:
+				}
+			}
+			participantCh<-p
+		}()
+	}
+
+	// Aggregate all of the pariticipants
+	var participants []q.Participant
+	for p := range participantCh {
+		participants = append(participants, p)
+
+		if len(participants) == len(leaderboard) {
+			// Thats all of them received
+			break
 		}
-		// deliver the result
-		itemsFetched += 1
-		allQuestionsCh<-questionSummaries
-		return nil
-	})
-
-	quiz := q.Quiz{
-		Id: quizId,
 	}
 
-	// Wait for all the items above to be captured
-	if err := errs.Wait(); err != nil {
-		return quiz, err
+	participantsCh<-participants
+}
+
+func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, leaderboard map[string]int, questionsCh chan<-[]q.QuestionSummary, errorCh chan<-error) {
+	defer close(questionsCh)
+	defer close(errorCh)
+	selectedQuestionIndexes, err := r.getSelectedQuestionIndexes(ctx, quizId)
+	if err != nil {
+		errorCh <- err
+		return
+	}
+	questionSummaryCh := make(chan q.QuestionSummary)
+	defer close(questionSummaryCh)
+	
+	// Pull out just the userIds
+	var userIds []string
+	for userId := range leaderboard { userIds = append(userIds, userId) }
+
+	for _, qIndex := range selectedQuestionIndexes {
+		i := qIndex // Closure remade each iteration
+		go func() {
+			qSummary, err := r.getQuestion(ctx, quizId, userIds, i)
+			if err != nil {
+				errorCh <- err
+				return
+			}
+			questionSummaryCh<-qSummary
+		}()
 	}
 
-	// Store all the items
-	for ;itemsFetched > 0; itemsFetched--{
-		select {
-		case quiz.Name = <-quizNameCh:
-		case quiz.QuestionDuration = <- questionDurationCh:
-		case quiz.StartTime = <-startTimeCh:
-		case quiz.StopTime = <-stopTimeCh:
-		case quiz.Participants = <-allParticipantsCh:
-		case quiz.Questions = <-allQuestionsCh:
+	// Aggregate all the questions
+	var questionSummaries []q.QuestionSummary
+	for qs := range questionSummaryCh {
+		questionSummaries = append(questionSummaries, qs)
+
+		if len(questionSummaries) == len(selectedQuestionIndexes) {
+			// Thats all of them
+			break
 		}
 	}
-
-	return quiz, nil
+	// deliver the result
+	questionsCh<-questionSummaries
 }
 
 type loadError struct {

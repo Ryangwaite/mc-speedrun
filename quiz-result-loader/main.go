@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/config"
+	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/deadletter"
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/worker"
@@ -65,14 +66,20 @@ func main() {
 	}
 
 	quizCh := make(chan string, 10)
+	deadLetterCh := make (chan deadletter.DeadLetter, 10)
 
 	go func() {
 		// Block forever waiting on subscription messages
 		subscriber.Start(ctx, quizCh)
 	}()
 
+	go func() {
+		// Handle any messages that couldn't be processed
+		deadletter.DeadLetterLogReceiver(ctx, deadLetterCh)
+	}()
+
 	// Start the workers and block waiting for them to finish (when the ctx is cancelled)
-	worker.WorkerPool(ctx, extractor, loader, config.QuestionSet.Path, quizCh, 10)
+	worker.WorkerPool(ctx, extractor, loader, config.QuestionSet.Path, quizCh, deadLetterCh, 10)
 
 	fmt.Println("Done")
 }

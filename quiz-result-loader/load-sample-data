@@ -100,8 +100,8 @@ def main(args):
 
     redis_contents = build_contents(quiz_id)
 
-    # print("Clearing out existing redis contents...")
-    # client.delete(*[i.key for i in redis_contents])
+    print("Clearing out existing redis contents...")
+    client.delete(*[i.key for i in redis_contents])
 
     print("Done. Populating redis...")
 
