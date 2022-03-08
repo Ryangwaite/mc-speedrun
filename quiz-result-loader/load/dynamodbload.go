@@ -61,8 +61,8 @@ func (d dynamoDbLoader) Load(ctx context.Context, quiz quiz.Quiz) error {
 
 	// Marshall asynchronously
 	mQuizCh := make(chan struct{q marshalledQuiz; err error})
-	defer close(mQuizCh)
 	go func() {
+		defer close(mQuizCh)
 		q, err := marshalQuiz(quiz)
 		mQuizCh <- struct{q marshalledQuiz; err error}{q, err}
 	}()
