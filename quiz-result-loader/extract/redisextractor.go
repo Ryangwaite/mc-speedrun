@@ -182,26 +182,26 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 		userId := uId
 		score := s
 		// Fetch the users name in parallel...
-		nameChan := make(chan string, 1)
+		nameChan := make(chan struct{Name string; err error}, 1)
 		go func() {
 			defer close(nameChan)
 			name, err := r.getUsername(ctx, quizId, userId)
 			if err != nil {
-				errorCh <- err
+				nameChan<-struct{Name string; err error}{"", err}
 				return
 			}
-			nameChan<-name
+			nameChan<-struct{Name string; err error}{name, nil}
 		}()
 		// ... with users stop time...
-		stopTimeChan := make(chan time.Time, 1)
+		stopTimeChan := make(chan struct{stopTime time.Time; err error}, 1)
 		go func() {
 			defer close(stopTimeChan)
 			stopTime, err := r.getUserStopTime(ctx, quizId, userId)
 			if err != nil {
-				errorCh <- err
+				stopTimeChan<-struct{stopTime time.Time; err error}{time.Time{}, err}
 				return
 			}
-			stopTimeChan<-stopTime
+			stopTimeChan<-struct{stopTime time.Time; err error}{stopTime, nil}
 		}()
 		// ... and aggregate the results
 		go func() {
@@ -211,8 +211,18 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 			}
 			for i := 0; i < 2; i++ {
 				select{
-				case p.Name = <-nameChan: 
-				case p.StopTime = <-stopTimeChan:
+				case nameChanResult := <-nameChan: 
+					if nameChanResult.err != nil {
+						errorCh<-nameChanResult.err
+						return
+					}
+					p.Name = nameChanResult.Name
+				case stopTimeChanResult := <-stopTimeChan:
+					if stopTimeChanResult.err != nil {
+						errorCh<-stopTimeChanResult.err
+						return
+					}
+					p.StopTime = stopTimeChanResult.stopTime
 				}
 			}
 			participantCh<-p
@@ -236,12 +246,15 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, leaderboard map[string]int, questionsCh chan<-[]q.QuestionSummary, errorCh chan<-error) {
 	defer close(questionsCh)
 	defer close(errorCh)
+
 	selectedQuestionIndexes, err := r.getSelectedQuestionIndexes(ctx, quizId)
 	if err != nil {
 		errorCh <- err
 		return
 	}
-	questionSummaryCh := make(chan q.QuestionSummary)
+
+	type QuestionSummaryChMsg struct{summary q.QuestionSummary; err error}
+	questionSummaryCh := make(chan QuestionSummaryChMsg)
 	defer close(questionSummaryCh)
 	
 	// Pull out just the userIds
@@ -253,17 +266,21 @@ func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, lea
 		go func() {
 			qSummary, err := r.getQuestion(ctx, quizId, userIds, i)
 			if err != nil {
-				errorCh <- err
+				questionSummaryCh<-QuestionSummaryChMsg{q.QuestionSummary{}, err}
 				return
 			}
-			questionSummaryCh<-qSummary
+			questionSummaryCh<-QuestionSummaryChMsg{qSummary, nil}
 		}()
 	}
 
 	// Aggregate all the questions
 	var questionSummaries []q.QuestionSummary
 	for qs := range questionSummaryCh {
-		questionSummaries = append(questionSummaries, qs)
+		if qs.err != nil {
+			errorCh<-qs.err
+			return
+		}
+		questionSummaries = append(questionSummaries, qs.summary)
 
 		if len(questionSummaries) == len(selectedQuestionIndexes) {
 			// Thats all of them
