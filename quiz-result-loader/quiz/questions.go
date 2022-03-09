@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 )
 
 // TODO: Investigate consolidating these structs with those used in the question-set-loader
@@ -32,4 +33,9 @@ func LoadQuestionsFromFile(path string) (qAndA QuestionAndAnswers, err error) {
 	}
 
 	return QuizFileFromBytes(&bytes)
+}
+
+// Deletes the file designated by path
+func DeleteQuestionsFile(path string) error {
+	return os.Remove(path)
 }

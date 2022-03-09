@@ -13,7 +13,7 @@ import (
 )
 
 type RedisExtractorOptions struct {
-	Addr string
+	Addr     string
 	Password string
 }
 
@@ -23,11 +23,11 @@ type redisExtractor struct {
 
 func NewRedisExtractor(o RedisExtractorOptions) Extractor {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: o.Addr,
+		Addr:     o.Addr,
 		Password: o.Password,
 	})
 
-	return redisExtractor {
+	return redisExtractor{
 		rdb: rdb,
 	}
 }
@@ -35,7 +35,7 @@ func NewRedisExtractor(o RedisExtractorOptions) Extractor {
 func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, error) {
 
 	// Give the extract operation 1 second to complete
-	ctx, cancel := context.WithTimeout(ctx, 1 * time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
 	// Extract all the needed items in parallel - count the amount retrieved in parallel for the aggregation phase
@@ -50,7 +50,7 @@ func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, err
 	questionDurationErrCh := make(chan error)
 	go r.extractQuestionDuration(ctx, quizId, questionDurationCh, questionDurationErrCh)
 	itemsFetched++
-	
+
 	startTimeCh := make(chan time.Time)
 	stopTimeCh := make(chan time.Time)
 	quizTimesErrCh := make(chan error)
@@ -68,12 +68,11 @@ func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, err
 	participantsErrCh := make(chan error)
 	go r.extractParticipants(ctx, quizId, leaderboard, participantsCh, participantsErrCh)
 	itemsFetched++
-	
+
 	questionsCh := make(chan []q.QuestionSummary)
 	questionsErrCh := make(chan error)
 	go r.extractQuestions(ctx, quizId, leaderboard, questionsCh, questionsErrCh)
 	itemsFetched++
-
 
 	// Fan-in all the error channels to 1
 	errorCh := make(chan error)
@@ -105,17 +104,17 @@ func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, err
 	go func() {
 		defer close(quizCh)
 		quiz := q.Quiz{
-			Id: quizId,
-			Name: <-quizNameCh,
+			Id:               quizId,
+			Name:             <-quizNameCh,
 			QuestionDuration: <-questionDurationCh,
-			StartTime: <-startTimeCh,
-			StopTime: <-stopTimeCh,
-			Participants: <-participantsCh,
-			Questions: <-questionsCh,
+			StartTime:        <-startTimeCh,
+			StopTime:         <-stopTimeCh,
+			Participants:     <-participantsCh,
+			Questions:        <-questionsCh,
 		}
-		quizCh<-quiz
+		quizCh <- quiz
 	}()
-	
+
 	select {
 	case quiz := <-quizCh:
 		return quiz, nil
@@ -124,7 +123,24 @@ func (r redisExtractor) Extract(ctx context.Context, quizId string) (q.Quiz, err
 	}
 }
 
-func (r redisExtractor) extractQuizName(ctx context.Context, quizId string, quizNameCh chan<-string, errorCh chan<-error) {
+// Delete the quiz from redis
+func (r redisExtractor) Delete(ctx context.Context, quizId string) error {
+	pattern := quizId + ":*"
+	iter := r.rdb.Scan(ctx, 0, pattern, 0).Iterator()
+	for iter.Next(ctx) {
+		if err := r.rdb.Del(ctx, iter.Val()).Err(); err != nil {
+			return err
+		}
+	}
+	if err := iter.Err(); err != nil {
+		return err
+	}
+	
+	// Successfully deleted it all
+	return nil
+}
+
+func (r redisExtractor) extractQuizName(ctx context.Context, quizId string, quizNameCh chan<- string, errorCh chan<- error) {
 	defer close(quizNameCh)
 	defer close(errorCh)
 	quizName, err := r.getQuizName(ctx, quizId)
@@ -135,7 +151,7 @@ func (r redisExtractor) extractQuizName(ctx context.Context, quizId string, quiz
 	quizNameCh <- quizName
 }
 
-func (r redisExtractor) extractQuestionDuration(ctx context.Context, quizId string, questionDurationCh chan<-time.Duration, errorCh chan<-error) {
+func (r redisExtractor) extractQuestionDuration(ctx context.Context, quizId string, questionDurationCh chan<- time.Duration, errorCh chan<- error) {
 	defer close(questionDurationCh)
 	defer close(errorCh)
 	duration, err := r.getQuestionDuration(ctx, quizId)
@@ -146,7 +162,7 @@ func (r redisExtractor) extractQuestionDuration(ctx context.Context, quizId stri
 	questionDurationCh <- duration
 }
 
-func (r redisExtractor) extractQuizTimes(ctx context.Context, quizId string, startTimeCh chan<-time.Time, stopTimeCh chan<-time.Time, errorCh chan<-error) {
+func (r redisExtractor) extractQuizTimes(ctx context.Context, quizId string, startTimeCh chan<- time.Time, stopTimeCh chan<- time.Time, errorCh chan<- error) {
 	defer close(startTimeCh)
 	defer close(stopTimeCh)
 	defer close(errorCh)
@@ -159,7 +175,7 @@ func (r redisExtractor) extractQuizTimes(ctx context.Context, quizId string, sta
 	stopTimeCh <- stopTime
 }
 
-func (r redisExtractor) extractLeaderboard(ctx context.Context, quizId string, leaderboardCh chan<-map[string]int, errorCh chan<-error) {
+func (r redisExtractor) extractLeaderboard(ctx context.Context, quizId string, leaderboardCh chan<- map[string]int, errorCh chan<- error) {
 	defer close(leaderboardCh)
 	defer close(errorCh)
 	leaderboard, err := r.getLeaderboard(ctx, quizId)
@@ -167,10 +183,10 @@ func (r redisExtractor) extractLeaderboard(ctx context.Context, quizId string, l
 		errorCh <- err
 		return
 	}
-	leaderboardCh<-leaderboard
+	leaderboardCh <- leaderboard
 }
 
-func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, leaderboard map[string]int, participantsCh chan<-[]q.Participant, errorCh chan<-error) {
+func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, leaderboard map[string]int, participantsCh chan<- []q.Participant, errorCh chan<- error) {
 	defer close(participantsCh)
 	defer close(errorCh)
 
@@ -182,50 +198,68 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 		userId := uId
 		score := s
 		// Fetch the users name in parallel...
-		nameChan := make(chan struct{Name string; err error}, 1)
+		nameChan := make(chan struct {
+			Name string
+			err  error
+		}, 1)
 		go func() {
 			defer close(nameChan)
 			name, err := r.getUsername(ctx, quizId, userId)
 			if err != nil {
-				nameChan<-struct{Name string; err error}{"", err}
+				nameChan <- struct {
+					Name string
+					err  error
+				}{"", err}
 				return
 			}
-			nameChan<-struct{Name string; err error}{name, nil}
+			nameChan <- struct {
+				Name string
+				err  error
+			}{name, nil}
 		}()
 		// ... with users stop time...
-		stopTimeChan := make(chan struct{stopTime time.Time; err error}, 1)
+		stopTimeChan := make(chan struct {
+			stopTime time.Time
+			err      error
+		}, 1)
 		go func() {
 			defer close(stopTimeChan)
 			stopTime, err := r.getUserStopTime(ctx, quizId, userId)
 			if err != nil {
-				stopTimeChan<-struct{stopTime time.Time; err error}{time.Time{}, err}
+				stopTimeChan <- struct {
+					stopTime time.Time
+					err      error
+				}{time.Time{}, err}
 				return
 			}
-			stopTimeChan<-struct{stopTime time.Time; err error}{stopTime, nil}
+			stopTimeChan <- struct {
+				stopTime time.Time
+				err      error
+			}{stopTime, nil}
 		}()
 		// ... and aggregate the results
 		go func() {
 			p := q.Participant{
 				UserId: userId,
-				Score: score,
+				Score:  score,
 			}
 			for i := 0; i < 2; i++ {
-				select{
-				case nameChanResult := <-nameChan: 
+				select {
+				case nameChanResult := <-nameChan:
 					if nameChanResult.err != nil {
-						errorCh<-nameChanResult.err
+						errorCh <- nameChanResult.err
 						return
 					}
 					p.Name = nameChanResult.Name
 				case stopTimeChanResult := <-stopTimeChan:
 					if stopTimeChanResult.err != nil {
-						errorCh<-stopTimeChanResult.err
+						errorCh <- stopTimeChanResult.err
 						return
 					}
 					p.StopTime = stopTimeChanResult.stopTime
 				}
 			}
-			participantCh<-p
+			participantCh <- p
 		}()
 	}
 
@@ -240,10 +274,10 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 		}
 	}
 
-	participantsCh<-participants
+	participantsCh <- participants
 }
 
-func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, leaderboard map[string]int, questionsCh chan<-[]q.QuestionSummary, errorCh chan<-error) {
+func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, leaderboard map[string]int, questionsCh chan<- []q.QuestionSummary, errorCh chan<- error) {
 	defer close(questionsCh)
 	defer close(errorCh)
 
@@ -253,23 +287,28 @@ func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, lea
 		return
 	}
 
-	type QuestionSummaryChMsg struct{summary q.QuestionSummary; err error}
+	type QuestionSummaryChMsg struct {
+		summary q.QuestionSummary
+		err     error
+	}
 	questionSummaryCh := make(chan QuestionSummaryChMsg)
 	defer close(questionSummaryCh)
-	
+
 	// Pull out just the userIds
 	var userIds []string
-	for userId := range leaderboard { userIds = append(userIds, userId) }
+	for userId := range leaderboard {
+		userIds = append(userIds, userId)
+	}
 
 	for _, qIndex := range selectedQuestionIndexes {
 		i := qIndex // Closure remade each iteration
 		go func() {
 			qSummary, err := r.getQuestion(ctx, quizId, userIds, i)
 			if err != nil {
-				questionSummaryCh<-QuestionSummaryChMsg{q.QuestionSummary{}, err}
+				questionSummaryCh <- QuestionSummaryChMsg{q.QuestionSummary{}, err}
 				return
 			}
-			questionSummaryCh<-QuestionSummaryChMsg{qSummary, nil}
+			questionSummaryCh <- QuestionSummaryChMsg{qSummary, nil}
 		}()
 	}
 
@@ -277,7 +316,7 @@ func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, lea
 	var questionSummaries []q.QuestionSummary
 	for qs := range questionSummaryCh {
 		if qs.err != nil {
-			errorCh<-qs.err
+			errorCh <- qs.err
 			return
 		}
 		questionSummaries = append(questionSummaries, qs.summary)
@@ -288,13 +327,13 @@ func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, lea
 		}
 	}
 	// deliver the result
-	questionsCh<-questionSummaries
+	questionsCh <- questionSummaries
 }
 
 type loadError struct {
-	attribute	string
-	key 		string
-	reason		string
+	attribute string
+	key       string
+	reason    string
 }
 
 func (e loadError) Error() string {
@@ -306,7 +345,7 @@ func (e loadError) Error() string {
 func (r redisExtractor) getString(ctx context.Context, key string, onErrorAttribute string) (string, error) {
 	val, err := r.rdb.Get(ctx, key).Result()
 	if err != nil {
-		return "", loadError{attribute:onErrorAttribute, key: key, reason: err.Error()}
+		return "", loadError{attribute: onErrorAttribute, key: key, reason: err.Error()}
 	}
 	return val, nil
 }
@@ -339,7 +378,7 @@ func (r redisExtractor) getQuestionDuration(ctx context.Context, quizId string) 
 	if err != nil {
 		return time.Duration(0), fmt.Errorf("couldn't parse questionDuration. " + err.Error())
 	}
-		
+
 	return time.Duration(duration) * time.Second, nil
 }
 
@@ -349,8 +388,8 @@ func (r redisExtractor) getSelectedQuestionIndexes(ctx context.Context, quizId s
 	if err != nil {
 		return []int{}, loadError{
 			attribute: "selected question indexes",
-			key: key,
-			reason: err.Error(),
+			key:       key,
+			reason:    err.Error(),
 		}
 	}
 
@@ -371,7 +410,7 @@ func (r redisExtractor) getQuizTimes(ctx context.Context, quizId string) (time.T
 	if err != nil {
 		return time.Time{}, time.Time{}, err
 	}
-	
+
 	key = quizId + ":stopTime"
 	stopTime, err := r.getTime(ctx, key, "quiz stop time")
 	if err != nil {
@@ -412,8 +451,8 @@ func (r redisExtractor) getUserStopTime(ctx context.Context, quizId string, user
 }
 
 type questionAnswerBlob struct {
-	SelectedOptionIndexes		[]int		`json:"selectedOptionIndexes"`
-	AnsweredInDuration			int			`json:"answeredInDuration"`
+	SelectedOptionIndexes []int `json:"selectedOptionIndexes"`
+	AnsweredInDuration    int   `json:"answeredInDuration"`
 }
 
 func (r redisExtractor) getQuestion(ctx context.Context, quizId string, userIds []string, questionIndex int) (q.QuestionSummary, error) {
@@ -430,7 +469,7 @@ func (r redisExtractor) getQuestion(ctx context.Context, quizId string, userIds 
 			return question, fmt.Errorf("failed to parse value for '%s'", key)
 		}
 		question.ParticipantAnswers = append(question.ParticipantAnswers, q.Answerer{
-			UserId: userId,
+			UserId:             userId,
 			ParticipantOptions: parsedValue.SelectedOptionIndexes,
 			AnsweredInDuration: time.Duration(parsedValue.AnsweredInDuration * int(time.Second)),
 		})

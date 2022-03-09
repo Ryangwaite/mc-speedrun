@@ -53,7 +53,7 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 		if err != nil {
 			deadLetterCh<-deadletter.DeadLetter{
 				QuizId: quizId,
-				ErrReason: fmt.Errorf("Failed to load questions from file. %w", err),
+				ErrReason: fmt.Errorf("failed to load questions from file. %w", err),
 			}
 			continue
 		}
@@ -66,7 +66,7 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 			println("Failed to extract")
 			deadLetterCh<-deadletter.DeadLetter{
 				QuizId: quizId,
-				ErrReason: fmt.Errorf("Failed to extract. %w", err),
+				ErrReason: fmt.Errorf("failed to extract. %w", err),
 			}
 			continue
 		}
@@ -77,7 +77,7 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 		if err != nil {
 			deadLetterCh<-deadletter.DeadLetter{
 				QuizId: quizId,
-				ErrReason: fmt.Errorf("Failed to merge extracted quiz and questions. %w", err),
+				ErrReason: fmt.Errorf("failed to merge extracted quiz and questions. %w", err),
 			}
 			continue
 		}
@@ -87,10 +87,21 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 		if err := loader.Load(ctx, completeQuiz); err != nil {
 			deadLetterCh<-deadletter.DeadLetter{
 				QuizId: quizId,
-				ErrReason: fmt.Errorf("Failed to load. %w", err),
+				ErrReason: fmt.Errorf("failed to load. %w", err),
 			}
 			continue
 		}
+
+		//// Delete ////
+		if err := extractor.Delete(ctx, quizId); err != nil {
+			log.Warnf("Failed to delete extracted quiz for '%s'. %s", quizId, err.Error())
+			continue
+		}
+		if err := quiz.DeleteQuestionsFile(questionSetPath); err != nil {
+			log.Warnf("Failed to delete questions file for quiz '%s'. %s", quizId, err.Error())
+			continue
+		}
+
 		elapsedTime := time.Since(startTime)
 		log.Infof("Worker %d finished processing quiz '%s' in %dms", workerNum, quizId, elapsedTime.Milliseconds())
 	}
