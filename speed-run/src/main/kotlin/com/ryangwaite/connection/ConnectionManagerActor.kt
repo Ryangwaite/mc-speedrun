@@ -9,11 +9,12 @@ import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.time.Instant
 
 fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPublish) = actor<ConnectionManagerMsg> {
 
@@ -76,7 +77,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 datastore.setSelectedCategories(quizId, categories)
                 datastore.setQuestionDuration(quizId, duration)
                 datastore.setSelectedQuestionIndexes(quizId, selectedQuestionIndexes)
-                datastore.setQuizStartTime(quizId, Instant.now())
+                datastore.setQuizStartTime(quizId, Clock.System.now())
 
                 LOG.info("Starting quiz '$quizId'")
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-STARTED`)
@@ -125,12 +126,12 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
 
                 if (datastore.isParticipantFinished(quizId, userId)) {
-                    datastore.setParticipantStopTime(quizId, userId, Instant.now())
+                    datastore.setParticipantStopTime(quizId, userId, Clock.System.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`PARTICIPANT-FINISHED`)
                 }
 
                 if (datastore.isQuizFinished(quizId)) {
-                    datastore.setQuizStopTime(quizId, Instant.now())
+                    datastore.setQuizStopTime(quizId, Clock.System.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
                 }
             }
@@ -152,12 +153,12 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 publisher.publishQuizEvent(quizId, SubscriptionMessages.`NOTIFY-HOST-QUIZ-SUMMARY`)
 
                 if (datastore.isParticipantFinished(quizId, userId)) {
-                    datastore.setParticipantStopTime(quizId, userId, Instant.now())
+                    datastore.setParticipantStopTime(quizId, userId, Clock.System.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`PARTICIPANT-FINISHED`)
                 }
 
                 if (datastore.isQuizFinished(quizId)) {
-                    datastore.setQuizStopTime(quizId, Instant.now())
+                    datastore.setQuizStopTime(quizId, Clock.System.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
                 }
             }

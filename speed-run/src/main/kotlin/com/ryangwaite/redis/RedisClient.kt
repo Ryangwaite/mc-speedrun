@@ -15,6 +15,7 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.rx3.await
 import kotlinx.coroutines.rx3.awaitSingle
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -26,7 +27,6 @@ import org.redisson.client.codec.IntegerCodec
 import org.redisson.client.codec.LongCodec
 import org.redisson.client.codec.StringCodec
 import org.redisson.config.Config
-import java.time.*
 import kotlin.math.exp
 
 
@@ -170,36 +170,36 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
 
     override suspend fun setQuizStartTime(quizId: String, time: Instant) {
         val bucket = redissonClient.getBucket<Long>(quizStartTimeKey(quizId), LongCodec())
-        bucket.set(time.epochSecond).await()
+        bucket.set(time.epochSeconds).await()
     }
 
     override suspend fun getQuizStartTime(quizId: String): Instant {
         val bucket = redissonClient.getBucket<Long>(quizStartTimeKey(quizId), LongCodec())
         val epochSeconds = bucket.get().awaitSingle()
-        return Instant.ofEpochSecond(epochSeconds)
+        return Instant.fromEpochSeconds(epochSeconds)
     }
 
     override suspend fun setQuizStopTime(quizId: String, time: Instant) {
         val bucket = redissonClient.getBucket<Long>(quizStopTimeKey(quizId), LongCodec())
-        bucket.set(time.epochSecond).await()
+        bucket.set(time.epochSeconds).await()
     }
 
     override suspend fun getQuizStopTime(quizId: String): Instant {
         val bucket = redissonClient.getBucket<Long>(quizStopTimeKey(quizId), LongCodec())
         val epochSeconds = bucket.get().awaitSingle()
-        return Instant.ofEpochSecond(epochSeconds)
+        return Instant.fromEpochSeconds(epochSeconds)
     }
 
     override suspend fun setParticipantStopTime(quizId: String, userId: String, time: Instant) {
         val bucket = redissonClient.getBucket<Long>(participantStopTimeKey(quizId, userId), LongCodec())
-        val epochSeconds = time.epochSecond
+        val epochSeconds = time.epochSeconds
         bucket.set(epochSeconds).await()
     }
 
     override suspend fun getParticipantStopTime(quizId: String, userId: String): Instant {
         val bucket = redissonClient.getBucket<Long>(participantStopTimeKey(quizId, userId), LongCodec())
         val epochSeconds = bucket.get().awaitSingle()
-        return Instant.ofEpochSecond(epochSeconds)
+        return Instant.fromEpochSeconds(epochSeconds)
     }
 
     override suspend fun setParticipantAnswer(

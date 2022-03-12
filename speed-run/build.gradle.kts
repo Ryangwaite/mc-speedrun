@@ -43,12 +43,13 @@ dependencies {
     implementation("io.ktor:ktor-auth:$ktor_version")
     implementation("io.ktor:ktor-auth-jwt:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
-    implementation("org.redisson:redisson:3.16.4")
+    implementation("org.redisson:redisson:3.16.8")
     implementation("io.reactivex.rxjava3:rxjava:3.1.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
 
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
-    testImplementation("io.mockk:mockk:1.12.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
+    testImplementation("io.mockk:mockk:1.12.3")
 }

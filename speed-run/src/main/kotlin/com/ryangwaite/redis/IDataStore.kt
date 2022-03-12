@@ -2,8 +2,7 @@ package com.ryangwaite.redis
 
 import com.ryangwaite.models.LeaderboardItem
 import com.ryangwaite.models.VerboseQuestionSummary
-import java.time.Instant
-import java.time.LocalDateTime
+import kotlinx.datetime.Instant
 
 interface IDataStore {
     suspend fun addUserId(quizId: String, userId: String)

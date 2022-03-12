@@ -14,10 +14,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.flow.collect
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.time.Instant
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 
@@ -67,7 +68,7 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                 }
 
                 val avgAnswerTimeMillis = if (answerDurations.size > 0) (answerDurations.average() * 1000).roundToInt() else 0
-                val totalTimeElapsed = Instant.now().epochSecond - datastore.getQuizStartTime(quizId).epochSecond
+                val totalTimeElapsed = Clock.System.now().epochSeconds - datastore.getQuizStartTime(quizId).epochSeconds
 
                 connectionManager.send(ForwardMsgToHost(quizId, NotifyHostQuizSummaryMsg(
                     totalTimeElapsed,
@@ -76,7 +77,7 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                 )))
             }
             SubscriptionMessages.`QUIZ-STARTED` -> {
-                val startTime = datastore.getQuizStartTime(quizId).epochSecond
+                val startTime = datastore.getQuizStartTime(quizId).epochSeconds
                 val duration = datastore.getQuestionDuration(quizId)
                 val numberOfQuestions = datastore.getSelectedQuestionIndexes(quizId).size
                 connectionManager.send(ForwardMsgToAll(quizId, BroadcastStartMsg(startTime, duration, numberOfQuestions)))
@@ -108,7 +109,7 @@ fun CoroutineScope.subscriberActor(datastore: IDataStore, subscriber: ISubscribe
                                 it.timeExpiredAnswerers.map { Answerer(it.userId, it.name) },
                             )
                         }
-                        val totalElapsedTime = datastore.getParticipantStopTime(quizId, userId).epochSecond - datastore.getQuizStartTime(quizId).epochSecond
+                        val totalElapsedTime = datastore.getParticipantStopTime(quizId, userId).epochSeconds - datastore.getQuizStartTime(quizId).epochSeconds
                         val avgAnswerTime = if (answerDurations.size > 0) (answerDurations.average() * 1000).roundToInt() else 0
                         connectionManager.send(ForwardMsgToParticipant(quizId, userId, NotifyParticipantQuizSummaryMsg(
                             totalElapsedTime,
