@@ -1,23 +1,24 @@
-# This overrides the default docker-compose.yml file to expose ports to the host
-# This makes it easy to develop individual services outside of the stack which
-# call all other services running in the docker-compose environment.
+# This overrides the default docker-compose.yml file to expose ports and
+# directories to the host. This makes it easy to develop individual services
+# outside of the stack which call all other services running in the
+# docker-compose environment.
 
 version: '3.9'
 services:
   redis:
     ports:
       - "6379:6379"
+  dynamodb-local:
+    ports:
+      - "8000:8000"
   quiz-completion-queue:
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=passwd
+    # Make management console available on the host
     ports:
       - "5672:5672"
       # Managment console
       - "8001:15672"
-  dynamodb-local:
-    ports:
-      - "8000:8000"
+      # Prometheus
+      - "8002:15692"
   sign-on:
     ports:
       - "8080:80"
@@ -28,8 +29,15 @@ services:
       - "8081:80"
     environment:
       - SPEED_RUN_DEVELOPMENT_MODE=true
+    volumes:
+      - "/tmp/mc-speedrun-quiz-questions:/quiz-questions:ro"
   question-set-loader:
     ports:
       - "8082:80"
     environment:
       - DEVELOPMENT_MODE=true
+    volumes:
+      - "/tmp/mc-speedrun-quiz-questions:/quiz-questions:rw"
+  quiz-result-loader:
+    volumes:
+      - "/tmp/mc-speedrun-quiz-questions:/question-sets:rw"

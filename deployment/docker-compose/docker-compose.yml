@@ -122,7 +122,7 @@ services:
         - REACT_APP__SIGN_ON_URL=http://localhost:80
     ports:
       - "80:80"
+
 volumes:
   quiz-questions:
-    driver: local
     name: mc-speedrun-quiz-questions
