@@ -1,3 +1,6 @@
+# Spins-up an entire local mc-speedrun environment
+# TODO: Move pass in secrets through an .env file
+
 version: '3.9'
 services:
   redis:
@@ -8,9 +11,15 @@ services:
     working_dir: /home/dynamodblocal
   quiz-completion-queue:
     image: rabbitmq:management
-    # environment:
-    #   - RABBITMQ_DEFAULT_USER=admin
-    #   - RABBITMQ_DEFAULT_PASS=passwd
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=passwd
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
   sign-on:
     depends_on:
       - redis
@@ -63,6 +72,35 @@ services:
       - type: volume
         source: quiz-questions
         target: /quiz-questions
+        read_only: false
+        volume:
+          nocopy: true
+  quiz-result-loader:
+    image: quiz-result-loader
+    build:
+      # quiz-result-loader as context and dockerfile path relative to it
+      context: ../../quiz-result-loader/
+      dockerfile: Dockerfile
+    depends_on:
+      quiz-completion-queue:
+        # Wait for rabbit mq to initialise within the container before starting
+        condition: service_healthy
+      redis:
+        condition: service_started
+      dynamodb-local:
+        condition: service_started
+    environment:
+      - RABBITMQ_HOST=quiz-completion-queue
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=passwd
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUESTION_SET_PATH=/question-sets
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
+    volumes:
+      - type: volume
+        source: quiz-questions
+        target: /question-sets
         read_only: false
         volume:
           nocopy: true
