@@ -35,7 +35,11 @@ services:
       - JWT_AUDIENCE=http://0.0.0.0/
   speed-run:
     depends_on:
-      - redis
+      quiz-completion-queue:
+        # Wait for rabbit mq to initialise within the container before starting
+        condition: service_healthy
+      redis:
+        condition: service_started
     image: speed-run
     build:
       # speed-run/ as context and dockerfile path relative to it
@@ -49,6 +53,9 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - QUIZ_DIRECTORY=/quiz-questions
+      - RABBITMQ_HOST=quiz-completion-queue
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=passwd
     volumes:
       - type: volume
         source: quiz-questions
@@ -115,8 +122,8 @@ services:
     image: reverse-proxy
     build:
       # Repo root as context and dockerfile path relative to it
-      context: ..
-      dockerfile: deployment/reverse-proxy/Dockerfile
+      context: ../..
+      dockerfile: deployment/docker-compose/reverse-proxy/Dockerfile
       args:
         # This is from the POV of the client side which has to hit nginx proxy first
         - REACT_APP__SIGN_ON_URL=http://localhost:80

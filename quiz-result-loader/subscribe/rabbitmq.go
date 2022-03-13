@@ -38,7 +38,7 @@ func NewRabbitMqReceiver(o RabbitMqReceiverOptions) (rabbitMqReceiver, error) {
 
 	queue, err := amqpCh.QueueDeclare(
 		o.QueueName,
-		false,			// durable
+		true,			// durable
 		false,			// dont delete when unused
 		false,			// not exclusive
 		false,			// no-wait

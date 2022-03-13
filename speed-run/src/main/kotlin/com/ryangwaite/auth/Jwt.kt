@@ -1,10 +1,9 @@
-package com.ryangwaite.config
+package com.ryangwaite.auth
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import io.ktor.application.*
-import io.ktor.auth.*
 import io.ktor.auth.jwt.*
 import io.ktor.config.*
 

@@ -1,12 +1,15 @@
 package com.ryangwaite.connection
 
 import com.ryangwaite.loader.QuizLoader
+import com.ryangwaite.notify.NotificationActorMsg
+import com.ryangwaite.notify.QuizComplete
 import com.ryangwaite.protocol.*
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.score.calculateAnswerScore
 import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -16,7 +19,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
-fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPublish) = actor<ConnectionManagerMsg> {
+fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPublish,  notifier: SendChannel<NotificationActorMsg>) = actor<ConnectionManagerMsg> {
 
     val LOG = LoggerFactory.getLogger("ConnectionManagerActor")
 
@@ -133,6 +136,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 if (datastore.isQuizFinished(quizId)) {
                     datastore.setQuizStopTime(quizId, Clock.System.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
+                    notifier.send(QuizComplete(quizId))
                 }
             }
             is ParticipantAnswerTimeoutMsg -> {
@@ -160,6 +164,7 @@ fun CoroutineScope.connectionManagerActor(datastore: IDataStore, publisher: IPub
                 if (datastore.isQuizFinished(quizId)) {
                     datastore.setQuizStopTime(quizId, Clock.System.now())
                     publisher.publishQuizEvent(quizId, SubscriptionMessages.`QUIZ-FINISHED`)
+                    notifier.send(QuizComplete(quizId))
                 }
             }
             else -> LOG.error("Unknown packet received: $packet")

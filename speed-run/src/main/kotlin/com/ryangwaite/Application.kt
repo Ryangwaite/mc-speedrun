@@ -2,6 +2,8 @@ package com.ryangwaite
 
 import com.ryangwaite.connection.IPublish
 import com.ryangwaite.loader.QuizLoader
+import com.ryangwaite.notify.INotifier
+import com.ryangwaite.notify.RabbitMqNotifier
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.redis.RedisClient
 import com.ryangwaite.routes.speedRun
@@ -19,11 +21,14 @@ fun Application.module(testing: Boolean = false) {
 
     configureQuizLoader()
 
+    val notifier = RabbitMqNotifier(environment.config)
+
     val redisClient = RedisClient(environment.config)
     configureRouting(
         redisClient,
         redisClient,
-        redisClient
+        redisClient,
+        notifier,
     )
 
     if (environment.developmentMode) {
@@ -38,8 +43,8 @@ fun Application.module(testing: Boolean = false) {
  * Configure routing via extension so that it can be tested
  * independent of module.
  */
-fun Application.configureRouting(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish) {
-    speedRun(dataStore, subscriber, publisher)
+fun Application.configureRouting(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish, notifier: INotifier) {
+    speedRun(dataStore, subscriber, publisher, notifier)
 }
 
 fun Application.configureQuizLoader() {

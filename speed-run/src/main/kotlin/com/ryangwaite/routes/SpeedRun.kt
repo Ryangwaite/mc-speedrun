@@ -1,34 +1,29 @@
 package com.ryangwaite.routes
 
 import com.auth0.jwt.exceptions.JWTVerificationException
-import com.auth0.jwt.interfaces.DecodedJWT
-import com.ryangwaite.config.buildJwtVerifier
-import com.ryangwaite.config.validateJwt
+import com.ryangwaite.auth.buildJwtVerifier
+import com.ryangwaite.auth.validateJwt
 import com.ryangwaite.connection.*
+import com.ryangwaite.notify.INotifier
+import com.ryangwaite.notify.notificationActor
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.subscribe.AddSubscription
 import com.ryangwaite.subscribe.ISubscribe
 import com.ryangwaite.subscribe.RemoveSubscription
 import com.ryangwaite.subscribe.subscriberActor
 import io.ktor.application.*
-import io.ktor.auth.*
 import io.ktor.auth.jwt.*
-import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
-import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.delay
-import java.util.*
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.LinkedHashSet
 
 
-fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish) {
+fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish, notifier: INotifier) {
     routing {
 
-        val connectionManagerChannel = connectionManagerActor(dataStore, publisher)
+        val notificationChannel = notificationActor(notifier) // todo: pass this into the other actor(s)
+        val connectionManagerChannel = connectionManagerActor(dataStore, publisher, notificationChannel)
         val subscriberChannel = subscriberActor(dataStore, subscriber, connectionManagerChannel)
 
         webSocket("/speed-run/{quiz_id}/ws") {
