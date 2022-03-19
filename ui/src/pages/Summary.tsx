@@ -14,7 +14,7 @@ import ProgressBlock from "../components/common/summary/ProgressBlock";
 import StatCard, { StatCardSize } from "../components/common/summary/StatCard";
 import theme, { COLUMN_MARGIN_TOP, scrollbarMixin } from "../themes/theme";
 import { QuestionCardVariant } from "../components/common/question/QuestionCard";
-import LeaderBoardItem from "../components/common/leaderboard/LeaderboardItem";
+import {LeaderBoardItem} from "../components/common/leaderboard/LeaderboardItem";
 import MenuIcon from '@mui/icons-material/Menu';
 
 const COLUMN_WIDTH = "340px"

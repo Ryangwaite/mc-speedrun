@@ -2,6 +2,19 @@
     "version": "0.2.0",
     "configurations": [
       {
+        "type": "node",
+        "name": "Debug JEST Tests",
+        "request": "launch",
+        "runtimeExecutable": "${workspaceRoot}/ui/node_modules/.bin/react-scripts",
+        "args": ["test", "--runInBand", "--no-cache", "--watchAll=false"],
+        "cwd": "${workspaceRoot}/ui",
+        "protocol": "inspector",
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen",
+        "env": { "CI": "true" },
+        "disableOptimisticBPs": true
+      },
+      {
         "type": "pwa-chrome",
         "request": "launch",
         "name": "Launch Chrome against localhost",

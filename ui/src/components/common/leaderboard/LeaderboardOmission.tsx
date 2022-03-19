@@ -1,14 +1,11 @@
 import { ListItem } from "@mui/material";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-interface ILeaderBoardOmissionProps {
-    key: number
-}
+interface ILeaderBoardOmissionProps {}
 
 function LeaderBoardOmission(props: ILeaderBoardOmissionProps) {
     return (
         <ListItem
-            key={props.key}
             sx={{
                 paddingTop: "20px",
                 paddingBottom: "20px",
@@ -16,7 +13,7 @@ function LeaderBoardOmission(props: ILeaderBoardOmissionProps) {
                 justifyContent: "center"
             }}
         >
-            <MoreHorizIcon />
+            <MoreHorizIcon titleAccess="omitted leaderboard items" />
         </ListItem>
     )
 }

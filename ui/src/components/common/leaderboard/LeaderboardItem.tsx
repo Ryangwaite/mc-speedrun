@@ -4,13 +4,13 @@ import { ILeaderboardItem } from "../../../types";
 import { getOrdinal } from "../../../utilities";
 import LeaderBoardItemScore from "./LeaderboardItemScore";
 
-interface ILeaderBoardItemProps {
+export interface ILeaderBoardItemProps {
     item: ILeaderboardItem,
     position: number,
     selected: boolean,
 }
 
-function LeaderBoardItem(props: ILeaderBoardItemProps) {
+export function LeaderBoardItem(props: ILeaderBoardItemProps) {
 
     const {name, score} = props.item;
     const {position, selected} = props
@@ -53,5 +53,3 @@ function LeaderBoardItem(props: ILeaderBoardItemProps) {
         </Card>
     )
 }
-
-export default LeaderBoardItem

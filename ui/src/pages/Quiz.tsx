@@ -4,7 +4,7 @@ import _ from "lodash";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LeaderBoard, LEADERBOARD_COLUMN_WIDTH } from '../components/common/leaderboard/Leaderboard';
-import LeaderBoardItem from '../components/common/leaderboard/LeaderboardItem';
+import { LeaderBoardItem } from '../components/common/leaderboard/LeaderboardItem';
 import { OptionMode } from '../components/common/question/Option';
 import QuestionCard, { QuestionCardVariant } from '../components/common/question/QuestionCard';
 import CountdownCard from '../components/participant/CountdownCard';
