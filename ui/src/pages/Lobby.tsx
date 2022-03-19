@@ -59,7 +59,7 @@ function Lobby(props: ILobbyProps) {
                 thisParticipant={
                     <ParticipantListJoinItem
                         key={otherParticipants.length + 1}
-                        initialUsername={username}
+                        username={username}
                         userJoined={userJoined}
                         onJoin={onJoin}
                     />

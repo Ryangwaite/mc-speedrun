@@ -3,16 +3,16 @@ import { useState } from "react";
 import theme from "../../../themes/theme";
 
 interface IParticipantListJoinItemProps {
-    initialUsername: string,
+    username: string,
     userJoined: boolean,
     onJoin: (name: string) => void
 }
 
 function ParticipantListJoinItem(props: IParticipantListJoinItemProps) {
 
-    const { initialUsername, userJoined, onJoin } = props;
+    const { username, userJoined, onJoin } = props;
 
-    const [nameField, setNameField] = useState(initialUsername);
+    const [nameField, setNameField] = useState(username);
 
     function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value
