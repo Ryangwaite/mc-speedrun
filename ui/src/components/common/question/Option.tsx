@@ -29,6 +29,7 @@ function Option(props: IOptionProps) {
         case OptionMode.PLAIN:
             return (
                 <Stack
+                    role="option"
                     direction="row"
                     justifyContent="center"
                     alignItems="center"
@@ -52,6 +53,7 @@ function Option(props: IOptionProps) {
         case OptionMode.SELECTED_UNMARKED:
             return (
                 <Stack
+                    role="option"
                     direction="row"
                     justifyContent="center"
                     alignItems="center"
@@ -75,6 +77,7 @@ function Option(props: IOptionProps) {
         case OptionMode.SELECTED_AND_MARKED_CORRECT:
             return (
                 <Stack
+                    role="option"
                     direction="row"
                     justifyContent="center"
                     alignItems="center"
@@ -96,12 +99,13 @@ function Option(props: IOptionProps) {
                             fontWeight: 500,
                         }}
                     >{choiceLabel} {text}</Typography>
-                    <CheckCircleOutlinedIcon fontSize={iconSize} sx={{color: theme.palette.success[900]}} />
+                    <CheckCircleOutlinedIcon titleAccess="check circle outline" fontSize={iconSize} sx={{color: theme.palette.success[900]}} />
                 </Stack>
             )
         case OptionMode.SELECTED_AND_MARKED_INCORRECT:
             return (
                 <Stack
+                role="option"
                     direction="row"
                     justifyContent="center"
                     alignItems="center"
@@ -123,12 +127,13 @@ function Option(props: IOptionProps) {
                             fontWeight: 500,
                         }}
                     >{choiceLabel} {text}</Typography>
-                    <CancelOutlinedIcon fontSize={iconSize} sx={{color: theme.palette.error[900]}} />
+                    <CancelOutlinedIcon titleAccess="cancel outline" fontSize={iconSize} sx={{color: theme.palette.error[900]}} />
                 </Stack>
             )
         case OptionMode.UNSELECTED_AND_MARKED_CORRECT:
             return (
                 <Stack
+                    role="option"
                     direction="row"
                     justifyContent="center"
                     alignItems="center"
@@ -150,7 +155,7 @@ function Option(props: IOptionProps) {
                             fontWeight: 500,
                         }}
                     >{choiceLabel} {text}</Typography>
-                    <CircleOutlinedIcon fontSize={iconSize} sx={{color: theme.palette.success[900]}} />
+                    <CircleOutlinedIcon titleAccess="circle outline" fontSize={iconSize} sx={{color: theme.palette.success[900]}} />
                 </Stack>
             )
         default:

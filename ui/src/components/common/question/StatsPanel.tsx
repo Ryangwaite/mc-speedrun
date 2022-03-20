@@ -70,6 +70,7 @@ function VerticalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
             >
                 <ListItem>
                     <CheckCircleOutlinedIcon
+                        titleAccess="check"
                         sx={{
                             color: theme.palette.success[900],
                             marginRight: 1.5,
@@ -93,6 +94,7 @@ function VerticalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
             >
                 <ListItem>
                     <CancelOutlinedIcon
+                        titleAccess="cancel"
                         sx={{
                             color: theme.palette.error[900],
                             marginRight: 1.5,
@@ -115,6 +117,7 @@ function VerticalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
             >
                 <ListItem>
                     <AccessAlarmIcon
+                        titleAccess="timeout"
                         sx={{
                             color: theme.palette.grey[900],
                             marginRight: 1.5,
@@ -135,6 +138,7 @@ function HorizontalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
 
     return (
         <Stack
+            data-testid="stats-panel"
             direction={"row"}
         >
             <Tooltip
@@ -148,11 +152,13 @@ function HorizontalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
                 placement="top"
             >
                 <Stack
+                    role="listitem"
                     direction={"row"}
                     alignItems={"center"}
                     marginRight={3}
                 >
                     <CheckCircleOutlinedIcon
+                        titleAccess="check"
                         sx={{
                             color: theme.palette.success[900],
                             marginRight: 1.5,
@@ -175,11 +181,13 @@ function HorizontalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
                 
             >
                 <Stack
+                    role="listitem"
                     direction={"row"}
                     alignItems={"center"}
                     marginRight={3}
                 >
                     <CancelOutlinedIcon
+                        titleAccess="cancel"
                         sx={{
                             color: theme.palette.error[900],
                             marginRight: 1.5,
@@ -201,10 +209,12 @@ function HorizontalQuestionStatsPanel(props: IVariantQuestionStatsPanel) {
                 placement="top"
             >
                 <Stack
+                    role="listitem"
                     direction={"row"}
                     alignItems={"center"}
                 >
                     <AccessAlarmIcon
+                        titleAccess="timeout"
                         sx={{
                             color: theme.palette.grey[900],
                             marginRight: 1.5,
