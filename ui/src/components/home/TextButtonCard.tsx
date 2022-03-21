@@ -16,7 +16,6 @@ function TextButtonCard(props: ITextButtonCardProps) {
 
     function onFieldChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
-        console.debug(`Field has updated to '${value}'`)
         setFieldContent(value)
     }
 
