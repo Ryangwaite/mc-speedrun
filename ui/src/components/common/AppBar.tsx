@@ -32,6 +32,7 @@ export function TopBar({connectionState}: ITopBarProps) {
                 }}
             >
                 <Logo
+                    title='logo'
                     height={24}
                     width={24}
                     style={{

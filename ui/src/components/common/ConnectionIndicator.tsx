@@ -36,7 +36,7 @@ export function ConnectionIndicator({connectionState}: IConnectionIndicatorProps
         default:
             throw new Error(`Unexpected websocket connection state: '${connectionState}'`)
     }
-    
+
     let content
     if (isSmallAndUp) {
         content = (
@@ -60,6 +60,7 @@ export function ConnectionIndicator({connectionState}: IConnectionIndicatorProps
         content = (
             <Tooltip title={text} placement='bottom-end'>
                 <CircleIcon
+                    titleAccess='status indicator'
                     htmlColor={color}
                     sx={{
                         marginRight: 1,
@@ -73,6 +74,7 @@ export function ConnectionIndicator({connectionState}: IConnectionIndicatorProps
     return (
         <Fade in={true}>
             <Stack
+                role={"status"}
                 direction="row"
                 alignItems={"center"}
                 borderRadius={4}
