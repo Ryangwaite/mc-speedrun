@@ -95,6 +95,7 @@ function UploadModal(props: IUploadModalProps): JSX.Element {
                         >
                             <input
                                 id={fileInputId}
+                                data-testid={fileInputId}
                                 type="file"
                                 ref={fileInput}
                                 onInput={handleFileSelected}

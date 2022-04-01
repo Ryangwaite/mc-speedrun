@@ -17,14 +17,10 @@ function QuizAccessCode(props: IQuizAccessCodeProps) {
 
     const {accessCode, showMenu, menuBadge, menuClicked} = props
 
-    /**
-     * Copies the code to clipboard
-     */
-    function onCopyIconClicked() {
+    async function onCopyIconClicked() {
         const element: HTMLInputElement = accessCodeRef.current!
         element.select()
-        document.execCommand("copy")
-
+        await navigator.clipboard.writeText(accessCode)
         // Display the copy snackbar
         setSnackbarVisible(true)
     }
