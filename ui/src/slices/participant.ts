@@ -19,7 +19,7 @@ interface IParticipantState {
     avgAnswerTime?: number,
 }
 
-const initialState: IParticipantState = {
+export const initialState: IParticipantState = {
     requestQuestion: false,
 }
 

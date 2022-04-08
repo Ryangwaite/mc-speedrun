@@ -13,7 +13,7 @@ export enum WebsocketConnectionStateType {
  * CORs will need to be enabled on this service so that the request succeeds.
  * @returns 
  */
- function getSpeedRunBaseUrl(): string {
+ export function getSpeedRunBaseUrl(): string {
     return process.env.REACT_APP__SPEED_RUN_URL ? process.env.REACT_APP__SPEED_RUN_URL : ""
 }
 

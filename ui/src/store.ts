@@ -15,7 +15,7 @@ const {createReduxHistory, routerMiddleware, routerReducer } = createReduxHistor
 // typing of middleware. If the reducer object is passed directly
 // to configureStore then `RootState` determined with ` ReturnType<typeof store.getState>`
 // introduces a circular dependency when adding middleware.
-const rootReducer = combineReducers({
+export const rootReducer = combineReducers({
     router: routerReducer,
     common: commonReducer,
     participant: participantReducer,

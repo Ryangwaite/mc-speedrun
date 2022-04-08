@@ -11,7 +11,7 @@ interface IHostState {
     quizSummary?: IHostQuestionSummary[],
 }
 
-const initialState: IHostState = {
+export const initialState: IHostState = {
     requestQuestions: false,
 }
 

@@ -14,7 +14,7 @@ interface ICommonState {
 }
 
 // State consists of that which is the intersection of participant and hosts
-const initialState: ICommonState = {
+export const initialState: ICommonState = {
     clientType: ClientType.UNKNOWN,
     connection: WebsocketConnectionStateType.UNINITIALIZED,
     leaderboard: [],
