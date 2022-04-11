@@ -1,4 +1,7 @@
 import { setupServer } from 'msw/node';
-import { signOnHandlers } from './server-handlers';
+import { quizUploadHandlers, signOnHandlers } from './server-handlers';
 
-export const apiServer = setupServer(...signOnHandlers)
+export const apiServer = setupServer(
+    ...signOnHandlers,
+    ...quizUploadHandlers,
+)
