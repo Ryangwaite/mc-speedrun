@@ -12,7 +12,7 @@ export const usePageVariant = () => {
     
     const isLargeAndUp = useMediaQuery(theme.breakpoints.up("lg"))
     const isSmallAndUp = useMediaQuery(theme.breakpoints.up("sm"))
-    
+
     let variant: PageVariant
     if (isLargeAndUp) {
         variant = PageVariant.LARGE

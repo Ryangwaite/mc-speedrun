@@ -1,6 +1,7 @@
 import {beforeAll, afterAll, afterEach} from '@jest/globals'
 import { apiServer } from '../test/api-server';
 import WS from "jest-websocket-mock";
+import mediaQuery from 'css-mediaquery';
 import dotenv from 'dotenv';
 import { QUIZ_ID } from '../test/test-utils';
 
@@ -8,8 +9,25 @@ import { QUIZ_ID } from '../test/test-utils';
 // This makes it available at "process.env"
 dotenv.config({ path: "./.env.production"})
 
-// Enable API mocking before tests
-beforeAll(() => apiServer.listen())
+beforeAll(() => {
+    // Enable API mocking before tests
+    apiServer.listen()
+
+    // window.matchMedia is not defined by default which is needed so that MUI
+    // "useMediaQuery(theme.breakpoints.up("lg"))" (for example) can resolve properly
+    // this command polyfills it.
+    // See: https://github.com/mui/material-ui/issues/16073#issuecomment-502359758
+    window.matchMedia = (query) => ({
+        matches: mediaQuery.match(query, { width: window.innerWidth }),
+        media: "",
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+    })
+})
 
 export let wsServer: WS
 
