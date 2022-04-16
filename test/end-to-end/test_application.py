@@ -45,6 +45,9 @@ def _answer_question_correctly(question: Question, participant_page: Page):
 
 
 def test_happy_path_15_participants(browser: Browser, quiz_question_filepath: str, quiz_questions: List[Question]):
+    """ It uploads a quiz on the host, waits for 15 participants to join then each of them answers each question in
+        correctly in sequence.
+    """
     
     host_context = browser.new_context()
 
