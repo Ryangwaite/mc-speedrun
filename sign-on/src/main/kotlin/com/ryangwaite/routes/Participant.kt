@@ -1,9 +1,9 @@
 package com.ryangwaite.routes
 
-import io.ktor.application.*
+import io.ktor.server.application.*
 import io.ktor.http.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import com.ryangwaite.models.AuthorizationResponse
 import com.ryangwaite.utilities.IRepository
 import com.ryangwaite.utilities.createJwtToken
@@ -23,9 +23,9 @@ fun Application.participant(
             if (!repository.quizExists(quizId)) {
                 return@post call.respondText("Invalid quiz ID '$quizId' provided", status = HttpStatusCode.NotFound)
             }
-            log.info("Participant joined quiz session $quizId")
+            this@participant.log.info("Participant joined quiz session $quizId")
 
-            val (token, expiresInSecs) = createJwtToken(environment, quizId, false)
+            val (token, expiresInSecs) = createJwtToken(this@participant.environment, quizId, false)
 
             val responsePayload = AuthorizationResponse(
                 access_token = token,

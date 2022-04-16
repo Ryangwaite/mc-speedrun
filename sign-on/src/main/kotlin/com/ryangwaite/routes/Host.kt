@@ -1,9 +1,9 @@
 package com.ryangwaite.routes
 
-import io.ktor.application.*
+import io.ktor.server.application.*
 import io.ktor.http.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import com.ryangwaite.models.AuthorizationResponse
 import com.ryangwaite.utilities.IRepository
 import com.ryangwaite.utilities.MemoryRepository
@@ -18,9 +18,9 @@ fun Application.host(repository: IRepository) {
 
             val quizId = generateId()
             repository.createQuiz(quizId)
-            log.info("Created new quiz session: id = $quizId")
+            this@host.log.info("Created new quiz session: id = $quizId")
 
-            val (token, expiresInSecs) = createJwtToken(environment, quizId, true)
+            val (token, expiresInSecs) = createJwtToken(this@host.environment, quizId, true)
 
             val responsePayload = AuthorizationResponse(
                 access_token = token,

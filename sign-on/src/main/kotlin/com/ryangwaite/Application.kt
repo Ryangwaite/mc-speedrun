@@ -3,10 +3,11 @@ import com.ryangwaite.routes.host
 import com.ryangwaite.routes.participant
 import com.ryangwaite.utilities.IRepository
 import com.ryangwaite.utilities.MemoryRepository
-import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.serialization.*
+import io.ktor.server.application.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.*
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
@@ -16,7 +17,7 @@ fun Application.module() {
     }
     if (environment.developmentMode) {
         install(CORS) {
-            log.info("Enabling CORS from any host")
+            this@module.log.info("Enabling CORS from any host")
             anyHost()
         }
     }

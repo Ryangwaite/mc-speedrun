@@ -2,58 +2,66 @@ package com.ryangwaite.routes
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.ryangwaite.configureRouting
 import com.ryangwaite.models.AuthorizationResponse
 import com.ryangwaite.utilities.MemoryRepository
 import com.ryangwaite.utilities.generateId
-import io.ktor.application.*
-import io.ktor.config.*
-import io.ktor.features.*
-import io.ktor.http.*
-import io.ktor.serialization.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.server.config.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.contentnegotiation.*
 import kotlin.test.*
 import io.ktor.server.testing.*
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.decodeFromStream
 import org.junit.jupiter.api.assertDoesNotThrow
 
 class HostTest {
 
     @Test
-    fun `create Host JWT`() = withTestApplication({install(ContentNegotiation) {json()} }) {
+    fun `create Host JWT`() = testApplication {
+        // Setup
+        install(ContentNegotiation) {
+            json()
+        }
         // Create the environment for forming the JWT params
         val TEST_SECRET = "test-secret"
         val TEST_ISSUER = "http://test.issuer:8080/"
         val TEST_AUDIENCE = "http://test.audience:8080/"
-        (environment.config as MapApplicationConfig).apply {
-            put("jwt.secret", TEST_SECRET)
-            put("jwt.issuer", TEST_ISSUER)
-            put("jwt.audience", TEST_AUDIENCE)
+        environment {
+            config = MapApplicationConfig(
+                "jwt.secret" to TEST_SECRET,
+                "jwt.issuer" to TEST_ISSUER,
+                "jwt.audience" to TEST_AUDIENCE,
+            )
         }
-        val quizId = "12345678"
         val repository = MemoryRepository()
-        application.host(repository)
+        this.application { configureRouting(repository) }
+
+        val quizId = "12345678"
 
         // Mock the generateId. See the following for details on
         // how this works:https://blog.kotlin-academy.com/mocking-is-not-rocket-science-mockk-advanced-features-42277e5983b5
         mockkStatic(::generateId)
         every { generateId() } returns quizId
 
-        with(handleRequest(HttpMethod.Post, "/sign-on/host") {
-            // NOTE: Add headers and body if needed
-        }) {
-            // Assertions
-            val payload = Json.decodeFromString<AuthorizationResponse>(response.content!!)
-            val jwtVerifier = JWT.require(Algorithm.HMAC256(TEST_SECRET))
-                .withAudience(TEST_AUDIENCE)
-                .withIssuer(TEST_ISSUER)
-                .withClaim("quizId", quizId)
-                .withClaim("isHost", true)
-                .build()
-            assertDoesNotThrow { jwtVerifier.verify(payload.access_token) }
-            // todo: assert the other attributes of the payload
-        }
+        // Act
+        val response = client.post("/sign-on/host")
+
+        // Assert
+        val payload = Json.decodeFromStream<AuthorizationResponse>(response.readBytes().inputStream())
+        val jwtVerifier = JWT.require(Algorithm.HMAC256(TEST_SECRET))
+            .withAudience(TEST_AUDIENCE)
+            .withIssuer(TEST_ISSUER)
+            .withClaim("quizId", quizId)
+            .withClaim("isHost", true)
+            .build()
+        assertDoesNotThrow { jwtVerifier.verify(payload.access_token) }
+        // todo: assert the other attributes of the payload
+
         assertEquals(1, repository.quizzes.size)
     }
 }
