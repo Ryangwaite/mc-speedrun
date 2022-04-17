@@ -2,6 +2,7 @@ package com.ryangwaite.routes
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.DecodedJWT
 import com.ryangwaite.models.AuthorizationResponse
 import com.ryangwaite.utilities.MemoryRepository
 import com.ryangwaite.utilities.generateId
@@ -18,8 +19,8 @@ import io.ktor.utils.io.jvm.javaio.*
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.decodeFromStream
+import org.joda.time.DateTime
 import org.junit.jupiter.api.assertDoesNotThrow
 
 class ParticipantTest {
@@ -84,7 +85,11 @@ class ParticipantTest {
             .withClaim("isHost", false)
             .withClaim("userId", userId)
             .build()
-        assertDoesNotThrow { jwtVerifier.verify(payload.access_token) }
-        // todo: assert the other attributes of the payload
+        val decodedJwt: DecodedJWT = assertDoesNotThrow {
+            jwtVerifier.verify(payload.access_token)
+        }
+        assertEquals("Bearer", payload.token_type)
+        val expectedExpiry = DateTime(decodedJwt.issuedAt.time).plusSeconds(payload.expires_in)
+        assertEquals(expectedExpiry, DateTime(decodedJwt.expiresAt.time))
     }
 }

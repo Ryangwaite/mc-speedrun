@@ -30,12 +30,14 @@ fun createJwtToken(environment: ApplicationEnvironment, quizId: String, isHost: 
 
     // Expire in 1 year which is way too high, but it's a stopgap till the logic for
     // refreshing the JWT token is implemented
+    val issueDate = DateTime.now()
     val expiresInSecs = 365 * 24 * 60 * 60
-    val expiryDate: Date = DateTime().plusSeconds(expiresInSecs).toDate()
+    val expiryDate: Date = issueDate.plusSeconds(expiresInSecs).toDate()
 
     val tokenBuilder = JWT.create()
         .withAudience(audience)
         .withIssuer(issuer)
+        .withIssuedAt(issueDate.toDate())
         .withExpiresAt(expiryDate)
         .withClaim("quizId", quizId)
         .withClaim("isHost", isHost)
