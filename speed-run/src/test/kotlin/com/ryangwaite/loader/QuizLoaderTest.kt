@@ -8,7 +8,7 @@ class QuizLoaderTest {
     @Test
     fun `test load from disk`() {
         QuizLoader.init("src/test/resources")
-        val questionsAndAnswers = QuizLoader.load("questionsAndAnswers")
+        val questionsAndAnswers = QuizLoader.load("example1")
         assertEquals(2, questionsAndAnswers.size)
     }
 }

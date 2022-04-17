@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.ryangwaite.configureRouting
 import com.ryangwaite.connection.IPublish
+import com.ryangwaite.notify.INotifier
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.subscribe.ISubscribe
 import io.ktor.application.*
@@ -50,11 +51,14 @@ class SpeedRunTest {
     @MockK
     lateinit var publisher: IPublish
 
+    @MockK
+    lateinit var notifier: INotifier
+
     @Test
     fun `No token provided`() {
         withTestApplication({
             install(io.ktor.websocket.WebSockets)
-            configureRouting(datastore, subscriber, publisher)
+            configureRouting(datastore, subscriber, publisher, notifier)
         }) {
             val quizId = "12345"
             handleWebSocketConversation("/speed-run/$quizId/ws") {incoming, _ ->
@@ -74,7 +78,7 @@ class SpeedRunTest {
                 put("jwt.audience", JWT_TEST_AUDIENCE)
             }
             install(io.ktor.websocket.WebSockets)
-            configureRouting(datastore, subscriber, publisher)
+            configureRouting(datastore, subscriber, publisher, notifier)
         }) {
             val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
             val quizId = "12345"
@@ -101,7 +105,7 @@ class SpeedRunTest {
             }
             install(io.ktor.websocket.WebSockets)
 //            installJwtAuthentication()
-            configureRouting(datastore, subscriber, publisher)
+            configureRouting(datastore, subscriber, publisher, notifier)
         }) {
             val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
             handleWebSocketConversation("/speed-run/12345/ws?token=$invalidToken") {incoming, _ ->

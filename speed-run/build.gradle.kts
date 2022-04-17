@@ -4,8 +4,8 @@ val logback_version: String by project
 
 plugins {
     application
-    kotlin("jvm") version "1.5.31"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.5.31"
+    kotlin("jvm") version "1.6.20"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.6.20"
 }
 
 // Junit Jupiter is imported so need to explicitly set to use JUnit platform
@@ -43,10 +43,10 @@ dependencies {
     implementation("io.ktor:ktor-auth:$ktor_version")
     implementation("io.ktor:ktor-auth-jwt:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
-    implementation("org.redisson:redisson:3.16.8")
+    implementation("org.redisson:redisson:3.17.0")
     implementation("com.rabbitmq:amqp-client:5.14.2")
-    implementation("io.reactivex.rxjava3:rxjava:3.1.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.5.2")
+    implementation("io.reactivex.rxjava3:rxjava:3.1.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.6.1-native-mt")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
 
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
