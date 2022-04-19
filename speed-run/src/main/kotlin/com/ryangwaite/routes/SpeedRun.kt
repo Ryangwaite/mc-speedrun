@@ -11,20 +11,21 @@ import com.ryangwaite.subscribe.AddSubscription
 import com.ryangwaite.subscribe.ISubscribe
 import com.ryangwaite.subscribe.RemoveSubscription
 import com.ryangwaite.subscribe.subscriberActor
-import io.ktor.application.*
-import io.ktor.auth.jwt.*
-import io.ktor.http.cio.websocket.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CompletableDeferred
-
+import java.io.File
+import java.io.FileOutputStream
 
 fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish, notifier: INotifier) {
     routing {
 
-        val notificationChannel = notificationActor(notifier) // todo: pass this into the other actor(s)
-        val connectionManagerChannel = connectionManagerActor(dataStore, publisher, notificationChannel)
-        val subscriberChannel = subscriberActor(dataStore, subscriber, connectionManagerChannel)
+        val notificationChannel = this@speedRun.notificationActor(notifier) // todo: pass this into the other actor(s)
+        val connectionManagerChannel = this@speedRun.connectionManagerActor(dataStore, publisher, notificationChannel)
+        val subscriberChannel = this@speedRun.subscriberActor(dataStore, subscriber, connectionManagerChannel)
 
         webSocket("/speed-run/{quiz_id}/ws") {
 
@@ -34,9 +35,9 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing 'token' query parameter"))
                 return@webSocket
             }
-            val tokenVerifier = buildJwtVerifier(environment)
+            val tokenVerifier = buildJwtVerifier(environment!!)
             val jwtPrincipal: JWTPrincipal = try {
-                val decodedToken = tokenVerifier.verify(token as String)
+                val decodedToken = tokenVerifier.verify(token)
                 validateJwt(JWTCredential(decodedToken))
             } catch (e: JWTVerificationException) {
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token '$token' received. Reason: ${e.message}"))
@@ -49,11 +50,11 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
             // Build connection from JWT claims
             val quizId = jwtPrincipal.payload.getClaim("quizId").asString()
             val connection: Connection = if (jwtPrincipal.payload.getClaim("isHost").asBoolean()) {
-                log.info("New Host connection initiated from '$this' with quizId: $quizId")
+                this@speedRun.log.info("New Host connection initiated from '$this' with quizId: $quizId")
                 HostConnection(this, websocketClosed,quizId)
             } else {
                 val userId = jwtPrincipal.payload.getClaim("userId").asString()
-                log.info("New Participant connection initiated from '$this' with quizId: $quizId, userId: $userId")
+                this@speedRun.log.info("New Participant connection initiated from '$this' with quizId: $quizId, userId: $userId")
                 ParticipantConnection(this, websocketClosed, quizId, userId)
             }
 
@@ -65,10 +66,10 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
                     throw exception
                 }
             } catch (e: Exception) {
-                log.error("Error: $e")
+                this@speedRun.log.error("Error: $e")
             } finally {
                 subscriberChannel.send(RemoveSubscription(quizId))
-                log.info("Connection '$this' closed.")
+                this@speedRun.log.info("Connection '$this' closed.")
             }
         }
     }

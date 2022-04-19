@@ -2,7 +2,7 @@ package com.ryangwaite.connection
 
 import com.ryangwaite.protocol.Packet
 import com.ryangwaite.protocol.ProtocolMsg
-import io.ktor.http.cio.websocket.*
+import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.encodeToString

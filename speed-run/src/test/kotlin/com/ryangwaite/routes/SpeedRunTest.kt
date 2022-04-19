@@ -7,10 +7,12 @@ import com.ryangwaite.connection.IPublish
 import com.ryangwaite.notify.INotifier
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.subscribe.ISubscribe
-import io.ktor.application.*
-import io.ktor.config.*
-import io.ktor.http.cio.websocket.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.server.application.*
+import io.ktor.server.config.*
 import io.ktor.server.testing.*
+import io.ktor.server.websocket.*
+import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,11 +21,29 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import java.util.*
-import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 const val JWT_TEST_AUDIENCE = "http://test.audience:8080/"
 const val JWT_TEST_ISSUER = "http://test.issuer:8080/"
 const val JWT_TEST_SECRET = "default-secret"
+
+/**
+ * Wraps the 'testApplication' method with common setup for all tests.
+ */
+fun wrappedTestApplication(
+    block: suspend ApplicationTestBuilder.() -> Unit
+): Unit = testApplication {
+    // NOTE: Without this environment block, 'testApplication' will automatically
+    // run Application.module()
+    environment {
+        config = MapApplicationConfig(
+            "jwt.secret" to JWT_TEST_SECRET,
+            "jwt.issuer" to JWT_TEST_ISSUER,
+            "jwt.audience" to JWT_TEST_AUDIENCE,
+        )
+    }
+    block()
+}
 
 fun createTestHostJwtToken(
     audience: String = JWT_TEST_AUDIENCE,
@@ -55,38 +75,34 @@ class SpeedRunTest {
     lateinit var notifier: INotifier
 
     @Test
-    fun `No token provided`() {
-        withTestApplication({
-            install(io.ktor.websocket.WebSockets)
+    fun `No token provided`() = wrappedTestApplication {
+        application {
+            install(WebSockets)
             configureRouting(datastore, subscriber, publisher, notifier)
-        }) {
-            val quizId = "12345"
-            handleWebSocketConversation("/speed-run/$quizId/ws") {incoming, _ ->
-                val closeFrame = incoming.receive() as Frame.Close
-                assertEquals("Missing 'token' query parameter", closeFrame.readReason()!!.message)
-            }
+        }
+        val wsClient = createClient {
+            install(ClientWebSockets)
+        }
+        val quizId = "12345"
+        wsClient.webSocket("/speed-run/$quizId/ws") {
+            assertEquals("Missing 'token' query parameter", closeReason.await()?.message)
         }
     }
 
     @Test
-    fun `JWT fails verification`() {
-        withTestApplication({
-            // Create the environment for verifying the JWT token
-            (environment.config as MapApplicationConfig).apply {
-                put("jwt.secret", JWT_TEST_SECRET)
-                put("jwt.issuer", JWT_TEST_ISSUER)
-                put("jwt.audience", JWT_TEST_AUDIENCE)
-            }
-            install(io.ktor.websocket.WebSockets)
+    fun `JWT fails verification`() = wrappedTestApplication {
+        application {
+            install(WebSockets)
             configureRouting(datastore, subscriber, publisher, notifier)
-        }) {
-            val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
-            val quizId = "12345"
-            handleWebSocketConversation("/speed-run/$quizId/ws?token=$invalidToken") {incoming, _ ->
-                val closeFrame = incoming.receive() as Frame.Close
-                assertEquals("Invalid token '${invalidToken}' received. Reason: The Token's Signature resulted invalid when verified using the Algorithm: HmacSHA256", closeFrame.readReason()!!.message)
-            }
-
+        }
+        val client = createClient {
+            install(ClientWebSockets)
+        }
+        val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
+        val quizId = "12345"
+        client.webSocket("/speed-run/$quizId/ws?token=$invalidToken") {
+            assertEquals("Invalid token '${invalidToken}' received. Reason: The Token's Signature resulted invalid when verified using the Algorithm: HmacSHA256",
+                closeReason.await()?.message)
         }
     }
 
@@ -95,24 +111,19 @@ class SpeedRunTest {
         "true,      ''",        // invalid quizId
         "yes,       12345",     // invalid isHost
     )
-    fun `JWT fails validation`(isHost: String, quizId: String) {
-        withTestApplication({
-            // Create the environment for verifying the JWT token
-            (environment.config as MapApplicationConfig).apply {
-                put("jwt.secret", JWT_TEST_SECRET)
-                put("jwt.issuer", JWT_TEST_ISSUER)
-                put("jwt.audience", JWT_TEST_AUDIENCE)
-            }
-            install(io.ktor.websocket.WebSockets)
-//            installJwtAuthentication()
+    fun `JWT fails validation`(isHost: String, quizId: String) = wrappedTestApplication {
+        application {
+            install(WebSockets)
             configureRouting(datastore, subscriber, publisher, notifier)
-        }) {
-            val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
-            handleWebSocketConversation("/speed-run/12345/ws?token=$invalidToken") {incoming, _ ->
-                // The first frame received should be a close due to an error
-                assertIs<Frame.Close>(incoming.receive())
-            }
+        }
+        val client = createClient {
+            install(ClientWebSockets)
+        }
 
+        val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
+        client.webSocket("/speed-run/12345/ws?token=$invalidToken") {
+            // The first frame received should be a close due to an error
+            assertTrue("Invalid token '${invalidToken}' received." in closeReason.await()?.message!!)
         }
     }
 }

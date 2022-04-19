@@ -8,11 +8,11 @@ import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.redis.RedisClient
 import com.ryangwaite.routes.speedRun
 import com.ryangwaite.subscribe.ISubscribe
-import io.ktor.application.*
-import io.ktor.config.*
-import io.ktor.features.*
+import io.ktor.server.application.*
+import io.ktor.server.config.*
 import io.ktor.server.netty.*
-import io.ktor.websocket.*
+import io.ktor.server.plugins.cors.*
+import io.ktor.server.websocket.*
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
@@ -33,7 +33,7 @@ fun Application.module(testing: Boolean = false) {
 
     if (environment.developmentMode) {
         install(CORS) {
-            log.info("Enabling CORS from any host")
+            this@module.log.info("Enabling CORS from any host")
             anyHost()
         }
     }
