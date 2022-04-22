@@ -8,8 +8,10 @@ import com.ryangwaite.subscribe.SubscriptionMessages
 import io.ktor.server.config.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.rx3.await
 import kotlinx.coroutines.rx3.awaitSingle
@@ -88,11 +90,12 @@ class RedisClient(config: ApplicationConfig): IDataStore, ISubscribe, IPublish {
     }
 
     /**
-     * Get a Flow for the topic pointed to by topicKey
+     * Get a Flow for the topic pointed to by topicKey. The flow is buffered
+     * so that no messages from Redis are missed.
      */
     override fun subscribeToQuizEvents(quizId: String): Flow<String> {
         val topic = this.redissonClient.getTopic(subscriptionKey(quizId))
-        return topic.getMessages(String::class.java).asFlow()
+        return topic.getMessages(String::class.java).asFlow().buffer(UNLIMITED)
     }
 
     private suspend fun getUsername(quizId: String, userId: String): String {
