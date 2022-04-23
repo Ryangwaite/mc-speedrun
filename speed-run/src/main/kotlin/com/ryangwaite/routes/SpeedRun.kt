@@ -35,7 +35,7 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing 'token' query parameter"))
                 return@webSocket
             }
-            val tokenVerifier = buildJwtVerifier(environment!!)
+            val tokenVerifier = buildJwtVerifier(environment!!.config)
             val jwtPrincipal: JWTPrincipal = try {
                 val decodedToken = tokenVerifier.verify(token)
                 validateJwt(JWTCredential(decodedToken))

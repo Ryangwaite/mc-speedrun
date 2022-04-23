@@ -11,10 +11,10 @@ import io.ktor.server.config.*
  * Builds the JWT verifier from the environment config.
  * This only verifies the constant config across participant and host JWTs.
  */
-fun buildJwtVerifier(environment: ApplicationEnvironment): com.auth0.jwt.interfaces.JWTVerifier {
-    val secret = environment.config.property("jwt.secret").getString()
-    val issuer = environment.config.property("jwt.issuer").getString()
-    val audience = environment.config.property("jwt.audience").getString()
+fun buildJwtVerifier(config: ApplicationConfig): com.auth0.jwt.interfaces.JWTVerifier {
+    val secret = config.property("jwt.secret").getString()
+    val issuer = config.property("jwt.issuer").getString()
+    val audience = config.property("jwt.audience").getString()
 
     if (secret.isEmpty()) throw ApplicationConfigurationException("Couldn't read JWT secret from environment")
     if (issuer.isEmpty()) throw ApplicationConfigurationException("Couldn't read JWT issuer from environment")
