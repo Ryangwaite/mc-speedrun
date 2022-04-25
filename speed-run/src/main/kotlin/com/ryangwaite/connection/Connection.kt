@@ -20,6 +20,15 @@ sealed class Connection(
         val serializedPacket = Json.encodeToString(Packet.encapsulate(msg))
         socketSession.outgoing.send(Frame.Text(serializedPacket))
     }
+
+    /**
+     * Closes the websocket with the provided reason and completes
+     * the future.
+     */
+    suspend fun close(closeReason: CloseReason) {
+        socketSession.close(closeReason)
+        websocketCloseFuture.complete(null)
+    }
 }
 
 data class HostConnection(

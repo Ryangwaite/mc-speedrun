@@ -51,7 +51,7 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
             val quizId = jwtPrincipal.payload.getClaim("quizId").asString()
             val connection: Connection = if (jwtPrincipal.payload.getClaim("isHost").asBoolean()) {
                 this@speedRun.log.info("New Host connection initiated from '$this' with quizId: $quizId")
-                HostConnection(this, websocketClosed,quizId)
+                HostConnection(this, websocketClosed, quizId)
             } else {
                 val userId = jwtPrincipal.payload.getClaim("userId").asString()
                 this@speedRun.log.info("New Participant connection initiated from '$this' with quizId: $quizId, userId: $userId")
