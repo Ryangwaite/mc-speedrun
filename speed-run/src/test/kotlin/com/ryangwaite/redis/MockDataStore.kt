@@ -19,7 +19,7 @@ private data class Quiz(
     var quizStopTime: Instant = Clock.System.now(),
 )
 
-private data class ParticipantAnswer(
+data class ParticipantAnswer(
     var questionIndex: Int,
     var selectedOptionIndexes: List<Int>,
     var answeredInDuration: Int
@@ -177,4 +177,11 @@ class MockDataStore(val questionsFile: String): IDataStore {
     private fun createQuizIfNotExists(quizId: String) = if (!quizzes.containsKey(quizId)) {
         quizzes[quizId] = Quiz()
     } else Unit
+
+    /**
+     * Returns the users answer for the [selectedQuestionIndex]
+     */
+    fun getParticipantAnswer(quizId: String, userId: String, selectedQuestionIndex: Int): ParticipantAnswer {
+        return users[quizId]!![userId]!!.answers.find { it.questionIndex == selectedQuestionIndex }!!
+    }
 }
