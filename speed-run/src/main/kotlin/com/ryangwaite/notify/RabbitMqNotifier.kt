@@ -4,6 +4,7 @@ import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.MessageProperties
 import io.ktor.server.config.*
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import java.io.ByteArrayOutputStream
@@ -20,6 +21,10 @@ class RabbitMqNotifier(val config: ApplicationConfig): INotifier {
     }
     private val connection: Connection = factory.newConnection()
 
+    /**
+     * Publishes the [event] on the RabbitMQ queue
+     */
+    @ExperimentalSerializationApi
     override fun notify(event: Event) {
         connection.createChannel().use {channel ->
             channel.queueDeclare(this.queueName, true, false, false, null)
