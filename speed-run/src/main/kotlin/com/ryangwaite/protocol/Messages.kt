@@ -123,4 +123,4 @@ data class BroadcastParticipantFinishedMsg(
 ): ProtocolMsg()
 
 @Serializable
-class BroadcastQuizFinishedMsg(): ProtocolMsg()
+object BroadcastQuizFinishedMsg : ProtocolMsg()

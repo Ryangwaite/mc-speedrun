@@ -152,7 +152,7 @@ suspend fun processNotification(datastore: IDataStore, connectionManager: SendCh
             jobs.joinAll()
 
             // Let everyone know that the quiz has ended
-            connectionManager.send(ForwardMsgToAll(quizId, BroadcastQuizFinishedMsg()))
+            connectionManager.send(ForwardMsgToAll(quizId, BroadcastQuizFinishedMsg))
         }
         SubscriptionMessages.`PARTICIPANT-FINISHED` -> {
             val userIds = datastore.getUserIds(quizId)

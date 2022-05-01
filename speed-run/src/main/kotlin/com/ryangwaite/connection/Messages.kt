@@ -4,25 +4,25 @@ import com.ryangwaite.protocol.ProtocolMsg
 
 sealed class ConnectionManagerMsg
 
-class NewConnection(
+data class NewConnection(
     val connection: Connection,
 ): ConnectionManagerMsg()
 
-class RemoveConnection(
+data class RemoveConnection(
     val connection: Connection,
 ): ConnectionManagerMsg()
 
-class ForwardMsgToAll(
+data class ForwardMsgToAll(
     val quizId: String,
     val msgToForward: ProtocolMsg,
 ): ConnectionManagerMsg()
 
-class ForwardMsgToHost(
+data class ForwardMsgToHost(
     val quizId: String,
     val msgToForward: ProtocolMsg,
 ): ConnectionManagerMsg()
 
-class ForwardMsgToParticipant(
+data class ForwardMsgToParticipant(
     val quizId: String,
     val userId: String,
     val msgToForward: ProtocolMsg,

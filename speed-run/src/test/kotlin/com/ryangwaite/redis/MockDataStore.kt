@@ -1,14 +1,12 @@
 package com.ryangwaite.redis
 
-import com.ryangwaite.models.AnswererWithOptions
-import com.ryangwaite.models.LeaderboardItem
-import com.ryangwaite.models.QuestionAndAnswers
-import com.ryangwaite.models.VerboseQuestionSummary
+import com.ryangwaite.models.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.io.File
+import kotlin.math.roundToInt
 
 private data class Quiz(
     var name: String = "",
@@ -131,15 +129,15 @@ class MockDataStore(val questionsFile: String): IDataStore {
         val users = users[quizId]!!
         return questions.mapIndexed { index, qAndA, ->
             if (!quiz.selectedQuestionIndexes.contains(index)) return@mapIndexed null
-            var correctAnswerers = mutableListOf<AnswererWithOptions>()
-            var incorrectAnswerers = mutableListOf<AnswererWithOptions>()
-            var timeExpiredAnswerers = mutableListOf<AnswererWithOptions>()
+            val correctAnswerers = mutableListOf<AnswererWithOptions>()
+            val incorrectAnswerers = mutableListOf<AnswererWithOptions>()
+            val timeExpiredAnswerers = mutableListOf<AnswererWithOptions>()
 
             users.values.forEach { user ->
                 // Find the answer for this question
                 val answeredQuestion = user.answers.find { it.questionIndex == index}
                 val answererWithOptions = AnswererWithOptions(user.userId, user.username, answeredQuestion!!.selectedOptionIndexes, answeredQuestion.answeredInDuration)
-                if (answeredQuestion!!.answeredInDuration > quiz.questionDuration) {
+                if (answeredQuestion.answeredInDuration > quiz.questionDuration) {
                     // Time expired user
                     timeExpiredAnswerers.add(answererWithOptions)
                 } else if (qAndA.answers.toSet() == answeredQuestion.selectedOptionIndexes.toSet()) {
@@ -183,5 +181,62 @@ class MockDataStore(val questionsFile: String): IDataStore {
      */
     fun getParticipantAnswer(quizId: String, userId: String, selectedQuestionIndex: Int): ParticipantAnswer {
         return users[quizId]!![userId]!!.answers.find { it.questionIndex == selectedQuestionIndex }!!
+    }
+
+    /**
+     * Returns the quiz summary for the host
+     */
+    suspend fun getHostQuizSummary(quizId: String): Triple<Long, Int, List<HostQuestionSummary>> {
+        val quizSummary = this.getQuizSummary(quizId)
+        val answerDurations = mutableListOf<Int>()
+        val hostQuestionSummary = quizSummary.map {
+            // Only interested in the durations for non-timed out questions
+            answerDurations.addAll(it.correctAnswerers.map { it.answeredInDuration })
+            answerDurations.addAll(it.incorrectAnswerers.map { it.answeredInDuration })
+            HostQuestionSummary(
+                it.question,
+                it.options,
+                it.correctOptions,
+                it.correctAnswerers.map { Answerer(it.userId, it.name) },
+                it.incorrectAnswerers.map { Answerer(it.userId, it.name) },
+                it.timeExpiredAnswerers.map { Answerer(it.userId, it.name) }
+            )
+        }
+        val avgAnswerTimeMillis = if (answerDurations.size > 0) (answerDurations.average() * 1000).roundToInt() else 0
+        val totalTimeElapsed = Clock.System.now().epochSeconds - this.getQuizStartTime(quizId).epochSeconds
+
+        return Triple(totalTimeElapsed, avgAnswerTimeMillis, hostQuestionSummary)
+    }
+
+    /**
+     * Returns the quiz summary for the participant
+     */
+    suspend fun getParticipantQuizSummary(quizId: String, userId: String): Triple<Long, Int, List<ParticipantQuestionSummary>> {
+        val quizSummary = this.getQuizSummary(quizId)
+        val answerDurations = mutableListOf<Int>()
+        val participantQuestionSummary = quizSummary.map {
+            val participantAnswer = (it.correctAnswerers + it.incorrectAnswerers + it.timeExpiredAnswerers).first {
+                it.userId == userId
+            }
+
+            if (!it.timeExpiredAnswerers.contains(participantAnswer)) {
+                answerDurations.add(participantAnswer.answeredInDuration)
+            }
+
+            ParticipantQuestionSummary(
+                it.question,
+                it.options,
+                it.correctOptions,
+                participantAnswer.participantOptions,
+                it.correctAnswerers.map { Answerer(it.userId, it.name) },
+                it.incorrectAnswerers.map { Answerer(it.userId, it.name) },
+                it.timeExpiredAnswerers.map { Answerer(it.userId, it.name) },
+            )
+        }
+
+        val totalElapsedTime = this.getParticipantStopTime(quizId, userId).epochSeconds - this.getQuizStartTime(quizId).epochSeconds
+        val avgAnswerTime = if (answerDurations.size > 0) (answerDurations.average() * 1000).roundToInt() else 0
+
+        return Triple(totalElapsedTime, avgAnswerTime, participantQuestionSummary)
     }
 }
