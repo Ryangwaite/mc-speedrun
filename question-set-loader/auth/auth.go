@@ -30,7 +30,7 @@ func ValidateJwt(tokenString string, jwtParams JwtParams) (quizId string, err er
 			if claims["isHost"] != true {
 				return nil, fmt.Errorf("only the host can upload the quiz")
 			}
-			if claims["quizId"] == "" {
+			if quizId := claims["quizId"]; quizId == nil || quizId == "" {
 				return nil, fmt.Errorf("quizId must be non-empty")
 			}
 		} else {
