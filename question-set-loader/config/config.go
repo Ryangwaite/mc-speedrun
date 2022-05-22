@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -32,9 +34,17 @@ func (e *missingConfigError) Error() string {
 }
 
 // Loads the config from the path specified and applys any overrides
-// from environment variables. Missing settings return an error
+// from environment variables. Absent settings return an error
 func Load(path string) (Config, error) {
-	viper.SetConfigFile(path)
+	file, err := os.Open(path)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to open config file '%s': %v", path, err)
+	}
+	return loadFromReader(file)
+}
+
+func loadFromReader(reader io.Reader) (Config, error) {
+	viper.SetConfigType("ini")
 
 	// Pair up env vars with the fields in config
 	viper.BindEnv("server.port", "PORT")
@@ -55,7 +65,7 @@ func Load(path string) (Config, error) {
 
 	loadedConfig := Config{}
 	
-	if err := viper.ReadInConfig(); err != nil {
+	if err := viper.ReadConfig(reader); err != nil {
 		return loadedConfig, err
 	}
 
@@ -78,6 +88,6 @@ func Load(path string) (Config, error) {
 	loadedConfig.Jwt.Issuer						= viper.GetString("jwt.issuer")
 	loadedConfig.Jwt.Audience					= viper.GetString("jwt.audience")
 	loadedConfig.Loader.DestinationDirectory 	= viper.GetString("loader.destination_directory")
-	
+
 	return loadedConfig, nil
 }
