@@ -8,6 +8,7 @@ import (
 	"github.com/Ryangwaite/mc-speedrun/question-set-loader/config"
 	"github.com/Ryangwaite/mc-speedrun/question-set-loader/handler"
 	"github.com/Ryangwaite/mc-speedrun/question-set-loader/logfmt"
+	"github.com/Ryangwaite/mc-speedrun/question-set-loader/quiz"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,7 +31,7 @@ func main() {
 
 	upload := handler.Upload {
 		DevelopmentMode: config.Server.Development,
-		SaveDirectory: config.Loader.DestinationDirectory,
+		QuizWriter: quiz.QuizJsonFileWriter{SaveDirectory: config.Loader.DestinationDirectory},
 		JwtParams: config.Jwt,
 	}
 

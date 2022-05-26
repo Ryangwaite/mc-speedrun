@@ -3,53 +3,21 @@ package auth
 import (
 	"testing"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/Ryangwaite/mc-speedrun/question-set-loader/internal/testutils"
 	"github.com/google/go-cmp/cmp"
 )
-
-type jwtTestParams struct {
-	secret string
-	audience interface{}
-	issuer interface{}
-	isHost interface{}
-	quizId interface{}
-}
-
-// Builds a jwt token from the provide parameters. Set the interface
-func buildJwt(jwtParams jwtTestParams) (string, error) {
-	claims := make(jwt.MapClaims)
-	if jwtParams.audience != nil {
-		claims["aud"] = jwtParams.audience
-	}
-	if jwtParams.issuer != nil {
-		claims["iss"] = jwtParams.issuer
-	}
-	if jwtParams.isHost != nil {
-		claims["isHost"] = jwtParams.isHost
-	}
-	if jwtParams.quizId != nil {
-		claims["quizId"] = jwtParams.quizId
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(jwtParams.secret))
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
-}
 
 func TestValidateJwt_valid(t *testing.T) {
 	quizId := "quizid1"
 	secret := "secret"
 	issuer := "http://test.com"
 	audience := "http://test.com"
-	token, err := buildJwt(jwtTestParams {
-		secret,
-		issuer,
-		audience,
-		true,
-		quizId,
+	token, err := testutils.BuildJwt(testutils.JwtTestParams {
+		Secret: secret,
+		Issuer: issuer,
+		Audience: audience,
+		IsHost: true,
+		QuizId: quizId,
 	})
 	if err != nil {
 		t.Errorf("Failed creating test jwt with: %v", err)
@@ -79,17 +47,17 @@ func TestValidateJwt_invalid(t *testing.T) {
 	const quizId = "quizid1"
 	const secret = "secret"
 	
-	tests := map[string]jwtTestParams{
-		"wrong secret": {secret: "badsecret", audience: audience, issuer: issuer, isHost: isHost, quizId: quizId},
-		"no audience": {secret: secret, audience: nil, issuer: issuer, isHost: isHost, quizId: quizId},
-		"no issuer": {secret: secret, audience: audience, issuer: nil, isHost: isHost, quizId: quizId},
-		"no isHost": {secret: secret, audience: audience, issuer: issuer, isHost: nil, quizId: quizId},
-		"no quizId": {secret: secret, audience: audience, issuer: issuer, isHost: isHost, quizId: nil},
+	tests := map[string]testutils.JwtTestParams{
+		"wrong secret": {Secret: "badsecret", Audience: audience, Issuer: issuer, IsHost: isHost, QuizId: quizId},
+		"no audience": {Secret: secret, Audience: nil, Issuer: issuer, IsHost: isHost, QuizId: quizId},
+		"no issuer": {Secret: secret, Audience: audience, Issuer: nil, IsHost: isHost, QuizId: quizId},
+		"no isHost": {Secret: secret, Audience: audience, Issuer: issuer, IsHost: nil, QuizId: quizId},
+		"no quizId": {Secret: secret, Audience: audience, Issuer: issuer, IsHost: isHost, QuizId: nil},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			token, err := buildJwt(tc)
+			token, err := testutils.BuildJwt(tc)
 			if err != nil {
 				t.Fatalf("Failed to build token for test")
 			}

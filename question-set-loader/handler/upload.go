@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"strings"
 
 	"github.com/Ryangwaite/mc-speedrun/question-set-loader/auth"
@@ -11,11 +10,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const MaxFileSize int64 = 10 * (1 << 20)
+const MaxFileSize int64 = 10 * (1 << 20)  // 10 MiB
 
 type Upload struct {
-	DevelopmentMode bool
-	SaveDirectory string
+	DevelopmentMode 	bool
+	QuizWriter 				quiz.QuizWriter
 	auth.JwtParams
 }
 
@@ -101,13 +100,11 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Save the file to disk
-
-	writePath := filepath.Join(u.SaveDirectory, quizId + ".json")
-	if err := qAndA.WriteToDisk(writePath); err != nil {
+	if err := u.QuizWriter.Write(quizId, &qAndA); err != nil {
 		http.Error(w, "Failed to save file", http.StatusBadRequest)
 		return
 	}
-	log.Info(fmt.Sprintf("Wrote quiz to '%s'", writePath))
+	log.Info(fmt.Sprintf("Wrote quiz '%s'", quizId))
 
 	w.WriteHeader(http.StatusCreated)
 }
