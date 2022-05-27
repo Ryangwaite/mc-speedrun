@@ -77,7 +77,7 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 
 	inFile, header, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Missing form field 'file'", http.StatusBadRequest)
 		return
 	}
 	defer inFile.Close()
