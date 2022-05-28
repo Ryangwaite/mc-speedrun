@@ -15,6 +15,7 @@ import (
 	"github.com/Ryangwaite/mc-speedrun/question-set-loader/internal/testutils"
 	"github.com/Ryangwaite/mc-speedrun/question-set-loader/quiz"
 	"github.com/google/go-cmp/cmp"
+	"github.com/sirupsen/logrus"
 )
 
 type mockQuizWriter struct {
@@ -111,6 +112,7 @@ func TestUploadQuizHandler_wrong_method(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: NewMockQuizWriter(nil),
 		JwtParams: jwtParams,
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act
@@ -149,6 +151,7 @@ func TestUploadQuizHandler_absent_authorization_header(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: NewMockQuizWriter(nil),
 		JwtParams: auth.JwtParams{},
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act
@@ -188,6 +191,7 @@ func TestUploadQuizHandler_invalid_authorization_format(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: NewMockQuizWriter(nil),
 		JwtParams: auth.JwtParams{},
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act
@@ -245,6 +249,7 @@ func TestUploadQuizHandler_invalid_auth_token(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: NewMockQuizWriter(nil),
 		JwtParams: jwtParams,
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act
@@ -302,6 +307,7 @@ func TestUploadQuizHandler_invalid_form_key(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: NewMockQuizWriter(nil),
 		JwtParams: jwtParams,
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act
@@ -360,6 +366,7 @@ func TestUploadQuizHandler_incorrectly_formatted_file(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: mockQuizWriter,
 		JwtParams: jwtParams,
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act
@@ -421,6 +428,7 @@ func TestUploadQuizHandler_fail_to_save_file(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: mockQuizWriter,
 		JwtParams: jwtParams,
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act
@@ -479,6 +487,7 @@ func TestUploadQuizHandler_success(t *testing.T) {
 		DevelopmentMode: false,
 		QuizWriter: mockQuizWriter,
 		JwtParams: jwtParams,
+		Logger: logrus.StandardLogger(),
 	}
 
 	// Act

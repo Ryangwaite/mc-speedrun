@@ -14,8 +14,9 @@ const MaxFileSize int64 = 10 * (1 << 20)  // 10 MiB
 
 type Upload struct {
 	DevelopmentMode 	bool
-	QuizWriter 				quiz.QuizWriter
+	QuizWriter 			quiz.QuizWriter
 	auth.JwtParams
+	Logger				*log.Logger
 }
 
 func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +34,7 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 				// Let the clients subsequent request through
 				w.Header().Set("Access-Control-Allow-Headers", "Authorization")
 				w.WriteHeader(http.StatusNoContent)
-				log.Info(fmt.Sprintf("Received preflight request from origin '%s'", origin))
+				u.Logger.Info(fmt.Sprintf("Received preflight request from origin '%s'", origin))
 				return
 			}
 		}
@@ -65,7 +66,7 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info(fmt.Sprintf("Received quiz upload for id '%s'", quizId))
+	u.Logger.Info(fmt.Sprintf("Received quiz upload for id '%s'", quizId))
 
 	// Validate Payload
 
@@ -104,7 +105,7 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to save file", http.StatusBadRequest)
 		return
 	}
-	log.Info(fmt.Sprintf("Wrote quiz '%s'", quizId))
+	u.Logger.Info(fmt.Sprintf("Wrote quiz '%s'", quizId))
 
 	w.WriteHeader(http.StatusCreated)
 }

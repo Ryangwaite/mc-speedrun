@@ -26,7 +26,7 @@ func (lrw *loggingResponseWriter) WriteHeader(statusCode int) {
 	lrw.wrappedWriter.WriteHeader(statusCode)
 }
 
-func LoggerMiddleware(handler func(http.ResponseWriter, *http.Request)) func (http.ResponseWriter, *http.Request) {
+func LoggerMiddleware(logger *log.Logger, handler func(http.ResponseWriter, *http.Request)) func (http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		lrw := loggingResponseWriter{
 			wrappedWriter: w,
@@ -38,7 +38,7 @@ func LoggerMiddleware(handler func(http.ResponseWriter, *http.Request)) func (ht
 
 		// Log the body for 4xx's and 5xx's only
 		if 400 <= lrw.statusCode && lrw.statusCode < 600 {
-			log.Warn(lrw.responseRaw.String())
+			logger.Warn(lrw.responseRaw.String())
 		}
 	}
 }
