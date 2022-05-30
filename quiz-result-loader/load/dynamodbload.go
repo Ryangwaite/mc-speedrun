@@ -23,10 +23,12 @@ type DynamoDbLoaderOptions struct {
 	EndpointUrl			string
 	AccessKeyID			string
 	SecretAccessKey		string
+	Logger				*log.Logger
 }
 
 type dynamoDbLoader struct {
 	client *dynamodb.Client
+	logger *log.Logger
 }
 
 func NewDynamodDbLoader(options DynamoDbLoaderOptions) (Loader, error) {
@@ -68,7 +70,7 @@ func (d dynamoDbLoader) Load(ctx context.Context, quiz quiz.Quiz) error {
 	}()
 
 	if !d.quizTableExists(ctx) {
-		log.Info("Quiz table doesn't yet exist - creating it.")
+		d.logger.Info("Quiz table doesn't yet exist - creating it.")
 		if err := d.createQuizTable(ctx); err != nil {
 			return err
 		}

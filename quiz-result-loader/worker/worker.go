@@ -32,19 +32,19 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 	return extractedQuiz, nil
 }
 
-func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
+func Worker(ctx context.Context, logger *log.Logger, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
 		job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, workerNum int) {
 	for {
 		var quizId string
 
 		select {
 		case <-ctx.Done():
-			log.Infof("worker %d stopped", workerNum)
+			logger.Infof("worker %d stopped", workerNum)
 			return
 		case quizId = <-job:
 		}
 
-		log.Infof("Worker %d started processing quiz '%s'", workerNum, quizId)
+		logger.Infof("Worker %d started processing quiz '%s'", workerNum, quizId)
 		startTime := time.Now()
 
 		//// Extract ////
@@ -58,7 +58,7 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 			continue
 		}
 
-		log.Debugf("Worker %d loaded questions from file for quiz '%s'", workerNum, quizId)
+		logger.Debugf("Worker %d loaded questions from file for quiz '%s'", workerNum, quizId)
 
 		// NOTE: This extracted quiz doesn't have completed questions at this stage
 		extractedQuiz, err := extractor.Extract(ctx, quizId)
@@ -71,7 +71,7 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 			continue
 		}
 
-		log.Debugf("Worker %d extracted data for quiz '%s'", workerNum, quizId)
+		logger.Debugf("Worker %d extracted data for quiz '%s'", workerNum, quizId)
 
 		completeQuiz, err := combineExtractedQuizAndQuestions(extractedQuiz, questions)
 		if err != nil {
@@ -81,7 +81,7 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 			}
 			continue
 		}
-		log.Debugf("Complete loaded quiz: %+v\n", completeQuiz)
+		logger.Debugf("Complete loaded quiz: %+v\n", completeQuiz)
 
 		//// Load ////
 		if err := loader.Load(ctx, completeQuiz); err != nil {
@@ -94,20 +94,20 @@ func Worker(ctx context.Context, extractor extract.Extractor, loader load.Loader
 
 		//// Delete ////
 		if err := extractor.Delete(ctx, quizId); err != nil {
-			log.Warnf("Failed to delete extracted quiz for '%s'. %s", quizId, err.Error())
+			logger.Warnf("Failed to delete extracted quiz for '%s'. %s", quizId, err.Error())
 			continue
 		}
 		if err := quiz.DeleteQuestionsFile(questionSetPath); err != nil {
-			log.Warnf("Failed to delete questions file for quiz '%s'. %s", quizId, err.Error())
+			logger.Warnf("Failed to delete questions file for quiz '%s'. %s", quizId, err.Error())
 			continue
 		}
 
 		elapsedTime := time.Since(startTime)
-		log.Infof("Worker %d finished processing quiz '%s' in %dms", workerNum, quizId, elapsedTime.Milliseconds())
+		logger.Infof("Worker %d finished processing quiz '%s' in %dms", workerNum, quizId, elapsedTime.Milliseconds())
 	}
 }
 
-func WorkerPool(ctx context.Context, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
+func WorkerPool(ctx context.Context, logger *log.Logger, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
 		job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, numWorkers int) {
 
 	var wg sync.WaitGroup
@@ -116,12 +116,12 @@ func WorkerPool(ctx context.Context, extractor extract.Extractor, loader load.Lo
 		i := i
 		wg.Add(1)
 		go func() {
-			Worker(ctx, extractor, loader, questionSetBasePath, job, deadLetterCh, i)
+			Worker(ctx, logger, extractor, loader, questionSetBasePath, job, deadLetterCh, i)
 			wg.Done()
 		}()
 	}
 
 	// Run forever till the workers complete which is when the passed context is cancelled
 	wg.Wait()
-	log.Info("worker pool stopped")
+	logger.Info("worker pool stopped")
 }

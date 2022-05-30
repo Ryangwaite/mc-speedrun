@@ -14,12 +14,14 @@ type RabbitMqReceiverOptions struct {
 	Username	string
 	Password	string
 	QueueName	string
+	Logger		*log.Logger
 }
 
 type rabbitMqReceiver struct {
 	conn *amqp.Connection
 	amqpCh *amqp.Channel
 	queue amqp.Queue
+	logger *log.Logger
 }
 
 // Get a new RabbitMQ connected receiver
@@ -81,13 +83,13 @@ func (r rabbitMqReceiver) Start(ctx context.Context, quizCh QuizCh) error {
 			err := json.Unmarshal(msg.Body, &event)
 			if err != nil {
 				// TODO: Send to  RabbitMQ dead letter queue
-				log.Warnf("Unable to parse '%s', Error: %s", string(msg.Body), err.Error())
+				r.logger.Warnf("Unable to parse '%s', Error: %s", string(msg.Body), err.Error())
 				continue
 			}
 
 			quizId := event.Data.QuizId
 			if quizId == "" {
-				log.Warnf("Empty quizId for event : '%s'", string(msg.Body))
+				r.logger.Warnf("Empty quizId for event : '%s'", string(msg.Body))
 				// TODO: Send to RabbitMQ dead letter queue
 				continue
 			}

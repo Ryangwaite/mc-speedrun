@@ -10,16 +10,16 @@ type DeadLetter struct {
 	ErrReason error
 }
 
-func DeadLetterLogReceiver(ctx context.Context, deadLetters <-chan DeadLetter) {
+func DeadLetterLogReceiver(ctx context.Context, logger *log.Logger, deadLetters <-chan DeadLetter) {
 	for {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Warn(ctx.Err().Error())
+				logger.Warn(ctx.Err().Error())
 			}
 			return
 		case deadLetter := <- deadLetters:
-			log.Infof("Failed to process quiz '%s'. Reason: %s", deadLetter.QuizId, deadLetter.ErrReason.Error())
+			logger.Infof("Failed to process quiz '%s'. Reason: %s", deadLetter.QuizId, deadLetter.ErrReason.Error())
 		}
 	}
 }

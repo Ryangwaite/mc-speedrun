@@ -19,16 +19,17 @@ import (
 
 func main() {
 
-	log.SetLevel(log.InfoLevel)
-	log.SetOutput(os.Stdout)
-	log.SetFormatter(logfmt.NewUtcLogFormatter())
+	logger := log.New()
+	logger.SetLevel(log.InfoLevel)
+	logger.SetOutput(os.Stdout)
+	logger.SetFormatter(logfmt.NewUtcLogFormatter())
 
 	config, err := config.Load("./config.ini")
 	if err != nil {
-		log.Panicf("Failed to load config: %s", err.Error())
+		logger.Panicf("Failed to load config: %s", err.Error())
 	}
 
-	log.Infof("Loaded config: %+v\n", config)
+	logger.Infof("Loaded config: %+v\n", config)
 
 	// Assemble the extractor and loader for the workers below
 	extractor := extract.NewRedisExtractor(extract.RedisExtractorOptions{
@@ -40,9 +41,10 @@ func main() {
 		EndpointUrl: config.DynamoDB.EndpointUrl,
 		AccessKeyID: config.DynamoDB.AccessKeyID,
 		SecretAccessKey: config.DynamoDB.SecretAccessKey,
+		Logger: logger,
 	})
 	if err != nil {
-		log.Panic("Failed to load default AWS config. Error: " + err.Error())
+		logger.Panic("Failed to load default AWS config. Error: " + err.Error())
 	}
 
 	// Stop the context (workers and everything) when ctrl-c is pressed
@@ -60,9 +62,10 @@ func main() {
 		Username: config.RabbitMQ.Username,
 		Password: config.RabbitMQ.Password,
 		QueueName: config.RabbitMQ.QueueName,
+		Logger: logger,
 	})
 	if err != nil {
-		log.Panicf("Failed to initialize RabbitMQ receiver: %s", err.Error())
+		logger.Panicf("Failed to initialize RabbitMQ receiver: %s", err.Error())
 	}
 
 	quizCh := make(chan string, 10)
@@ -75,11 +78,11 @@ func main() {
 
 	go func() {
 		// Handle any messages that couldn't be processed
-		deadletter.DeadLetterLogReceiver(ctx, deadLetterCh)
+		deadletter.DeadLetterLogReceiver(ctx, logger, deadLetterCh)
 	}()
 
 	// Start the workers and block waiting for them to finish (when the ctx is cancelled)
-	worker.WorkerPool(ctx, extractor, loader, config.QuestionSet.Path, quizCh, deadLetterCh, 10)
+	worker.WorkerPool(ctx, logger, extractor, loader, config.QuestionSet.Path, quizCh, deadLetterCh, 10)
 
 	fmt.Println("Done")
 }
