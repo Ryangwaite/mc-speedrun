@@ -1,4 +1,4 @@
-package loader
+package extract
 
 import (
 	"context"
@@ -201,7 +201,7 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 		nameChan := make(chan struct {
 			Name string
 			err  error
-		}, 1)
+		})
 		go func() {
 			defer close(nameChan)
 			name, err := r.getUsername(ctx, quizId, userId)
@@ -221,7 +221,7 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 		stopTimeChan := make(chan struct {
 			stopTime time.Time
 			err      error
-		}, 1)
+		})
 		go func() {
 			defer close(stopTimeChan)
 			stopTime, err := r.getUserStopTime(ctx, quizId, userId)
@@ -243,20 +243,31 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 				UserId: userId,
 				Score:  score,
 			}
-			for i := 0; i < 2; i++ {
+			for {
 				select {
-				case nameChanResult := <-nameChan:
-					if nameChanResult.err != nil {
-						errorCh <- nameChanResult.err
-						return
+				case nameChanResult, ok := <-nameChan:
+					if ok {
+						if nameChanResult.err != nil {
+							errorCh <- nameChanResult.err
+							return
+						}
+						p.Name = nameChanResult.Name
+					} else {
+						nameChan = nil // indicate that this has been retrieved
 					}
-					p.Name = nameChanResult.Name
-				case stopTimeChanResult := <-stopTimeChan:
-					if stopTimeChanResult.err != nil {
-						errorCh <- stopTimeChanResult.err
-						return
+				case stopTimeChanResult, ok := <-stopTimeChan:
+					if ok {
+						if stopTimeChanResult.err != nil {
+							errorCh <- stopTimeChanResult.err
+							return
+						}
+						p.StopTime = stopTimeChanResult.stopTime
+					} else {
+						stopTimeChan = nil // indicate that this has been retrieved
 					}
-					p.StopTime = stopTimeChanResult.stopTime
+				}
+				if nameChan == nil && stopTimeChan == nil {
+					break
 				}
 			}
 			participantCh <- p
@@ -273,7 +284,6 @@ func (r redisExtractor) extractParticipants(ctx context.Context, quizId string, 
 			break
 		}
 	}
-
 	participantsCh <- participants
 }
 
