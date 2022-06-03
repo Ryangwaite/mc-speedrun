@@ -302,7 +302,6 @@ func (r redisExtractor) extractQuestions(ctx context.Context, quizId string, lea
 		err     error
 	}
 	questionSummaryCh := make(chan QuestionSummaryChMsg)
-	defer close(questionSummaryCh)
 
 	// Pull out just the userIds
 	var userIds []string

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 )
 
 const (
+	quizId = "quiz1"
 	quizName = "example"
 	questionDuration int64 = 10
 	startTime int64 = 1643273678
@@ -110,7 +112,6 @@ func NewRedisExtractorFromClient(rdb *redis.Client) redisExtractor {
 // Tests successfully extracting a quiz from redis
 func TestExtract_ok(t *testing.T) {
 	miniredis := miniredis.RunT(t)
-	quizId := "quiz1"
 	ctx := context.Background()
 	if err := populateRedis(miniredis, quizId); err != nil {
 		t.Fatalf("Failed to initialize redis before test: Error: %v", err)
@@ -194,7 +195,62 @@ func TestExtract_ok(t *testing.T) {
 	}
 
 	sortQuestion := func(a, b quiz.QuestionSummary) bool { return a.Question < b.Question }
-	if diff := cmp.Diff(actualQuiz, expectedQuiz, cmpopts.SortSlices(sortQuestion)); diff != "" {
+	sortParticipant := func(a, b quiz.Participant) bool { return a.Name < b.Name }
+	sortAnswerer := func(a, b quiz.Answerer) bool {return a.UserId < b.UserId }
+	if diff := cmp.Diff(actualQuiz, expectedQuiz, cmpopts.SortSlices(sortQuestion),
+			cmpopts.SortSlices(sortParticipant), cmpopts.SortSlices(sortAnswerer)); diff != "" {
 		t.Fatalf("Loaded quiz does match expected: %s", diff)
+	}
+}
+
+// Tests extracting quiz returns error where information is missing 
+func TestExtract_missing_data(t *testing.T) {
+
+
+	tests := []string{
+		"quizName",
+		"questionDuration",
+		"startTime",
+		"stopTime",
+		// User 1
+		userIds[0] + ":username",
+		userIds[0] + ":stopTime",
+		userIds[0] + ":answer:3",
+		userIds[0] + ":answer:4",
+		userIds[0] + ":answer:5",
+		// User 2
+		userIds[1] + ":username",
+		userIds[1] + ":stopTime",
+		userIds[1] + ":answer:3",
+		userIds[1] + ":answer:4",
+		userIds[1] + ":answer:5",
+	}
+
+	for _, tst := range tests{
+		keyToDel := quizId + ":" + tst
+		t.Run(fmt.Sprintf("Absent '%s'", keyToDel), func(t *testing.T) {
+			miniredis := miniredis.RunT(t)
+			ctx := context.Background()
+			if err := populateRedis(miniredis, quizId); err != nil {
+				t.Errorf("Failed to initialize redis before test: Error: %v", err)
+			}
+			
+			if !miniredis.Del(keyToDel) {
+				t.Errorf("Failed to prepare redis for test")
+			}
+	
+			extractor := NewRedisExtractorFromClient(redis.NewClient(&redis.Options{
+				Addr: miniredis.Addr(),
+			}))
+	
+			_, err := extractor.Extract(ctx, quizId)
+			if err == nil {
+				t.Errorf("Failed to return error from Extract")
+			}
+
+			if !strings.Contains(err.Error(), keyToDel) {
+				t.Errorf("Error message didn't contain '%s'", keyToDel)
+			}
+		})
 	}
 }
