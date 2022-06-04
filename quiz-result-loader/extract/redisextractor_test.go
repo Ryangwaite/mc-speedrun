@@ -205,8 +205,6 @@ func TestExtract_ok(t *testing.T) {
 
 // Tests extracting quiz returns error where information is missing 
 func TestExtract_missing_data(t *testing.T) {
-
-
 	tests := []string{
 		"quizName",
 		"questionDuration",
@@ -225,7 +223,6 @@ func TestExtract_missing_data(t *testing.T) {
 		userIds[1] + ":answer:4",
 		userIds[1] + ":answer:5",
 	}
-
 	for _, tst := range tests{
 		keyToDel := quizId + ":" + tst
 		t.Run(fmt.Sprintf("Absent '%s'", keyToDel), func(t *testing.T) {
@@ -252,5 +249,36 @@ func TestExtract_missing_data(t *testing.T) {
 				t.Errorf("Error message didn't contain '%s'", keyToDel)
 			}
 		})
+	}
+}
+
+// When deleting a quiz from Redis it deletes just that quiz and leaves others untouched
+func TestDelete_ok(t *testing.T) {
+	miniredis := miniredis.RunT(t)
+	ctx := context.Background()
+
+	quizToKeep := "quiztokeep"
+	if err := populateRedis(miniredis, quizToKeep); err != nil {
+		t.Fatalf("Failed to initialize redis before test: Error: %v", err)
+	}
+	quizToKeepKeys := miniredis.Keys()
+
+	quizToDelete := "quiztodelete"
+	if err := populateRedis(miniredis, quizToDelete); err != nil {
+		t.Fatalf("Failed to initialize redis before test: Error: %v", err)
+	}
+
+	extractor := NewRedisExtractorFromClient(redis.NewClient(&redis.Options{
+		Addr: miniredis.Addr(),
+	}))
+
+	if err := extractor.Delete(ctx, quizToDelete); err != nil {
+		t.Fatalf("Failed to delete quiz '%s' from redis: Error %+v", quizToDelete, err)
+	}
+
+	keysAfterDel := miniredis.Keys()
+
+	if diff := cmp.Diff(quizToKeepKeys, keysAfterDel); diff != "" {
+		t.Fatalf("Keys for quiz that weren't deleted were modified: %s", diff)
 	}
 }
