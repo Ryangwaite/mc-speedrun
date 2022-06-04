@@ -15,7 +15,7 @@ import (
 )
 
 // The name of the quiz table to load quizzes into
-var quizTableName string = "quiz"
+const quizTableName string = "quiz"
 
 type marshalledQuiz map[string]types.AttributeValue
 type DynamoDbLoaderOptions struct {

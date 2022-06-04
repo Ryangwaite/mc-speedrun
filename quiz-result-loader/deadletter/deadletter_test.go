@@ -7,21 +7,14 @@ import (
 	"strings"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/internal/testutils"
 )
-
-type MockLogFormatter struct {}
-func (f *MockLogFormatter) Format(entry *log.Entry) ([]byte, error) {
-	return []byte(entry.Message), nil
-}
 
 // Tests logging dead letter received messages
 func TestDeadLetterLogReceiver(t *testing.T) {
 	// Init
 	logBuffer := bytes.Buffer{}
-	logger := log.New()
-	logger.SetOutput(&logBuffer)
-	logger.SetFormatter(&MockLogFormatter{})
+	logger := testutils.BuildMemoryLogger(&logBuffer)
 
 	ctx := context.Background()
 	deadLetterCh := make(chan DeadLetter)
