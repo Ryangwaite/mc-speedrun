@@ -8,6 +8,53 @@ import (
 	"github.com/streadway/amqp"
 )
 
+//--------------------------------------------------------
+// Interfaces for injecting mocks
+type amqpConnection interface {
+	Close() error
+}
+
+type amqpChannel interface {
+	Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp.Table) (<-chan amqp.Delivery, error)
+	Close() error
+}
+
+type amqpQueue interface {
+	Name() string
+}
+
+// Wrappers over amqp that implement the above interfaces for the actual implementation
+
+type amqpConnectionWrapper struct {
+	conn *amqp.Connection
+}
+
+func (a *amqpConnectionWrapper) Close() error {
+	return a.conn.Close()
+}
+
+type amqpChannelWrapper struct {
+	amqpCh *amqp.Channel
+}
+
+func (a *amqpChannelWrapper) Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp.Table) (<-chan amqp.Delivery, error) {
+	return a.amqpCh.Consume(queue, consumer, autoAck, exclusive, noLocal, noWait, args)
+}
+
+func (a *amqpChannelWrapper) Close() error {
+	return a.amqpCh.Close()
+}
+
+type amqpQueueWrapper struct {
+	amqpQ *amqp.Queue
+}
+
+func (a *amqpQueueWrapper) Name() string {
+	return a.amqpQ.Name
+}
+
+//------------------------------------------------------
+
 type RabbitMqReceiverOptions struct {
 	Host		string
 	Port		int
@@ -18,9 +65,9 @@ type RabbitMqReceiverOptions struct {
 }
 
 type rabbitMqReceiver struct {
-	conn *amqp.Connection
-	amqpCh *amqp.Channel
-	queue amqp.Queue
+	conn amqpConnection
+	amqpCh amqpChannel
+	queue amqpQueue
 	logger *log.Logger
 }
 
@@ -53,9 +100,10 @@ func NewRabbitMqReceiver(o RabbitMqReceiverOptions) (rabbitMqReceiver, error) {
 	}
 
 	receiver := rabbitMqReceiver{
-		conn: conn,
-		amqpCh: amqpCh,
-		queue: queue,
+		conn: &amqpConnectionWrapper{conn},
+		amqpCh: &amqpChannelWrapper{amqpCh},
+		queue: &amqpQueueWrapper{&queue},
+		logger: o.Logger,
 	}
 
 	return receiver, nil
@@ -64,7 +112,7 @@ func NewRabbitMqReceiver(o RabbitMqReceiverOptions) (rabbitMqReceiver, error) {
 // Listens forever on RabbitMQ queue and publishes received quizzes to quizCh
 func (r rabbitMqReceiver) Start(ctx context.Context, quizCh QuizCh) error {
 	msgs, err := r.amqpCh.Consume(
-		r.queue.Name,
+		r.queue.Name(),
 		"",					// consumer
 		true,				// auto-ack
 		false,				// exclusive
@@ -112,4 +160,3 @@ func (r rabbitMqReceiver) Close() {
 	r.amqpCh.Close()
 	r.conn.Close()
 }
-
