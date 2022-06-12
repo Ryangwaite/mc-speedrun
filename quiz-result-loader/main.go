@@ -10,6 +10,7 @@ import (
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/deadletter"
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
+	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/worker"
 
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/logfmt"
@@ -82,7 +83,7 @@ func main() {
 	}()
 
 	// Start the workers and block waiting for them to finish (when the ctx is cancelled)
-	worker.WorkerPool(ctx, logger, extractor, loader, config.QuestionSet.Path, quizCh, deadLetterCh, 10)
+	worker.WorkerPool(ctx, logger, &quiz.QuizUtil{}, extractor, loader, config.QuestionSet.Path, quizCh, deadLetterCh, 10)
 
 	fmt.Println("Done")
 }

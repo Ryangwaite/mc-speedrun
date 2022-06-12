@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/deadletter"
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	load "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
@@ -32,8 +31,8 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 	return extractedQuiz, nil
 }
 
-func Worker(ctx context.Context, logger *log.Logger, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
-		job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, workerNum int) {
+func Worker(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extractor extract.Extractor, loader load.Loader,
+		questionSetBasePath string, job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, workerNum int) {
 	for {
 		var quizId string
 
@@ -63,7 +62,6 @@ func Worker(ctx context.Context, logger *log.Logger, extractor extract.Extractor
 		// NOTE: This extracted quiz doesn't have completed questions at this stage
 		extractedQuiz, err := extractor.Extract(ctx, quizId)
 		if err != nil {
-			println("Failed to extract")
 			deadLetterCh<-deadletter.DeadLetter{
 				QuizId: quizId,
 				ErrReason: fmt.Errorf("failed to extract. %w", err),
@@ -107,8 +105,8 @@ func Worker(ctx context.Context, logger *log.Logger, extractor extract.Extractor
 	}
 }
 
-func WorkerPool(ctx context.Context, logger *log.Logger, extractor extract.Extractor, loader load.Loader, questionSetBasePath string,
-		job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, numWorkers int) {
+func WorkerPool(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extractor extract.Extractor, loader load.Loader,
+		questionSetBasePath string, job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, numWorkers int) {
 
 	var wg sync.WaitGroup
 
@@ -116,7 +114,7 @@ func WorkerPool(ctx context.Context, logger *log.Logger, extractor extract.Extra
 		i := i
 		wg.Add(1)
 		go func() {
-			Worker(ctx, logger, extractor, loader, questionSetBasePath, job, deadLetterCh, i)
+			Worker(ctx, logger, quiz, extractor, loader, questionSetBasePath, job, deadLetterCh, i)
 			wg.Done()
 		}()
 	}

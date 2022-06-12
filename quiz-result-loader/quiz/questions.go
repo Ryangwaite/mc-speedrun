@@ -16,7 +16,16 @@ type QuestionAndAnswers []struct {
 	Answers		[]int		`json:"answers"`
 }
 
-func QuizFileFromBytes(fileBytes *[]byte) (qAndA QuestionAndAnswers, err error) {
+type IQuiz interface {
+	QuizFileFromBytes(fileBytes *[]byte) (QuestionAndAnswers, error)
+	LoadQuestionsFromFile(path string) (QuestionAndAnswers, error)
+	DeleteQuestionsFile(path string) error
+}
+
+type QuizUtil struct {}
+
+// Extracts a QuestionAndAnswers object from the fileBytes, returns non-nil error on failure
+func (q *QuizUtil) QuizFileFromBytes(fileBytes *[]byte) (qAndA QuestionAndAnswers, err error) {
 
 	if err := json.Unmarshal(*fileBytes, &qAndA); err != nil {
 		return nil, fmt.Errorf("failed to deserialize quiz file: Error: %s", err.Error())
@@ -26,16 +35,17 @@ func QuizFileFromBytes(fileBytes *[]byte) (qAndA QuestionAndAnswers, err error) 
 	return qAndA, nil
 }
 
-func LoadQuestionsFromFile(path string) (qAndA QuestionAndAnswers, err error) {
+// Extracts a QuestionAndAnswers object from the file pointed to by path, returns non-nil error on failure
+func (q *QuizUtil) LoadQuestionsFromFile(path string) (qAndA QuestionAndAnswers, err error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file. Error: %s", err.Error())
 	}
 
-	return QuizFileFromBytes(&bytes)
+	return q.QuizFileFromBytes(&bytes)
 }
 
 // Deletes the file designated by path
-func DeleteQuestionsFile(path string) error {
+func (q *QuizUtil) DeleteQuestionsFile(path string) error {
 	return os.Remove(path)
 }

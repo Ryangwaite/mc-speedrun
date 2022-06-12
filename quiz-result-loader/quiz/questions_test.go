@@ -28,7 +28,8 @@ func TestQuizFileFromBytes(t *testing.T) {
 		t.Fatalf("Failed to serialize QuestionAndAnswer: %v", err)
 	}
 
-	deserializedQAndA, err := QuizFileFromBytes(&qAndABytes)
+	quizUtil := QuizUtil{}
+	deserializedQAndA, err := quizUtil.QuizFileFromBytes(&qAndABytes)
 	if err != nil {
 		t.Fatalf("Failed to deserialize QuestionAndAnswers bytes: %v", err)
 	}
