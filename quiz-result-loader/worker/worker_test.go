@@ -352,7 +352,45 @@ func TestWorker_extract_error(t *testing.T) {
 
 // Enqueues a deadletter when it fails to combine extracted and loaded questions
 func TestWorker_combineExtractedQuizAndQuestions_error(t *testing.T) {
-	// TODO: implement this
+	mockLogger := testutils.BuildMemoryLogger(new(bytes.Buffer))
+	quizUtil := NewMockQuizUtilOk()
+	extractor := &mockExtractor{
+		extractImpl: func(ctx context.Context, quizId string) (quiz.Quiz, error) {
+			outQuiz, _ := ExtractOkImpl(ctx, quizId)
+			// Set the question test to a non-question index
+			outQuiz.Questions[0].Question = "notandindex"
+			return outQuiz, nil
+		},
+		deleteImpl: DeleteOkImpl,
+	}
+	loader := NewMockLoaderOk()
+	jobCh := make(chan string)
+	deadLetterCh := make(chan deadletter.DeadLetter)
+	workerNum := 3
+	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
+	defer cancel() // Terminates the worker below on function exit
+
+	// Start worker in the background
+	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
+			jobCh, deadLetterCh, workerNum)
+
+	// Process quiz
+	jobCh<-quizId
+
+	// Check that the log was received
+	for {
+		select {
+		case deadLetter := <-deadLetterCh:
+			wantedError := "failed to merge extracted quiz and questions"
+			actualError := deadLetter.ErrReason.Error()
+			if !strings.Contains(actualError, wantedError) {
+				t.Fatalf("Unexpected error '%s' wanted '%s'", actualError, wantedError)
+			}
+			return // test pass
+		case <-ctx.Done():
+			t.Fatalf("Context cancelled. Error: %+v", ctx.Err())
+		}
+	}
 }
 
 // Enqueues a deadletter when it fails to load questions

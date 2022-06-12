@@ -22,6 +22,7 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 		if err != nil {
 			return extractedQuiz, errors.New("expected question from extracted quiz to be an index")
 		}
+		// TODO: Check for qIndex out-of-bounds error
 		// Copy the question fields into the quiz
 		qAndA := questions[qIndex]
 		extractedQuiz.Questions[i].Question = qAndA.Question
