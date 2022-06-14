@@ -32,7 +32,7 @@ beforeAll(() => {
 export let wsServer: WS
 
 beforeEach(() => {
-    wsServer = new WS(`ws://localhost/speed-run/${QUIZ_ID}/ws`, {jsonProtocol: true});
+    wsServer = new WS(`wss://localhost/speed-run/${QUIZ_ID}/ws`, {jsonProtocol: true});
 })
 
 // Reset any runtime request handlers we may add during tests.

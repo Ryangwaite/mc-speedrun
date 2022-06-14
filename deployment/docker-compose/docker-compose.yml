@@ -124,12 +124,18 @@ services:
       # Repo root as context and dockerfile path relative to it
       context: ../..
       dockerfile: deployment/docker-compose/reverse-proxy/Dockerfile
-      args:
-        # This is from the POV of the client side which has to hit nginx proxy first
-        - REACT_APP__SIGN_ON_URL=http://localhost:80
     ports:
-      - "80:80"
+      - "443:443"
+    secrets:
+      - server-crt.pem
+      - server-key.pem
 
 volumes:
   quiz-questions:
     name: mc-speedrun-quiz-questions
+
+secrets:
+  server-crt.pem:
+    file: secrets/server-crt.pem
+  server-key.pem:
+    file: secrets/server-key.pem

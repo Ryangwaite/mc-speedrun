@@ -47,7 +47,9 @@ export default class WrappedWebsocket {
         this.quizId = quizId
         this.token = token
 
-        const url = `${getSpeedRunBaseUrl()}/speed-run/${quizId}/ws?token=${token}`
+        let origin = getSpeedRunBaseUrl()
+        if (!origin) origin = `wss://${window.location.host}`
+        const url = `${origin}/speed-run/${quizId}/ws?token=${token}`
 
         this.socket = new WebSocket(url)
         this.socket.onerror = (evt) => {
