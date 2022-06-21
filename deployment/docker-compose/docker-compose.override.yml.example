@@ -31,6 +31,8 @@ services:
       - SPEED_RUN_DEVELOPMENT_MODE=true
     volumes:
       - "/tmp/mc-speedrun-quiz-questions:/quiz-questions:ro"
+    deploy:
+      replicas: 1
   question-set-loader:
     ports:
       - "8082:80"

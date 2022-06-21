@@ -63,6 +63,8 @@ services:
         read_only: true
         volume:
           nocopy: true
+    deploy:
+      replicas: 2
   question-set-loader:
     image: question-set-loader
     build:

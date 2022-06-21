@@ -8,17 +8,17 @@ def _add_participant(browser: Browser, username: str, access_code: str) -> Page:
         a new participant with the provided username.
     """
     # Open new page
-    participant_context = browser.new_context()
+    participant_context = browser.new_context(ignore_https_errors=True)
     participant_page = participant_context.new_page()
 
-    # Go to http://localhost/
-    participant_page.goto("http://localhost/")
+    # Go to https://localhost/
+    participant_page.goto("https://localhost/")
 
     # Insert access code
     participant_page.locator("input[type=\"text\"]").fill(access_code)
 
     # Click "enter"
-    with participant_page.expect_navigation(url="http://localhost/lobby"):
+    with participant_page.expect_navigation(url="https://localhost/lobby"):
         participant_page.locator("text=Enter").click()
 
     # Insert username
@@ -49,15 +49,15 @@ def test_happy_path_15_participants(browser: Browser, quiz_question_filepath: st
         correctly in sequence.
     """
     
-    host_context = browser.new_context()
+    host_context = browser.new_context(ignore_https_errors=True)
 
     #### Start Host Config ####
 
     # Start host page and configure anything
     host_page: Page = host_context.new_page()
-    host_page.goto("http://localhost/")
+    host_page.goto("https://localhost/")
 
-    with host_page.expect_navigation(url="http://localhost/config"):
+    with host_page.expect_navigation(url="https://localhost/config"):
         # Click begin button which should redirect to /config page
         host_page.locator("text=Begin").click()
 
@@ -97,7 +97,7 @@ def test_happy_path_15_participants(browser: Browser, quiz_question_filepath: st
     
     #### Stop add participants ####
     #### Start Quiz ####
-    with host_page.expect_navigation(url="http://localhost/summary"):
+    with host_page.expect_navigation(url="https://localhost/summary"):
             host_page.locator("text=Start").click()
     #### Stop Quiz ####
     #### Start Answer questions ####
@@ -112,17 +112,17 @@ def test_happy_path_15_participants(browser: Browser, quiz_question_filepath: st
     #### Stop Answer questions ####
     #### Start Assert final result ####
     
-    expect(host_page).to_have_url("http://localhost/summary")
+    expect(host_page).to_have_url("https://localhost/summary")
     for participant_page in participant_pages:
-        expect(participant_page).to_have_url("http://localhost/summary")
+        expect(participant_page).to_have_url("https://localhost/summary")
 
     # Host return to home
     host_page.locator("text=RETURN TO HOME").click()
-    expect(host_page).to_have_url("http://localhost/")
+    expect(host_page).to_have_url("https://localhost/")
 
     # Participants return to home
     for participant_page in participant_pages:
         participant_page.locator("text=RETURN TO HOME").click()
-        expect(participant_page).to_have_url("http://localhost/")
+        expect(participant_page).to_have_url("https://localhost/")
 
     #### Stop Assert final result ####
