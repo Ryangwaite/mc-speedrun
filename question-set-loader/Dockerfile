@@ -7,11 +7,11 @@ COPY config/ config/
 COPY handler/ handler/
 COPY logfmt/ logfmt/
 COPY quiz/ quiz/
-COPY main.go .
+COPY cmd/container/ cmd/container/
 COPY go.mod .
 COPY go.sum .
 
-RUN go build -o question-set-loader
+RUN go build -o question-set-loader ./cmd/container
 
 FROM alpine:3.15
 

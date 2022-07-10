@@ -179,3 +179,5 @@ docker-compose.override.yml
 /quiz-result-loader/python-env/
 
 secrets/
+
+question-set-loader/bin/
