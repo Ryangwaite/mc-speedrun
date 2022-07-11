@@ -25,14 +25,16 @@ container-clean:
 	-@docker image remove $(CONTAINER_NAME)
 
 
-.PHONY: lambda-build
-# Make the binary contained in the lambda deployment package
-lambda-build:
-	@go build -o bin/lambda ./cmd/lambda
+.PHONY: cdk-lambda-build
+# Make the binary contained in the lambda deployment package.
+# NOTE: This should only be called by the cdk, else files will be created
+# in directories outside the repo root
+cdk-lambda-build:
+	@go build -o /asset-output/lambda ./cmd/lambda
 	@echo "Done building."
 
 
-.PHONY: Lambda-clean
+.PHONY: cdk-lambda-clean
 # Deletes the build artifacts if they exist
-lambda-clean:
-	@rm -f bin/lambda
+cdk-lambda-clean:
+	@rm -f /asset-output/lambda

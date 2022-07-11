@@ -181,3 +181,4 @@ docker-compose.override.yml
 secrets/
 
 question-set-loader/bin/
+question-set-loader/asset-output/
