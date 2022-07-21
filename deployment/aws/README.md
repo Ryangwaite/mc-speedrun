@@ -2,7 +2,7 @@
 - [1. Setup](#1-setup)
 - [2. Deploying](#2-deploying)
 - [3. Architecture](#3-architecture)
-  - [3.1 API Gateway](#31-api-gateway)
+  - [3.1 Application load balancer](#31-application-load-balancer)
   - [3.2 Question Set Loader](#32-question-set-loader)
   - [3.3 Question Set Store](#33-question-set-store)
   - [3.4 speed-run Fargate Cluster](#34-speed-run-fargate-cluster)
@@ -32,16 +32,16 @@ Also need to delete the `cdk-hnb659fds-assets-xxxxxxxx-us-east-1` bucket as well
 ## 3. Architecture
 ![AWS Architecture](./architecture-aws.drawio.png)
 
-### 3.1 API Gateway 
+### 3.1 Application load balancer
 
-An *HTTP API* typed gateway with three integrations:
+An Application load balancer typed gateway with three targets:
 
-- **question-set-loader** - Receives multipart/form-data at `POST /question-set-upload`. This facilatates client-side file upload.
-- **speed-run Service Fargate Cluster** - Receives `GET /speedrun` requests which get upgraded to WebSocket connections.
-- **sign-on** - Receives `/signon` requests
+- **question-set-loader** (*Lambda*) - Receives multipart/form-data at `POST /question-set-upload`. This facilatates client-side file upload. Note the maximum file upload + overhead is [1MB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/lambda-functions.html) as per limitations of this target type. With an API Gateway + Lambda integration this could increase to [10MB](https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html).
+- **speed-run** (*Fargate*)- Receives `GET /speedrun` requests which get upgraded to WebSocket connections.
+- **sign-on** (*Fargate*) - Receives `/signon` requests
 
 ### 3.2 Question Set Loader
-A lambda function that receives mutlipart/form-data from the the API gateway, processes it then writes it to Question Set Store (EFS) 
+A lambda function that receives mutlipart/form-data from the the API gateway, processes it then writes it to Question Set Store (EFS). There is a 1MB limit on the uploaded file size.
 
 ### 3.3 Question Set Store
 An EFS file share mounted into each ECS.
