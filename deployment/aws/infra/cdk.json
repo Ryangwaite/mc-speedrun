@@ -2,7 +2,8 @@
   "app": "npx ts-node --prefer-ts-exts bin/app.ts",
   "watch": {
     "include": [
-      "**"
+      "**",
+      "../../../question-set-loader/**/*.go"
     ],
     "exclude": [
       "README.md",

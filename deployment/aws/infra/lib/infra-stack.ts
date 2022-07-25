@@ -5,6 +5,8 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elb from 'aws-cdk-lib/aws-elasticloadbalancingv2'
 import * as elbtargets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets'
 
+const QUESTION_SET_LOADER_ENV_VAR_PREFIX = "MC_SPEEDRUN_"
+
 export class InfraStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -20,7 +22,13 @@ export class InfraStack extends Stack {
           command: ["make", "cdk-lambda-build"],
         }
       }),
-      handler: "lambda"
+      handler: "lambda",
+      environment: {
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}LOADER_DST_DIR`]: "/mnt/quizzes/",
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_SECRET`]: "secret",  // FIXME: Replace with AWS secrets manager
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_AUDIENCE`]: "audience",
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_ISSUER`]: "issuer",
+      }, // TODO: Mount EFS
     })
 
     ////// VPC //////
@@ -61,15 +69,18 @@ export class InfraStack extends Stack {
       })
     })
 
-    listener.addTargets("/upload", {
+    const lambdaTarget = listener.addTargets("/upload", {
       priority: 10,
       conditions: [
-        elb.ListenerCondition.pathPatterns(["/upload"])
+        elb.ListenerCondition.pathPatterns(["/upload/*"]),
       ],
       targets: [
         new elbtargets.LambdaTarget(questionSetLoaderLambda)
       ],
       // TODO: Enable health checks
     })
+    // Populates the "multiValueHeaders" attribute in the ALBTargetGroupRequest sent from the ALB
+    // as opposed to the "headers" attribute.
+    lambdaTarget.setAttribute("lambda.multi_value_headers.enabled", "true")
   }
 }

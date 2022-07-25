@@ -1,6 +1,8 @@
 SERVICE_NAME = $(shell basename `pwd`)
 CONTAINER_NAME = "mc-speedrun/$(SERVICE_NAME)"
 
+AWS_INFRA_DIR := "../deployment/aws/infra"
+AWS_INFRA_LAMBDA_TEMPLATE := "$(AWS_INFRA_DIR)/cdk.out/McSpeedrun.template.json"
 
 .PHONY: container-build
 # Make the docker container deployment
@@ -32,6 +34,26 @@ container-clean:
 cdk-lambda-build:
 	@go build -o /asset-output/lambda ./cmd/lambda
 	@echo "Done building."
+
+
+.PHONY: cdk-lambda-synthesize
+# Synthesizes the cloudformation template for the stack containing the QuestionSetLoader
+# lambda. This makes it available for local testing via AWS SAM.
+cdk-lambda-synthesize:
+	@cd $(AWS_INFRA_DIR) && \
+	cdk synthesize McSpeedrun && \
+	echo "Successfully synthesized lambda";
+
+
+.PHONY: cdk-lambda-test-local
+# Invokes the lambda locally with the sample-event.json
+cdk-lambda-test-local:
+	@if [ ! -e $(AWS_INFRA_LAMBDA_TEMPLATE) ]; then \
+		echo "Lambda template does not exist. Synthesizing lambda project..."; \
+		$(MAKE) cdk-lambda-synthesize; \
+	fi;
+
+	sam local invoke QuestionSetLoader --event ./cmd/lambda/sample-event.json --template-file $(AWS_INFRA_LAMBDA_TEMPLATE)
 
 
 .PHONY: cdk-lambda-clean

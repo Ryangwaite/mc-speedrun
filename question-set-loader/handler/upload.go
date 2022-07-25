@@ -102,7 +102,7 @@ func (u *Upload) Quiz(w http.ResponseWriter, r *http.Request) {
 	
 	// Save the file to disk
 	if err := u.QuizWriter.Write(quizId, &qAndA); err != nil {
-		http.Error(w, "Failed to save file", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to save file. Error: %s", err), http.StatusBadRequest)
 		return
 	}
 	u.Logger.Info(fmt.Sprintf("Wrote quiz '%s'", quizId))

@@ -19,6 +19,10 @@ func main() {
 	logger.SetOutput(os.Stdout)
 	logger.SetFormatter(logfmt.NewUtcLogFormatter())
 
+	// FIXME: The config file is required else it will panic even if all config
+	// properties are provided via environment variables. Note that viper still
+	// requires the config file to be present though.
+	// See https://github.com/spf13/viper/issues/584
 	config, err := config.Load("./config.ini")
 	if err != nil {
 		logger.Panic("Failed to load config. Error: " + err.Error())

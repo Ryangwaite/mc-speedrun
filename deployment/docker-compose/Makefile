@@ -3,9 +3,9 @@ SECRETS ?= secrets
 SERVER_KEY = "${SECRETS}/server-key.pem"
 SERVER_CRT = "${SECRETS}/server-crt.pem"
 
+.PHONY: pki
 # Generate the nginx server certificate and private key for SSL connections.
 # NOTE: This is a self-signed certificate with a private key that doesn't have a password.
-.PHONY: pki
 pki:
 	@if [ -f ${SERVER_CRT} -a -f ${SERVER_KEY} ]; then \
 		echo "Certificate and key already exist. Reusing them" && exit 0; \
@@ -27,8 +27,20 @@ clean:
 	@rm -rf ${SECRETS}
 
 
-# Launch the docker-compose enmvironment
-.PHONY: pki
+.PHONY: build
+# Build all components for instantiating the application
+build:
+	@docker-compose build --parallel
+
+
+.PHONY: docker-compose-up
+# Bring up the docker-compose environment
 docker-compose-up: pki
 	@echo "Launching docker-compose environment"
 	@docker-compose up
+
+
+.PHONY: docker-compose-down
+# Bring down the docker-compose environment
+docker-compose-down:
+	@docker-compose down
