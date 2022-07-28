@@ -1,35 +1,17 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elb from 'aws-cdk-lib/aws-elasticloadbalancingv2'
 import * as elbtargets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets'
+import * as efs from 'aws-cdk-lib/aws-efs'
+import {CfnOutput} from 'aws-cdk-lib';
 
 const QUESTION_SET_LOADER_ENV_VAR_PREFIX = "MC_SPEEDRUN_"
 
 export class InfraStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-
-    ////// Lambda //////
-
-    const questionSetLoaderLambda = new lambda.Function(this, "QuestionSetLoader", {
-      runtime: lambda.Runtime.GO_1_X,
-      code: lambda.Code.fromAsset("../../../question-set-loader/", {
-        bundling: {
-          image: lambda.Runtime.GO_1_X.bundlingImage,
-          user: "root",
-          command: ["make", "cdk-lambda-build"],
-        }
-      }),
-      handler: "lambda",
-      environment: {
-        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}LOADER_DST_DIR`]: "/mnt/quizzes/",
-        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_SECRET`]: "secret",  // FIXME: Replace with AWS secrets manager
-        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_AUDIENCE`]: "audience",
-        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_ISSUER`]: "issuer",
-      }, // TODO: Mount EFS
-    })
 
     ////// VPC //////
 
@@ -48,6 +30,57 @@ export class InfraStack extends Stack {
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED
         }
       ]
+    })
+
+    ////// EFS //////
+    const questionSetStore = new efs.FileSystem(this, "QuestionSetStore", {
+      vpc: vpc,
+      vpcSubnets: {subnets: vpc.isolatedSubnets},
+      performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
+      throughputMode: efs.ThroughputMode.BURSTING,
+      removalPolicy: RemovalPolicy.DESTROY,
+
+    })
+    // TODO: Doesn't look like there are any mount targets available??
+
+    ////// Lambda //////
+    const questionSetStoreLoaderAP = questionSetStore.addAccessPoint("QuestionSetLoaderAccessPoint", {
+      // NOTE: Even though there is only one type of data stored in EFS and we could theoretically use
+      // the root path, the permissions are unable to be changed so that a non-root user can write to
+      // it. Instead, the /quizzes directory is created with permissions that enable non-root users to
+      // write to it.
+      path: "/quizzes",
+      createAcl: {
+        ownerUid: "1001",
+        ownerGid: "1001",
+        permissions: "750", // Corresponds to: u+rwx,g+rx
+      },
+      posixUser: {
+        uid: "1001",  // TODO: Paramaterize these
+        gid: "1001",
+      },
+    })
+
+    const quizDirPath = "/mnt/quizzes"
+    const questionSetLoaderLambda = new lambda.Function(this, "QuestionSetLoader", {
+      filesystem: lambda.FileSystem.fromEfsAccessPoint(questionSetStoreLoaderAP, quizDirPath),
+      vpc: vpc, // Put in data subnets and create a Security Group. TODO: Make this clearer
+      runtime: lambda.Runtime.GO_1_X,
+      code: lambda.Code.fromAsset("../../../question-set-loader/", {
+        bundling: {
+          image: lambda.Runtime.GO_1_X.bundlingImage,
+          user: "root",
+          command: ["make", "cdk-lambda-build"],
+        }
+      }),
+      handler: "lambda",
+      environment: {
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}LOADER_DST_DIR`]: quizDirPath,
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_SECRET`]: "secret",  // FIXME: Replace with AWS secrets manager
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_AUDIENCE`]: "audience",
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_ISSUER`]: "issuer",
+      },
+      
     })
 
     ////// Application Load Balancer //////
@@ -82,5 +115,11 @@ export class InfraStack extends Stack {
     // Populates the "multiValueHeaders" attribute in the ALBTargetGroupRequest sent from the ALB
     // as opposed to the "headers" attribute.
     lambdaTarget.setAttribute("lambda.multi_value_headers.enabled", "true")
+
+    new CfnOutput(this, "ALBPublicDnsName", {
+      exportName: "ALB-DNS-name",
+      description: "The public DNS name to reach the ALB",
+      value: alb.loadBalancerDnsName,
+    })
   }
 }
