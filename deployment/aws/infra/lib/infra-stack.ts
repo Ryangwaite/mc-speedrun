@@ -5,9 +5,15 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elb from 'aws-cdk-lib/aws-elasticloadbalancingv2'
 import * as elbtargets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets'
 import * as efs from 'aws-cdk-lib/aws-efs'
+import * as ecs from 'aws-cdk-lib/aws-ecs'
 import {CfnOutput} from 'aws-cdk-lib';
 
 const QUESTION_SET_LOADER_ENV_VAR_PREFIX = "MC_SPEEDRUN_"
+
+// TODO: Pass these in through secrets manager
+const JWT_SECRET = "secret"
+const JWT_AUDIENCE = "http://0.0.0.0/"
+const JWT_ISSUER = "http://sign-on/"
 
 export class InfraStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -32,6 +38,10 @@ export class InfraStack extends Stack {
       ]
     })
 
+    // TODO: So that the ECS Fargate can pull from ECR without going through the public internet
+    // AWS PrivateLink endpoints need to be configured in the VPC
+    // See: https://stackoverflow.com/a/66802973
+
     ////// EFS //////
     const questionSetStore = new efs.FileSystem(this, "QuestionSetStore", {
       vpc: vpc,
@@ -43,7 +53,7 @@ export class InfraStack extends Stack {
     })
     // TODO: Doesn't look like there are any mount targets available??
 
-    ////// Lambda //////
+    ////// Question Set Loader //////
     const questionSetStoreLoaderAP = questionSetStore.addAccessPoint("QuestionSetLoaderAccessPoint", {
       // NOTE: Even though there is only one type of data stored in EFS and we could theoretically use
       // the root path, the permissions are unable to be changed so that a non-root user can write to
@@ -64,7 +74,7 @@ export class InfraStack extends Stack {
     const quizDirPath = "/mnt/quizzes"
     const questionSetLoaderLambda = new lambda.Function(this, "QuestionSetLoader", {
       filesystem: lambda.FileSystem.fromEfsAccessPoint(questionSetStoreLoaderAP, quizDirPath),
-      vpc: vpc, // Put in data subnets and create a Security Group. TODO: Make this clearer
+      vpc: vpc, // Put in data subnets and create a Security Group. TODO: Move to application subnets
       runtime: lambda.Runtime.GO_1_X,
       code: lambda.Code.fromAsset("../../../question-set-loader/", {
         bundling: {
@@ -76,11 +86,48 @@ export class InfraStack extends Stack {
       handler: "lambda",
       environment: {
         [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}LOADER_DST_DIR`]: quizDirPath,
-        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_SECRET`]: "secret",  // FIXME: Replace with AWS secrets manager
-        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_AUDIENCE`]: "audience",
-        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_ISSUER`]: "issuer",
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_SECRET`]: JWT_SECRET,
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_AUDIENCE`]: JWT_AUDIENCE,
+        [`${QUESTION_SET_LOADER_ENV_VAR_PREFIX}JWT_ISSUER`]: JWT_ISSUER,
       },
-      
+    })
+
+    ////// Sign On //////
+    const signOnPort = 80
+    const signOnTaskDefinition = new ecs.FargateTaskDefinition(this, "SignOnTask", {
+      cpu: 256,
+      memoryLimitMiB: 512,
+    })
+    const signOnContainer = signOnTaskDefinition.addContainer("SignOnContainer", {
+      image: ecs.ContainerImage.fromAsset("../../../sign-on/", {
+        file: "Dockerfile",
+      }),
+      portMappings: [{
+        containerPort: signOnPort,
+        hostPort: signOnPort,
+        protocol: ecs.Protocol.TCP,
+      }],
+      environment: {
+        JWT_SECRET,
+        JWT_AUDIENCE,
+        JWT_ISSUER,
+        SIGN_ON_PORT: signOnPort.toString(),
+      },
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: "mc-speedrun",
+      })
+    })
+
+    const ecsCluster = new ecs.Cluster(this, "Cluster", {
+      vpc: vpc,
+    })
+
+    const signOnService = new ecs.FargateService(this, "SignOnService", {
+      vpcSubnets: {subnets: vpc.publicSubnets},
+      assignPublicIp: true, // Enables it to route through the internet gateway through to ECR to pull the image
+      cluster: ecsCluster,
+      taskDefinition: signOnTaskDefinition,
+      desiredCount: 1,  // TODO: Tune tasks count
     })
 
     ////// Application Load Balancer //////
@@ -102,7 +149,7 @@ export class InfraStack extends Stack {
       })
     })
 
-    const lambdaTarget = listener.addTargets("/upload", {
+    const questionSetLoaderTarget = listener.addTargets("/upload", {
       priority: 10,
       conditions: [
         elb.ListenerCondition.pathPatterns(["/upload/*"]),
@@ -114,7 +161,23 @@ export class InfraStack extends Stack {
     })
     // Populates the "multiValueHeaders" attribute in the ALBTargetGroupRequest sent from the ALB
     // as opposed to the "headers" attribute.
-    lambdaTarget.setAttribute("lambda.multi_value_headers.enabled", "true")
+    questionSetLoaderTarget.setAttribute("lambda.multi_value_headers.enabled", "true")
+
+    const signOnTarget = listener.addTargets("/sign-on", {
+      priority: 11,
+      protocol: elb.ApplicationProtocol.HTTP,
+      conditions: [
+        elb.ListenerCondition.pathPatterns(["/sign-on/*"]),
+      ],
+      // TODO: Currently failing healthcheck, need to add one
+      targets: [
+        signOnService.loadBalancerTarget({
+          containerName: signOnContainer.containerName,
+          containerPort: signOnPort,
+          protocol: ecs.Protocol.TCP,
+        })
+      ],
+    })
 
     new CfnOutput(this, "ALBPublicDnsName", {
       exportName: "ALB-DNS-name",

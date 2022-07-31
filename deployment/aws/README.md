@@ -25,7 +25,7 @@ cdk bootstrap aws://<aws-account>/us-east-1
 ```
 Unbootstrapping the cdk environment:
 ```
-aws cloudformation delete-stack --stack-name CDKToolkit --profile mc-speedrun-iamadmin
+aws cloudformation delete-stack --stack-name CDKToolkit
 ```
 Also need to delete the `cdk-hnb659fds-assets-xxxxxxxx-us-east-1` bucket as well.
 
