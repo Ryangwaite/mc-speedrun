@@ -1,4 +1,4 @@
-import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -169,7 +169,6 @@ export class InfraStack extends Stack {
       conditions: [
         elb.ListenerCondition.pathPatterns(["/sign-on/*"]),
       ],
-      // TODO: Currently failing healthcheck, need to add one
       targets: [
         signOnService.loadBalancerTarget({
           containerName: signOnContainer.containerName,
@@ -177,6 +176,14 @@ export class InfraStack extends Stack {
           protocol: ecs.Protocol.TCP,
         })
       ],
+      healthCheck: {
+        path: "/ping",
+        healthyHttpCodes: "200",
+        // NOTE: For consistency, these should match that of the Docker containers HEALTHCHECK
+        interval: Duration.seconds(5),
+        timeout: Duration.seconds(2),
+        unhealthyThresholdCount: 3, // corresponds to --retries for Docker
+      }
     })
 
     new CfnOutput(this, "ALBPublicDnsName", {

@@ -1,4 +1,5 @@
 package com.ryangwaite
+import com.ryangwaite.routes.healthCheck
 import com.ryangwaite.routes.host
 import com.ryangwaite.routes.participant
 import com.ryangwaite.utilities.IRepository
@@ -33,4 +34,5 @@ fun Application.module() {
 fun Application.configureRouting(repository: IRepository) {
     participant(repository)
     host(repository)
+    healthCheck()
 }
