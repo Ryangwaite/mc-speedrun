@@ -6,6 +6,7 @@ import com.ryangwaite.notify.INotifier
 import com.ryangwaite.notify.RabbitMqNotifier
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.redis.RedisClient
+import com.ryangwaite.routes.healthCheck
 import com.ryangwaite.routes.speedRun
 import com.ryangwaite.subscribe.ISubscribe
 import io.ktor.server.application.*
@@ -45,6 +46,7 @@ fun Application.module(testing: Boolean = false) {
  */
 fun Application.configureRouting(dataStore: IDataStore, subscriber: ISubscribe, publisher: IPublish, notifier: INotifier) {
     speedRun(dataStore, subscriber, publisher, notifier)
+    healthCheck()
 }
 
 fun Application.configureQuizLoader() {
