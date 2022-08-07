@@ -2,8 +2,7 @@ package com.ryangwaite
 
 import com.ryangwaite.connection.IPublish
 import com.ryangwaite.loader.QuizLoader
-import com.ryangwaite.notify.INotifier
-import com.ryangwaite.notify.RabbitMqNotifier
+import com.ryangwaite.notify.*
 import com.ryangwaite.redis.IDataStore
 import com.ryangwaite.redis.RedisClient
 import com.ryangwaite.routes.healthCheck
@@ -14,17 +13,27 @@ import io.ktor.server.config.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.cors.*
 import io.ktor.server.websocket.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
-    install(WebSockets)
+
+    // Load notifier
+    val notifier = when(val notifierType = environment.config.property("notify.destination_type").getString()) {
+        "rabbitmq" -> RabbitMqNotifier(environment.config)
+        "sqs" -> SqsNotifier(environment.config)
+        else -> throw ApplicationConfigurationException("Invalid notifier destination type '$notifierType'")
+    }
 
     configureQuizLoader()
 
-    val notifier = RabbitMqNotifier(environment.config)
+    notifier.notify(Event("test", "somwhere", "id", Clock.System.now(), EventData("quizid")))
 
     val redisClient = RedisClient(environment.config)
+
+    install(WebSockets)
     configureRouting(
         redisClient,
         redisClient,

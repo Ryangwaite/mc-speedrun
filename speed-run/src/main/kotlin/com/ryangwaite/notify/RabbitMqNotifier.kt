@@ -1,42 +1,26 @@
 package com.ryangwaite.notify
 
-import com.rabbitmq.client.Connection
-import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.client.MessageProperties
+import com.rabbitmq.jms.admin.RMQConnectionFactory
+import com.rabbitmq.jms.admin.RMQDestination
 import io.ktor.server.config.*
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToStream
-import java.io.ByteArrayOutputStream
+import javax.jms.Destination
 
-class RabbitMqNotifier(val config: ApplicationConfig): INotifier {
-
-    private val queueName = config.property("rabbitmq.queue_name").getString()
-
-    private val factory: ConnectionFactory = ConnectionFactory().apply {
-        host = config.property("rabbitmq.host").getString()
-        port = config.property("rabbitmq.port").getString().toInt()
-        username = config.property("rabbitmq.username").getString()
-        password = config.property("rabbitmq.password").getString()
+/**
+ * Notifier for sending messages to RabbitMQ levaraging the Java
+ * Message Service API
+ */
+class RabbitMqNotifier(val config: ApplicationConfig): JmsNotifier() {
+    override val connectionFactory = RMQConnectionFactory().apply {
+        host = config.property("notify.rabbitmq.host").getString()
+        port = config.property("notify.rabbitmq.port").getString().toInt()
+        username = config.property("notify.rabbitmq.username").getString()
+        password = config.property("notify.rabbitmq.password").getString()
     }
-    private val connection: Connection = factory.newConnection()
 
-    /**
-     * Publishes the [event] on the RabbitMQ queue
-     */
-    @ExperimentalSerializationApi
-    override fun notify(event: Event) {
-        connection.createChannel().use {channel ->
-            channel.queueDeclare(this.queueName, true, false, false, null)
-
-            val eventByteStream = ByteArrayOutputStream()
-            Json.encodeToStream(event, eventByteStream)
-            channel.basicPublish(
-                "",
-                this.queueName,
-                MessageProperties.PERSISTENT_TEXT_PLAIN,
-                eventByteStream.toByteArray(),
-            )
+    override val destination: Destination
+    init {
+        val queueName = config.property("notify.queue_name").getString()
+        destination = RMQDestination(queueName, true, false).apply {
         }
     }
 }

@@ -32,7 +32,19 @@ application {
 }
 
 repositories {
-    mavenCentral()
+    mavenCentral {
+        content {
+            // Maven central has a directory for resolving javax.jms:jms:1.1, however
+            // there's no .jar present and gradle gives up at that point without checking
+            // the jboss repo below. The following line turns off searching the module
+            // for this repo to avoid the problem.
+            excludeModule("javax.jms", "jms")
+        }
+    }
+    // To resolve javax.jms:jms:1.1
+    maven {
+        url = uri("https://repository.jboss.org/maven2")
+    }
 }
 
 dependencies {
@@ -45,6 +57,10 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("org.redisson:redisson:3.17.0")
     implementation("com.rabbitmq:amqp-client:5.14.2")
+    implementation("com.rabbitmq.jms:rabbitmq-jms:2.5.0")
+    implementation("software.amazon.awssdk:sdk-core:2.17.247")
+    implementation("software.amazon.awssdk:sqs:2.17.247")
+    implementation("com.amazonaws:amazon-sqs-java-messaging-lib:2.0.0")
     implementation("io.reactivex.rxjava3:rxjava:3.1.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.6.1-native-mt")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")

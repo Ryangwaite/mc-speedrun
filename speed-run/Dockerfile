@@ -1,5 +1,7 @@
 FROM gradle:7.3.0-jdk11-alpine AS builder
 
+# TODO: Only copy whats necessary to limit the probability that gradle needs to be downloaded on subsequent builds
+
 # Use the local sources but take note of the .dockerignore
 # which ignores host machine artifacts so we can build totally fresh in here
 COPY . ./
