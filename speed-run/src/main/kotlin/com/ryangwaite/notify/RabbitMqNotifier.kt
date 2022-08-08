@@ -11,13 +11,13 @@ import java.io.ByteArrayOutputStream
 
 class RabbitMqNotifier(val config: ApplicationConfig): INotifier {
 
-    private val queueName = config.property("rabbitmq.queue_name").getString()
+    private val queueName = config.property("notify.queue_name").getString()
 
     private val factory: ConnectionFactory = ConnectionFactory().apply {
-        host = config.property("rabbitmq.host").getString()
-        port = config.property("rabbitmq.port").getString().toInt()
-        username = config.property("rabbitmq.username").getString()
-        password = config.property("rabbitmq.password").getString()
+        host = config.property("notify.rabbitmq.host").getString()
+        port = config.property("notify.rabbitmq.port").getString().toInt()
+        username = config.property("notify.rabbitmq.username").getString()
+        password = config.property("notify.rabbitmq.password").getString()
     }
     private val connection: Connection = factory.newConnection()
 

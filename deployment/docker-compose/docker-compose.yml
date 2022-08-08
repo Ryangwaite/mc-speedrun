@@ -45,6 +45,7 @@ services:
       # speed-run/ as context and dockerfile path relative to it
       context: ../../speed-run/
       dockerfile: Dockerfile
+      target: "base"
     environment:
       - SPEED_RUN_PORT=80
       - JWT_SECRET=dockercomposesecret
@@ -53,9 +54,11 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - QUIZ_DIRECTORY=/quiz-questions
-      - RABBITMQ_HOST=quiz-completion-queue
-      - RABBITMQ_USERNAME=admin
-      - RABBITMQ_PASSWORD=passwd
+      - NOTIFY_RABBITMQ_HOST=quiz-completion-queue
+      - NOTIFY_RABBITMQ_USERNAME=admin
+      - NOTIFY_RABBITMQ_PASSWORD=passwd
+      - NOTIFY_QUEUE_NAME=quiz-complete
+      - NOTIFY_DESTINATION_TYPE=rabbitmq
     volumes:
       - type: volume
         source: quiz-questions

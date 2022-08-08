@@ -48,6 +48,7 @@ dependencies {
     implementation("io.reactivex.rxjava3:rxjava:3.1.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.6.1-native-mt")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
+    implementation("software.amazon.awssdk:sqs:2.17.247")
 
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1-native-mt")

@@ -35,3 +35,10 @@ If jdk11 is used (which matches my local dev environment) then it works.
 TODO: Determine consistent set of jdk/jvms across all environments.
 
 https://stackoverflow.com/questions/61267495/exception-in-thread-main-java-lang-nosuchmethoderror-java-nio-bytebuffer-flip
+
+## Deploying to AWS ECS (fargate)
+
+- Use a single task definition for the sign-on service, another one for the speed-run service
+- Use a service to manage the task definition which will help maintain desired number of tasks
+- To run the container in a private subnet and be able to pull the image from ecr, i think i need to give ecr a vpc interface endpoint
+- The ECR registry will be private and need to be authenticated with. The credentials should be stored in secrets manager.

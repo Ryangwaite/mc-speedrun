@@ -1,4 +1,4 @@
-import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -6,7 +6,8 @@ import * as elb from 'aws-cdk-lib/aws-elasticloadbalancingv2'
 import * as elbtargets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets'
 import * as efs from 'aws-cdk-lib/aws-efs'
 import * as ecs from 'aws-cdk-lib/aws-ecs'
-import {CfnOutput} from 'aws-cdk-lib';
+import * as sqs from 'aws-cdk-lib/aws-sqs'
+import { Elasticache } from './elasticache';
 
 const QUESTION_SET_LOADER_ENV_VAR_PREFIX = "MC_SPEEDRUN_"
 
@@ -42,18 +43,23 @@ export class InfraStack extends Stack {
     // AWS PrivateLink endpoints need to be configured in the VPC
     // See: https://stackoverflow.com/a/66802973
 
-    ////// EFS //////
+    ////// ECS Fargate //////
+    const ecsCluster = new ecs.Cluster(this, "Cluster", {
+      vpc: vpc,
+    })
+
+    ////// Question Set Store //////
     const questionSetStore = new efs.FileSystem(this, "QuestionSetStore", {
       vpc: vpc,
       vpcSubnets: {subnets: vpc.isolatedSubnets},
       performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
       throughputMode: efs.ThroughputMode.BURSTING,
       removalPolicy: RemovalPolicy.DESTROY,
-
     })
-    // TODO: Doesn't look like there are any mount targets available??
+    // Allow speed-run ECS to mount EFS. TODO: Constrain this a bit further to the security group
+    questionSetStore.connections.allowFromAnyIpv4(ec2.Port.tcp(2049))
 
-    ////// Question Set Loader //////
+    // ////// Question Set Loader //////
     const questionSetStoreLoaderAP = questionSetStore.addAccessPoint("QuestionSetLoaderAccessPoint", {
       // NOTE: Even though there is only one type of data stored in EFS and we could theoretically use
       // the root path, the permissions are unable to be changed so that a non-root user can write to
@@ -118,10 +124,6 @@ export class InfraStack extends Stack {
       })
     })
 
-    const ecsCluster = new ecs.Cluster(this, "Cluster", {
-      vpc: vpc,
-    })
-
     const signOnService = new ecs.FargateService(this, "SignOnService", {
       vpcSubnets: {subnets: vpc.publicSubnets},
       assignPublicIp: true, // Enables it to route through the internet gateway through to ECR to pull the image
@@ -130,8 +132,79 @@ export class InfraStack extends Stack {
       desiredCount: 1,  // TODO: Tune tasks count
     })
 
-    ////// Application Load Balancer //////
+    ////// Speed Run Cache //////
+    const speedRunCache = new Elasticache(this, "SpeedRunCache", {
+      vpc: vpc,
+      vpcSubnets: {subnets: vpc.isolatedSubnets},
+      redisPort: 6379,
+    })
 
+    ////// Completion Job Queue //////
+    const completionJobQ = new sqs.Queue(this, "CompletionJobQueue", {
+      fifo: true, // TODO: Confirm if client requires this
+      // This is a single-producer/consumer system where each msg body is unique
+      contentBasedDeduplication: true,
+    })
+
+    ///// Speed Run /////
+    const speedRunPort = 80
+    const speedRunTaskDefinition = new ecs.FargateTaskDefinition(this, "SpeedRunTask", {
+      cpu: 256,
+      memoryLimitMiB: 512,
+    })
+    speedRunTaskDefinition.addVolume({
+      name: "question-set-store",
+      efsVolumeConfiguration: {
+        // rootDirectory: "/",  // TODO: Set back to /quizzes
+        fileSystemId: questionSetStore.fileSystemId,
+        transitEncryption: "ENABLED",
+        authorizationConfig: {
+          accessPointId: questionSetStoreLoaderAP.accessPointId,
+        }
+      },
+    })
+    completionJobQ.grantSendMessages(speedRunTaskDefinition.taskRole)
+
+    const speedRunContainer = speedRunTaskDefinition.addContainer("SpeedRunContainer", {
+      image: ecs.ContainerImage.fromAsset("../../../speed-run/", {
+        file: "Dockerfile",
+        target: "AWS",
+      }),
+      portMappings: [{
+        containerPort: speedRunPort,
+        hostPort: speedRunPort,
+        protocol: ecs.Protocol.TCP,
+      }],
+      environment: {
+        JWT_SECRET,
+        JWT_AUDIENCE,
+        JWT_ISSUER,
+        SPEED_RUN_PORT: speedRunPort.toString(),
+        REDIS_HOST: speedRunCache.clusterEndpointAddress,
+        REDIS_PORT: speedRunCache.clusterEndpointPort,
+        QUIZ_DIRECTORY: "/quiz-questions",
+        NOTIFY_DESTINATION_TYPE: "sqs",
+        NOTIFY_QUEUE_NAME: completionJobQ.queueName,
+      },
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: "mc-speedrun",
+      }),
+    })
+    speedRunContainer.addMountPoints({
+      containerPath: "/quiz-questions",
+      readOnly: false,
+      sourceVolume: "question-set-store", // Must match with the volume name on the task definition
+    })
+
+    const speedRunService = new ecs.FargateService(this, "SpeedRunService", {
+      vpcSubnets: {subnets: vpc.publicSubnets},
+      assignPublicIp: true, // Enables it to route through the internet gateway through to ECR to pull the image
+      cluster: ecsCluster,
+      taskDefinition: speedRunTaskDefinition,
+      desiredCount: 1,  // TODO: Tune tasks count
+    })
+
+    ////// Application Load Balancer //////
     const alb = new elb.ApplicationLoadBalancer(this, "ALB", {
       vpc: vpc,
       internetFacing: true, // TODO: Might need to change this once cloudfront is put in front
@@ -173,6 +246,29 @@ export class InfraStack extends Stack {
         signOnService.loadBalancerTarget({
           containerName: signOnContainer.containerName,
           containerPort: signOnPort,
+          protocol: ecs.Protocol.TCP,
+        })
+      ],
+      healthCheck: {
+        path: "/ping",
+        healthyHttpCodes: "200",
+        // NOTE: For consistency, these should match that of the Docker containers HEALTHCHECK
+        interval: Duration.seconds(5),
+        timeout: Duration.seconds(2),
+        unhealthyThresholdCount: 3, // corresponds to --retries for Docker
+      }
+    })
+
+    const speedRunTarget = listener.addTargets("/speed-run", {
+      priority: 12,
+      protocol: elb.ApplicationProtocol.HTTP,
+      conditions: [
+        elb.ListenerCondition.pathPatterns(["/speed-run/*"]),
+      ],
+      targets: [
+        speedRunService.loadBalancerTarget({
+          containerName: speedRunContainer.containerName,
+          containerPort: speedRunPort,
           protocol: ecs.Protocol.TCP,
         })
       ],

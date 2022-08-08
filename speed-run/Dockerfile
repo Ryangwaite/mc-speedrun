@@ -6,7 +6,7 @@ COPY . ./
 
 RUN ./gradlew installDist
 
-FROM openjdk:11
+FROM openjdk:11 AS base
 
 COPY --from=builder /home/gradle/build/install/com.ryangwaite.speed-run /app/
 
@@ -16,3 +16,14 @@ HEALTHCHECK --interval=5s --timeout=2s --start-period=5s --retries=3 CMD \
 
 WORKDIR /app/bin
 ENTRYPOINT ["./com.ryangwaite.speed-run"]
+
+FROM base as AWS
+
+# Install botocore so that the NFS mount target DNS address can be resolved to an IP
+RUN apt-get update && apt-get install --yes \
+    python3-pip
+
+RUN pip3 install botocore
+
+# Create mount point for EFS quiz directory
+RUN mkdir /quiz-questions
