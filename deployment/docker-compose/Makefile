@@ -30,6 +30,8 @@ clean:
 .PHONY: build
 # Build all components for instantiating the application
 build:
+	@# Make the UI assets first
+	@$(MAKE) -C ../../ui build-prod
 	@docker-compose build --parallel
 
 
