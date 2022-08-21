@@ -1,10 +1,9 @@
-import { aws_elasticache, CfnOutput } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as elasticache from 'aws-cdk-lib/aws-elasticache'
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 
-export interface ElasticacheProps {
-    vpc: ec2.Vpc,
+export interface SpeedRunCacheProps {
+    vpc: ec2.IVpc,
     vpcSubnets: ec2.SubnetSelection,
     redisPort: number,
 }
@@ -16,12 +15,12 @@ export interface ElasticacheProps {
  *
  * Creates Redis Elasticache running in standalone node mode.
  */
-export class Elasticache extends Construct {
+export class SpeedRunCache extends Construct {
 
     public readonly clusterEndpointAddress: string
     public readonly clusterEndpointPort: string
 
-    constructor(scope: Construct, id: string, props: ElasticacheProps) {
+    constructor(scope: Construct, id: string, props: SpeedRunCacheProps) {
         super(scope, id)
 
         // Notes
