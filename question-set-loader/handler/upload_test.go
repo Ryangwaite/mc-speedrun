@@ -93,7 +93,7 @@ func TestUploadQuizHandler_wrong_method(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPatch, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPatch, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 
 	token, err := testutils.BuildJwt(testutils.JwtTestParams{
@@ -144,7 +144,7 @@ func TestUploadQuizHandler_absent_authorization_header(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 
 	uploadServer := Upload {
@@ -183,7 +183,7 @@ func TestUploadQuizHandler_invalid_authorization_format(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 	req.Header.Add("Authorization", "Invalid format")
 
@@ -230,7 +230,7 @@ func TestUploadQuizHandler_invalid_auth_token(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 
 	token, err := testutils.BuildJwt(testutils.JwtTestParams{
@@ -288,7 +288,7 @@ func TestUploadQuizHandler_invalid_form_key(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 
 	token, err := testutils.BuildJwt(testutils.JwtTestParams{
@@ -346,7 +346,7 @@ func TestUploadQuizHandler_incorrectly_formatted_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 
 	token, err := testutils.BuildJwt(testutils.JwtTestParams{
@@ -405,7 +405,7 @@ func TestUploadQuizHandler_fail_to_save_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 
 	token, err := testutils.BuildJwt(testutils.JwtTestParams{
@@ -446,7 +446,7 @@ func TestUploadQuizHandler_fail_to_save_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read response body bytes: %v", err)
 	}
-	expectedError := "Failed to save file"
+	expectedError := "failed to save file"
 	actualError := string(bodyBytes)
 	if !strings.Contains(actualError, expectedError) {
 		t.Fatalf("Response body '%s' did not contain error message '%s'", actualError, expectedError)
@@ -467,7 +467,7 @@ func TestUploadQuizHandler_success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request body: %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/upload/quiz", body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload/quiz", body)
 	req.Header.Add("Content-Type", contentTypeValue)
 
 	token, err := testutils.BuildJwt(testutils.JwtTestParams{

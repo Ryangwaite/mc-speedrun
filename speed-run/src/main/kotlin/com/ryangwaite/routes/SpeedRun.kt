@@ -27,7 +27,7 @@ fun Application.speedRun(dataStore: IDataStore, subscriber: ISubscribe, publishe
         val connectionManagerChannel = this@speedRun.connectionManagerActor(dataStore, publisher, notificationChannel)
         val subscriberChannel = this@speedRun.subscriberActor(dataStore, subscriber, connectionManagerChannel)
 
-        webSocket("/speed-run/{quiz_id}/ws") {
+        webSocket("/api/speed-run/{quiz_id}/ws") {
 
             // Validate JWT token
             val token = call.request.queryParameters["token"]

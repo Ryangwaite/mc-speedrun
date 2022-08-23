@@ -1,6 +1,6 @@
 {
   "httpMethod": "POST",
-  "path": "/upload/quiz",
+  "path": "/api/upload/quiz",
   "multiValueHeaders": {
       "accept": ["*/*"],
       "authorization": ["Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhdWRpZW5jZSIsImlzSG9zdCI6dHJ1ZSwicXVpeklkIjoiMGYzYjQ5MTQiLCJpc3MiOiJpc3N1ZXIiLCJleHAiOjE2OTAyNjk5NjMsImlhdCI6MTY1ODczMzk2M30.BNkBaDOiMsYus9OPENbyAcMFTneIjBBb2yg3_9W77Yo"],

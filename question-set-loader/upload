@@ -27,7 +27,7 @@ to question-set-loader.
     if not os.path.exists(file_path) or not os.path.isfile(file_path):
         sys.exit(f"File '{file_path}' doesn't exist or is a directory")
 
-    response = requests.post(f"http://localhost/sign-on/host")
+    response = requests.post(f"https://localhost/api/sign-on/host", verify=False)
     if response.status_code != 200:
         sys.exit(f"Failed to get JWT token from sign-on service. Error: {response.text}")
 
@@ -35,9 +35,9 @@ to question-set-loader.
     jwt_token = response_json["access_token"]
     
     # Upload file
-    q_set_loader_url = f"http://{parsed_args.address}/upload/quiz"
+    q_set_loader_url = f"https://{parsed_args.address}/api/upload/quiz"
     print(f"Uploading '{file_path}' to '{q_set_loader_url}' with token '{jwt_token}'...")
-    response = requests.post(q_set_loader_url, headers={"Authorization": f"Bearer {jwt_token}"}, files={"file": open(file_path, "rb")})
+    response = requests.post(q_set_loader_url, headers={"Authorization": f"Bearer {jwt_token}"}, files={"file": open(file_path, "rb")}, verify=False)
     if response.status_code != 201:
         sys.exit(f"Failed to upload: {response.text}")
     print("Done")

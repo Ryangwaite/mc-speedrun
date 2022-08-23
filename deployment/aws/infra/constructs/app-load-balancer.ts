@@ -24,33 +24,33 @@ export interface AppLoadBalancerProps {
 export class AppLoadBalancer extends Construct {
 
     public readonly loadBalancerDnsName: string
+    public readonly loadBalancer: elb.IApplicationLoadBalancer
 
     constructor(scope: Construct, id: string, props: AppLoadBalancerProps) {
         super(scope, id)
 
-        const alb = new elb.ApplicationLoadBalancer(this, "ALB", {
+        this.loadBalancer = new elb.ApplicationLoadBalancer(this, "ALB", {
             vpc: props.vpc,
             internetFacing: true, // Required to serve as an origin for the cloudfront distribution
             vpcSubnets: { subnets: props.vpc.publicSubnets } // Load balancer across all public subnets
         })
 
-        this.loadBalancerDnsName = alb.loadBalancerDnsName
+        this.loadBalancerDnsName = this.loadBalancer.loadBalancerDnsName
 
-        const listener = alb.addListener("Listener", {
-            // TODO: Update for HTTPS
+        const listener = this.loadBalancer.addListener("Listener", {
             port: 80,
             protocol: elb.ApplicationProtocol.HTTP,
-            open: true, // Allow anyone on the internet to reach it. TODO: Look into restricting this once cloudfront is in front
+            open: true, // Allow anyone on the internet to reach it. TODO: Restrict such that only cloudfront can reach it
             defaultAction: elb.ListenerAction.fixedResponse(404, {
                 contentType: "text/html",
                 messageBody: "<h1>Nothing here</h1>", // TODO: Make a proper not found page
             })
         })
 
-        const questionSetLoaderTarget = listener.addTargets("/upload", {
+        const questionSetLoaderTarget = listener.addTargets("/api/upload", {
             priority: 10,
             conditions: [
-                elb.ListenerCondition.pathPatterns(["/upload/*"]),
+                elb.ListenerCondition.pathPatterns(["/api/upload/*"]),
             ],
             targets: [
                 new elbtargets.LambdaTarget(props.questionSetLoaderLambda)
@@ -61,11 +61,11 @@ export class AppLoadBalancer extends Construct {
         // as opposed to the "headers" attribute.
         questionSetLoaderTarget.setAttribute("lambda.multi_value_headers.enabled", "true")
 
-        const signOnTarget = listener.addTargets("/sign-on", {
+        const signOnTarget = listener.addTargets("/api/sign-on", {
             priority: 11,
             protocol: elb.ApplicationProtocol.HTTP,
             conditions: [
-                elb.ListenerCondition.pathPatterns(["/sign-on/*"]),
+                elb.ListenerCondition.pathPatterns(["/api/sign-on/*"]),
             ],
             targets: [
                 props.signOn.service.loadBalancerTarget({
@@ -75,7 +75,7 @@ export class AppLoadBalancer extends Construct {
                 })
             ],
             healthCheck: {
-                path: "/ping",
+                path: "/api/ping",
                 healthyHttpCodes: "200",
                 // NOTE: For consistency, these should match that of the Docker containers HEALTHCHECK
                 interval: Duration.seconds(5),
@@ -84,11 +84,11 @@ export class AppLoadBalancer extends Construct {
             }
         })
 
-        const speedRunTarget = listener.addTargets("/speed-run", {
+        const speedRunTarget = listener.addTargets("/api/speed-run", {
             priority: 12,
             protocol: elb.ApplicationProtocol.HTTP,
             conditions: [
-                elb.ListenerCondition.pathPatterns(["/speed-run/*"]),
+                elb.ListenerCondition.pathPatterns(["/api/speed-run/*"]),
             ],
             targets: [
                 props.speedRun.service.loadBalancerTarget({
@@ -98,7 +98,7 @@ export class AppLoadBalancer extends Construct {
                 })
             ],
             healthCheck: {
-                path: "/ping",
+                path: "/api/ping",
                 healthyHttpCodes: "200",
                 // NOTE: For consistency, these should match that of the Docker containers HEALTHCHECK
                 interval: Duration.seconds(5),

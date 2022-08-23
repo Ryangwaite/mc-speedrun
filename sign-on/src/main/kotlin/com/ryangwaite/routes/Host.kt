@@ -14,7 +14,7 @@ import java.util.*
 
 fun Application.host(repository: IRepository) {
     routing {
-        post("/sign-on/host") {
+        post("/api/sign-on/host") {
 
             val quizId = generateId()
             repository.createQuiz(quizId)

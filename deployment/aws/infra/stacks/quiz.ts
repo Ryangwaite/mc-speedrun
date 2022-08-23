@@ -11,6 +11,7 @@ import { SpeedRunCache } from "../constructs/speed-run-cache";
 import { AppLoadBalancer } from "../constructs/app-load-balancer";
 import { SpeedRun } from "../constructs/speed-run";
 import { Frontend } from "../constructs/frontend";
+import { CloudfrontDistro } from "../constructs/cloudfront";
 
 interface QuizStackProps extends StackProps {
     vpc: ec2.IVpc
@@ -98,5 +99,16 @@ export class QuizStack extends Stack {
         })
 
         const frontend = new Frontend(this, "Frontend", {})
+
+        const distribution = new CloudfrontDistro(this, "CloudfrontDistrubution", {
+            frontendBucket: frontend.bucket,
+            loadBalancer: appLoadBalancer.loadBalancer
+        })
+
+        new CfnOutput(this, "CloudfrontDnsAddress", {
+            exportName: "CF-DNS-name",
+            description: "The public DNS name to reach the cloudfront distribution",
+            value: `https://${distribution.domainName}`,
+        })
     }
 }

@@ -84,7 +84,7 @@ class SpeedRunTest {
             install(ClientWebSockets)
         }
         val quizId = "12345"
-        wsClient.webSocket("/speed-run/$quizId/ws") {
+        wsClient.webSocket("/api/speed-run/$quizId/ws") {
             assertEquals("Missing 'token' query parameter", closeReason.await()?.message)
         }
     }
@@ -100,7 +100,7 @@ class SpeedRunTest {
         }
         val invalidToken = createTestHostJwtToken(secret = JWT_TEST_SECRET + "invalid")
         val quizId = "12345"
-        client.webSocket("/speed-run/$quizId/ws?token=$invalidToken") {
+        client.webSocket("/api/speed-run/$quizId/ws?token=$invalidToken") {
             assertEquals("Invalid token '${invalidToken}' received. Reason: The Token's Signature resulted invalid when verified using the Algorithm: HmacSHA256",
                 closeReason.await()?.message)
         }
@@ -121,7 +121,7 @@ class SpeedRunTest {
         }
 
         val invalidToken = createTestHostJwtToken(isHost = isHost, quizId = quizId)
-        client.webSocket("/speed-run/12345/ws?token=$invalidToken") {
+        client.webSocket("/api/speed-run/12345/ws?token=$invalidToken") {
             // The first frame received should be a close due to an error
             assertTrue("Invalid token '${invalidToken}' received." in closeReason.await()?.message!!)
         }

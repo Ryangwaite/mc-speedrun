@@ -49,7 +49,7 @@ export default class WrappedWebsocket {
 
         let origin = getSpeedRunBaseUrl()
         if (!origin) origin = `wss://${window.location.host}`
-        const url = `${origin}/speed-run/${quizId}/ws?token=${token}`
+        const url = `${origin}/api/speed-run/${quizId}/ws?token=${token}`
 
         this.socket = new WebSocket(url)
         this.socket.onerror = (evt) => {

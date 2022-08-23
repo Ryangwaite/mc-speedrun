@@ -30,8 +30,8 @@ via 'websocat' and hooks up stdin/stdout to it
     jwt_token = response_json["access_token"]
     
     # connect to websocket
-    ws_address = f"ws://{parsed_args.address}/speed-run/{parsed_args.access_code}/ws?token={jwt_token}"
-    args = ["websocat", ws_address]
+    ws_address = f"wss://{parsed_args.address}/api/speed-run/{parsed_args.access_code}/ws?token={jwt_token}"
+    args = ["websocat", "-vv", ws_address]
     print(f"Connecting to websocket '{ws_address}' with token '{jwt_token}'")
     print("-------------------------------------")
     os.execvp("websocat", args)

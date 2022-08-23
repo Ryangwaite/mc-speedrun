@@ -6,7 +6,7 @@ import { HOST_TOKEN, PARTICIPANT_TOKEN } from './test-utils';
  * in the test setup themselves.
  */
 export const signOnHandlers = [
-    rest.post('/sign-on/host', async (req, res, ctx) => {
+    rest.post('/api/sign-on/host', async (req, res, ctx) => {
         const {token, expiresIn} = HOST_TOKEN
         return res(ctx.json({
             access_token: token,
@@ -14,7 +14,7 @@ export const signOnHandlers = [
             expires_in: expiresIn,
         }))
     }),
-    rest.post('/sign-on/:quizId/join', (req, res, ctx) => {
+    rest.post('/api/sign-on/:quizId/join', (req, res, ctx) => {
         // const {quizId} = req.params
         const {token, expiresIn} = PARTICIPANT_TOKEN
         return res(ctx.json({
@@ -26,7 +26,7 @@ export const signOnHandlers = [
 ]
 
 export const quizUploadHandlers = [
-    rest.post('/upload/quiz', async (req, res, ctx) => {
+    rest.post('/api/upload/quiz', async (req, res, ctx) => {
         const authHeader = req.headers.get("Authorization")
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res(

@@ -9,7 +9,7 @@ import io.ktor.server.routing.*
  */
 fun Application.healthCheck() {
     routing {
-        get("/ping") {
+        get("/api/ping") {
             call.respondText { "pong" }
         }
     }

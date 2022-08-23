@@ -30,7 +30,7 @@ interface IAuthorizationResponse {
 }
 
 export async function postHostQuiz(): Promise<IAuthorizationResponse> {
-    const response = await fetchSignOn(`/sign-on/host`, {
+    const response = await fetchSignOn(`/api/sign-on/host`, {
         method: "POST",
     })
 
@@ -43,7 +43,7 @@ export async function postHostQuiz(): Promise<IAuthorizationResponse> {
 }
 
 export async function postJoinQuiz(quizId: string): Promise<IAuthorizationResponse> {
-    const response = await fetchSignOn(`/sign-on/${quizId}/join`, {
+    const response = await fetchSignOn(`/api/sign-on/${quizId}/join`, {
         method: "POST",
     })
 

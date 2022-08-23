@@ -51,7 +51,7 @@ class HostTest {
         every { generateId() } returns quizId
 
         // Act
-        val response = client.post("/sign-on/host")
+        val response = client.post("/api/sign-on/host")
 
         // Assert
         val payload = Json.decodeFromStream<AuthorizationResponse>(response.readBytes().inputStream())

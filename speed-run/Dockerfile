@@ -12,7 +12,7 @@ COPY --from=builder /home/gradle/build/install/com.ryangwaite.speed-run /app/
 
 # For consistency, keep the following in-sync with CDK infra
 HEALTHCHECK --interval=5s --timeout=2s --start-period=5s --retries=3 CMD \
-    curl --silent --fail http://localhost/ping | grep  --silent "pong" || exit 1
+    curl --silent --fail http://localhost/api/ping | grep  --silent "pong" || exit 1
 
 WORKDIR /app/bin
 ENTRYPOINT ["./com.ryangwaite.speed-run"]

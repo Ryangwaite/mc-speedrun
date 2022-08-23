@@ -30,7 +30,7 @@ class ParticipantTest {
             participant(MemoryRepository())
         }
 
-        val response = client.post("/sign-on/join")
+        val response = client.post("/api/sign-on/join")
         assertEquals(HttpStatusCode.NotFound, response.status)
     }
 
@@ -40,7 +40,7 @@ class ParticipantTest {
             participant(MemoryRepository())
         }
 
-        val response = client.post("/sign-on/badcode/join")
+        val response = client.post("/api/sign-on/badcode/join")
         assertEquals(HttpStatusCode.NotFound, response.status)
         assertEquals("Invalid quiz ID 'badcode' provided", response.bodyAsText())
     }
@@ -74,7 +74,7 @@ class ParticipantTest {
         every { generateId() } returns userId
 
         // Act
-        val response = client.post("/sign-on/$quizId/join")
+        val response = client.post("/api/sign-on/$quizId/join")
 
         // Assert
         val payload = Json.decodeFromStream<AuthorizationResponse>(response.bodyAsChannel().toInputStream())

@@ -38,7 +38,7 @@ func main() {
 		Logger: logger,
 	}
 
-	http.HandleFunc("/upload/quiz", handler.LoggerMiddleware(logger, upload.Quiz))
+	http.HandleFunc("/api/upload/quiz", handler.LoggerMiddleware(logger, upload.Quiz))
 
 	port := config.Server.Port
 	logger.Info(fmt.Sprintf("Listening on port %d", port))

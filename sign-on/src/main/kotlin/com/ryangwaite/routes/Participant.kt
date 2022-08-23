@@ -17,7 +17,7 @@ fun Application.participant(
          * Return a Jwt token for authorizing to the permitted quiz
          * This is modelled after https://self-issued.info/docs/draft-ietf-oauth-v2-bearer.html#ExAccTokResp
          */
-        post("/sign-on/{quiz_id}/join") {
+        post("/api/sign-on/{quiz_id}/join") {
             val quizId = call.parameters["quiz_id"]!!
 
             if (!repository.quizExists(quizId)) {

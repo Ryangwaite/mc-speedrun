@@ -3,7 +3,7 @@ info:
   title: sign-on API
   version: 1.0.0
 paths:
-  /sign-on/{quiz_id}/join:
+  /api/sign-on/{quiz_id}/join:
     parameters:
       - name: quiz_id
         in: path
@@ -43,7 +43,7 @@ paths:
                 "token_type": "Bearer",
                 "expires_in": 31536000
               }
-  /sign-on/host:
+  /api/sign-on/host:
     post:
       summary: Create a hosted session with name '{quiz_name}'
       responses:

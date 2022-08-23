@@ -12,7 +12,7 @@ export async function uploadQuiz(quizFile: File, token: string) {
     const formData = new FormData()
     formData.append("file", quizFile)
 
-    const url = `${getQuizUploadBaseUrl()}/upload/quiz`
+    const url = `${getQuizUploadBaseUrl()}/api/upload/quiz`
     console.log("Upload url is, ", url)
     const response = await fetch(url, {
         headers: {
