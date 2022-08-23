@@ -170,9 +170,11 @@ aws-asset-icons/
 
 sign-on/build/
 sign-on/.gradle/
+!sign-on/gradle/wrapper/*
 
 speed-run/build/
 speed-run/.gradle/
+!speed-run/gradle/wrapper/*
 
 docker-compose.override.yml
 

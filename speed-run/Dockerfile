@@ -1,10 +1,11 @@
 FROM gradle:7.3.0-jdk11-alpine AS builder
 
-# Use the local sources but take note of the .dockerignore
-# which ignores host machine artifacts so we can build totally fresh in here
-COPY . ./
+COPY gradle.properties .
+COPY src src
+COPY build.gradle.kts .
+COPY settings.gradle.kts .
 
-RUN ./gradlew installDist
+RUN gradle installDist
 
 FROM openjdk:11 AS base
 
