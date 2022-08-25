@@ -54,6 +54,7 @@ func NewDynamodDbLoader(options DynamoDbLoaderOptions) (Loader, error) {
 	
 	return dynamoDbLoader{
 		client: dynamodb.NewFromConfig(cfg),
+		logger: options.Logger,
 	}, nil
 }
 
