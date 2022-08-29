@@ -12,9 +12,12 @@ import { AppLoadBalancer } from "../constructs/app-load-balancer";
 import { SpeedRun } from "../constructs/speed-run";
 import { Frontend } from "../constructs/frontend";
 import { CloudfrontDistro } from "../constructs/cloudfront";
+import { SpeedRunStore } from "../constructs/speed-run-store";
+import { QuizResultLoader } from "../constructs/quiz-result-loader";
+import { InterfaceVpcEndpointAwsService } from "aws-cdk-lib/aws-ec2";
 
 interface QuizStackProps extends StackProps {
-    vpc: ec2.IVpc
+    vpc: ec2.IVpc,
 }
 
 // TODO: Pass these in through secrets manager
@@ -23,7 +26,6 @@ const JWT: Jwt = {
     audience: "http://0.0.0.0/",
     issuer: "http://sign-on/",
 }
-
 
 /**
  * Stack for bringing up all resources needed to run a quiz end-to-end
@@ -62,7 +64,7 @@ export class QuizStack extends Stack {
             redisPort: 6379,
         })
 
-        const completionJobQ = new sqs.Queue(this, "CompletionJobQueue", {
+        const completionJobQueue = new sqs.Queue(this, "CompletionJobQueue", {
             fifo: true, // TODO: Confirm if client requires this
             // This is a single-producer/consumer system where each msg body is unique
             contentBasedDeduplication: true,
@@ -70,7 +72,7 @@ export class QuizStack extends Stack {
 
         const speedRun = new SpeedRun(this, "SpeedRun", {
             vpc: props.vpc,
-            completionJobQ: completionJobQ,
+            completionJobQ: completionJobQueue,
             questionSetStore: questionSetStore,
             speedRunCache: speedRunCache,
             ecsCluster: ecsCluster,
@@ -109,6 +111,18 @@ export class QuizStack extends Stack {
             exportName: "CF-DNS-name",
             description: "The public DNS name to reach the cloudfront distribution",
             value: `https://${distribution.domainName}`,
+        })
+
+        const speedRunStore = new SpeedRunStore(this, "SpeedRunStore", {
+            vpc: props.vpc,
+        })
+
+        const quizResultLoader = new QuizResultLoader(this, "QuizResulLoader", {
+            questionSetStoreAccessPoint: questionSetStore.accessPoint,
+            vpc: props.vpc,
+            completionJobQ: completionJobQueue,
+            speedRunCache: speedRunCache,
+            speedRunStore: speedRunStore,
         })
     }
 }

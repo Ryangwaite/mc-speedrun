@@ -6,8 +6,6 @@ import (
 
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -19,10 +17,7 @@ const quizTableName string = "quiz"
 
 type marshalledQuiz map[string]types.AttributeValue
 type DynamoDbLoaderOptions struct {
-	Region 				string
-	EndpointUrl			string
-	AccessKeyID			string
-	SecretAccessKey		string
+	AwsConfig 			aws.Config
 	Logger				*log.Logger
 }
 
@@ -32,28 +27,8 @@ type dynamoDbLoader struct {
 }
 
 func NewDynamodDbLoader(options DynamoDbLoaderOptions) (Loader, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(options.Region),
-		// Use dynamodb-local
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-			func(s, r string, o ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: options.EndpointUrl}, nil
-			},
-		)),
-		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
-			Value: aws.Credentials{
-				// These don't matter for dynmaodb-local
-				AccessKeyID: options.AccessKeyID,
-				SecretAccessKey: options.SecretAccessKey,
-			},
-		}),
-	)
-	if err != nil {
-		return dynamoDbLoader{}, err
-	}
-	
 	return dynamoDbLoader{
-		client: dynamodb.NewFromConfig(cfg),
+		client: dynamodb.NewFromConfig(options.AwsConfig),
 		logger: options.Logger,
 	}, nil
 }
@@ -95,6 +70,7 @@ func (d dynamoDbLoader) quizTableExists(ctx context.Context) bool {
 	}
 	output, err := d.client.DescribeTable(ctx, &input)
 	if err != nil {
+		d.logger.Debugf("DescribeTable result: %s", err.Error())
 		return false
 	}
 
@@ -123,6 +99,8 @@ func (d dynamoDbLoader) createQuizTable(ctx context.Context) error {
 		},
 	}
 	_, err := d.client.CreateTable(ctx, &input)
+	// TODO: Wait for table to be created before writing to it. It's ok
+	// atm since the cdk stack creates it.
 	return err
 }
 

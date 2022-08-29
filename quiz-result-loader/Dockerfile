@@ -11,11 +11,11 @@ COPY python-env/ python-env/
 COPY quiz/ quiz/
 COPY subscribe/ subscribe/
 COPY worker/ worker/
-COPY main.go .
+COPY cmd/container/ cmd/container/
 COPY go.mod .
 COPY go.sum .
 
-RUN go build -o quiz-result-loader
+RUN go build -o quiz-result-loader ./cmd/container
 
 FROM alpine:3.15
 

@@ -3,7 +3,8 @@
   "watch": {
     "include": [
       "**",
-      "../../../question-set-loader/**/*.go"
+      "../../../question-set-loader/**/*.go",
+      "../../../quiz-result-loader/**/*.go"
     ],
     "exclude": [
       "README.md",

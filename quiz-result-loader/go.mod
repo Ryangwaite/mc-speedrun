@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis/v2 v2.21.0 // indirect
+	github.com/aws/aws-lambda-go v1.34.1 // indirect
 	github.com/aws/aws-sdk-go v1.42.47 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.13.1 // indirect

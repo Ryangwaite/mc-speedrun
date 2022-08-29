@@ -8,6 +8,6 @@ const app = new cdk.App();
 
 const networkStack = new NetworkStack(app, "Network", {})
 
-new QuizStack(app, 'McSpeedrun', {
+new QuizStack(app, "Quiz", {
   vpc: networkStack.vpc,
 });

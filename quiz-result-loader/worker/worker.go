@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/deadletter"
 	extract "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	load "github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/quiz"
@@ -32,8 +31,21 @@ func combineExtractedQuizAndQuestions(extractedQuiz quiz.Quiz, questions quiz.Qu
 	return extractedQuiz, nil
 }
 
+type CompleteJob struct {
+	QuizId string
+	// The identifier of the worker that processed this job
+	WorkerNum int
+	ProcessingTimeMillis int64
+	Err error
+}
+
+// True if the completed job was successfully processed, else False
+func (j *CompleteJob) Success() bool {
+	return j.Err == nil
+}
+
 func Worker(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extractor extract.Extractor, loader load.Loader,
-		questionSetBasePath string, job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, workerNum int) {
+		questionSetBasePath string, newJobCh <-chan string, completeJobCh chan<-CompleteJob, workerNum int) {
 	for {
 		var quizId string
 
@@ -41,20 +53,24 @@ func Worker(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extractor 
 		case <-ctx.Done():
 			logger.Infof("worker %d stopped", workerNum)
 			return
-		case quizId = <-job:
+		case quizId = <-newJobCh:
 		}
 
 		logger.Infof("Worker %d started processing quiz '%s'", workerNum, quizId)
 		startTime := time.Now()
 
+		completeJob := CompleteJob{
+			QuizId: quizId,
+			WorkerNum: workerNum,
+		}
+
 		//// Extract ////
 		questionSetPath := path.Join(questionSetBasePath, quizId + ".json")
 		questions, err := quiz.LoadQuestionsFromFile(questionSetPath)
 		if err != nil {
-			deadLetterCh<-deadletter.DeadLetter{
-				QuizId: quizId,
-				ErrReason: fmt.Errorf("failed to load questions from file. %w", err),
-			}
+			completeJob.ProcessingTimeMillis = time.Since(startTime).Milliseconds()
+			completeJob.Err = fmt.Errorf("failed to load questions from file. %w", err)
+			completeJobCh<-completeJob
 			continue
 		}
 
@@ -63,10 +79,9 @@ func Worker(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extractor 
 		// NOTE: This extracted quiz doesn't have completed questions at this stage
 		extractedQuiz, err := extractor.Extract(ctx, quizId)
 		if err != nil {
-			deadLetterCh<-deadletter.DeadLetter{
-				QuizId: quizId,
-				ErrReason: fmt.Errorf("failed to extract. %w", err),
-			}
+			completeJob.ProcessingTimeMillis = time.Since(startTime).Milliseconds()
+			completeJob.Err = fmt.Errorf("failed to extract. %w", err)
+			completeJobCh<-completeJob
 			continue
 		}
 
@@ -74,40 +89,42 @@ func Worker(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extractor 
 
 		completeQuiz, err := combineExtractedQuizAndQuestions(extractedQuiz, questions)
 		if err != nil {
-			deadLetterCh<-deadletter.DeadLetter{
-				QuizId: quizId,
-				ErrReason: fmt.Errorf("failed to merge extracted quiz and questions. %w", err),
-			}
+			completeJob.ProcessingTimeMillis = time.Since(startTime).Milliseconds()
+			completeJob.Err = fmt.Errorf("failed to merge extracted quiz and questions. %w", err)
+			completeJobCh<-completeJob
 			continue
 		}
-		logger.Debugf("Complete loaded quiz: %+v\n", completeQuiz)
+		logger.Debugf("Worker %d complete loaded quiz: %+v\n", workerNum, completeQuiz)
 
 		//// Load ////
 		if err := loader.Load(ctx, completeQuiz); err != nil {
-			deadLetterCh<-deadletter.DeadLetter{
-				QuizId: quizId,
-				ErrReason: fmt.Errorf("failed to load. %w", err),
-			}
+			completeJob.ProcessingTimeMillis = time.Since(startTime).Milliseconds()
+			completeJob.Err = fmt.Errorf("failed to load. %w", err)
+			completeJobCh<-completeJob
 			continue
 		}
+		logger.Debugf("Worker %d loaded quiz '%s'", workerNum, quizId)
 
 		//// Delete ////
 		if err := extractor.Delete(ctx, quizId); err != nil {
 			logger.Warnf("Failed to delete extracted quiz for '%s'. %s", quizId, err.Error())
 			continue
 		}
+		logger.Debugf("Worker %d deleted quiz '%s'", workerNum, quizId)
 		if err := quiz.DeleteQuestionsFile(questionSetPath); err != nil {
 			logger.Warnf("Failed to delete questions file for quiz '%s'. %s", quizId, err.Error())
 			continue
 		}
+		logger.Debugf("Worker %d deleted questions file for quiz '%s'", workerNum, quizId)
 
-		elapsedTime := time.Since(startTime)
-		logger.Infof("Worker %d finished processing quiz '%s' in %dms", workerNum, quizId, elapsedTime.Milliseconds())
+		// Success
+		completeJob.ProcessingTimeMillis = time.Since(startTime).Milliseconds()
+		completeJobCh<-completeJob
 	}
 }
 
 func WorkerPool(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extractor extract.Extractor, loader load.Loader,
-		questionSetBasePath string, job <-chan string, deadLetterCh chan<-deadletter.DeadLetter, numWorkers int) {
+		questionSetBasePath string, newJobCh <-chan string, completeJobCh chan<-CompleteJob, numWorkers int) {
 
 	var wg sync.WaitGroup
 
@@ -115,7 +132,7 @@ func WorkerPool(ctx context.Context, logger *log.Logger, quiz quiz.IQuiz, extrac
 		i := i
 		wg.Add(1)
 		go func() {
-			Worker(ctx, logger, quiz, extractor, loader, questionSetBasePath, job, deadLetterCh, i)
+			Worker(ctx, logger, quiz, extractor, loader, questionSetBasePath, newJobCh, completeJobCh, i)
 			wg.Done()
 		}()
 	}

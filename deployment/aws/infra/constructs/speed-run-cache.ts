@@ -1,13 +1,11 @@
 import { Construct } from "constructs";
 import * as elasticache from 'aws-cdk-lib/aws-elasticache'
 import * as ec2 from "aws-cdk-lib/aws-ec2";
-
 export interface SpeedRunCacheProps {
     vpc: ec2.IVpc,
     vpcSubnets: ec2.SubnetSelection,
     redisPort: number,
 }
-
 
 /**
  * As of cdk version 2.29.1 there are no official constructs for elasticache, so this
