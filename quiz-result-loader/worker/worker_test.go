@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/deadletter"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/extract"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/internal/testutils"
 	"github.com/Ryangwaite/mc-speedrun/quiz-result-loader/load"
@@ -241,33 +240,31 @@ func TestWorker_ok(t *testing.T) {
 	quizUtil := NewMockQuizUtilOk()
 	extractor := NewMockExtractorOk()
 	loader := NewMockLoaderOk()
-	jobCh := make(chan string)
-	deadLetterCh := make(chan deadletter.DeadLetter)
+	newJobCh := make(chan string)
+	completeJobCh := make(chan CompleteJob)
 	workerNum := 3
 	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
 	defer cancel() // Terminates the worker below on function exit
 
 	// Start worker in the background
 	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
-			jobCh, deadLetterCh, workerNum)
+			newJobCh, completeJobCh, workerNum)
 
 	// Process quiz
-	jobCh<-quizId
+	newJobCh<-quizId
 
 	// Check that the log was received
 	for {
 		select {
-		case logMsgBytes := <-logCh:
-			logMsg := string(logMsgBytes)
-			if !strings.Contains(logMsg, fmt.Sprintf("Worker %d finished processing quiz '%s'", workerNum, quizId)) {
-				t.Logf("Received log '%s'. Not the one we're looking for, reading again...", logMsg)
-				continue
+		case completeJob := <-completeJobCh:
+			if completeJob.Err != nil {
+				t.Fatalf("Received failed to process quiz deadLetter")
 			} else {
-				// Received it - test pass
+				// success
 				return
 			}
-		case <-deadLetterCh:
-			t.Fatalf("Received failed to process quiz deadLetter")
+		case logMsg := <-logCh: // Listen on this channel to drain it so test doesn't hang
+			t.Logf("Received log msg '%s'", logMsg)
 		case <-ctx.Done():
 			t.Fatalf("Context cancelled. Error: %+v", ctx.Err())
 		}
@@ -284,14 +281,14 @@ func TestWorker_loadQuestionFromFile_error(t *testing.T) {
 	extractor := NewMockExtractorOk()
 	loader := NewMockLoaderOk()
 	jobCh := make(chan string)
-	deadLetterCh := make(chan deadletter.DeadLetter)
+	completeJobCh := make(chan CompleteJob)
 	workerNum := 3
 	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
 	defer cancel() // Terminates the worker below on function exit
 
 	// Start worker in the background
 	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
-			jobCh, deadLetterCh, workerNum)
+			jobCh, completeJobCh, workerNum)
 
 	// Process quiz
 	jobCh<-quizId
@@ -299,9 +296,9 @@ func TestWorker_loadQuestionFromFile_error(t *testing.T) {
 	// Check that the log was received
 	for {
 		select {
-		case deadLetter := <-deadLetterCh:
+		case completeJob := <-completeJobCh:
 			wantedError := "failed to load questions from file"
-			actualError := deadLetter.ErrReason.Error()
+			actualError := completeJob.Err.Error()
 			if !strings.Contains(actualError, wantedError) {
 				t.Fatalf("Unexpected error '%s' wanted '%s'", actualError, wantedError)
 			}
@@ -322,14 +319,14 @@ func TestWorker_extract_error(t *testing.T) {
 	}
 	loader := NewMockLoaderOk()
 	jobCh := make(chan string)
-	deadLetterCh := make(chan deadletter.DeadLetter)
+	completeJobCh := make(chan CompleteJob)
 	workerNum := 3
 	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
 	defer cancel() // Terminates the worker below on function exit
 
 	// Start worker in the background
 	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
-			jobCh, deadLetterCh, workerNum)
+			jobCh, completeJobCh, workerNum)
 
 	// Process quiz
 	jobCh<-quizId
@@ -337,9 +334,9 @@ func TestWorker_extract_error(t *testing.T) {
 	// Check that the log was received
 	for {
 		select {
-		case deadLetter := <-deadLetterCh:
+		case completeJob := <-completeJobCh:
 			wantedError := "failed to extract"
-			actualError := deadLetter.ErrReason.Error()
+			actualError := completeJob.Err.Error()
 			if !strings.Contains(actualError, wantedError) {
 				t.Fatalf("Unexpected error '%s' wanted '%s'", actualError, wantedError)
 			}
@@ -365,14 +362,14 @@ func TestWorker_combineExtractedQuizAndQuestions_error(t *testing.T) {
 	}
 	loader := NewMockLoaderOk()
 	jobCh := make(chan string)
-	deadLetterCh := make(chan deadletter.DeadLetter)
+	completeJobCh := make(chan CompleteJob)
 	workerNum := 3
 	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
 	defer cancel() // Terminates the worker below on function exit
 
 	// Start worker in the background
 	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
-			jobCh, deadLetterCh, workerNum)
+			jobCh, completeJobCh, workerNum)
 
 	// Process quiz
 	jobCh<-quizId
@@ -380,9 +377,9 @@ func TestWorker_combineExtractedQuizAndQuestions_error(t *testing.T) {
 	// Check that the log was received
 	for {
 		select {
-		case deadLetter := <-deadLetterCh:
+		case completeJob := <-completeJobCh:
 			wantedError := "failed to merge extracted quiz and questions"
-			actualError := deadLetter.ErrReason.Error()
+			actualError := completeJob.Err.Error()
 			if !strings.Contains(actualError, wantedError) {
 				t.Fatalf("Unexpected error '%s' wanted '%s'", actualError, wantedError)
 			}
@@ -402,14 +399,14 @@ func TestWorker_load_error(t *testing.T) {
 		loadImpl: LoadErrorImpl,
 	}
 	jobCh := make(chan string)
-	deadLetterCh := make(chan deadletter.DeadLetter)
+	completeJobCh := make(chan CompleteJob)
 	workerNum := 3
 	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
 	defer cancel() // Terminates the worker below on function exit
 
 	// Start worker in the background
 	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
-			jobCh, deadLetterCh, workerNum)
+			jobCh, completeJobCh, workerNum)
 
 	// Process quiz
 	jobCh<-quizId
@@ -417,9 +414,9 @@ func TestWorker_load_error(t *testing.T) {
 	// Check that the log was received
 	for {
 		select {
-		case deadLetter := <-deadLetterCh:
+		case completeJob := <-completeJobCh:
 			wantedError := "failed to load"
-			actualError := deadLetter.ErrReason.Error()
+			actualError := completeJob.Err.Error()
 			if !strings.Contains(actualError, wantedError) {
 				t.Fatalf("Unexpected error '%s' wanted '%s'", actualError, wantedError)
 			}
@@ -441,14 +438,14 @@ func TestWorker_extractor_delete_error(t *testing.T) {
 	}
 	loader := NewMockLoaderOk()
 	jobCh := make(chan string)
-	deadLetterCh := make(chan deadletter.DeadLetter)
+	completeJobCh := make(chan CompleteJob)
 	workerNum := 3
 	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
 	defer cancel() // Terminates the worker below on function exit
 
 	// Start worker in the background
 	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
-			jobCh, deadLetterCh, workerNum)
+			jobCh, completeJobCh, workerNum)
 
 	// Process quiz
 	jobCh<-quizId
@@ -465,8 +462,10 @@ func TestWorker_extractor_delete_error(t *testing.T) {
 				// Received it - test pass
 				return
 			}
-		case deadLetter := <-deadLetterCh:
-			t.Fatalf("Received deadLetter: %+v", deadLetter)
+		case completeJob := <-completeJobCh:
+			if completeJob.Err != nil {
+				t.Fatalf("Received deadLetter: %+v", completeJob.Err)
+			}
 		case <-ctx.Done():
 			t.Fatalf("Context cancelled. Error: %+v", ctx.Err())
 		}
@@ -484,14 +483,14 @@ func TestWorker_deleteQuestionsFile_error(t *testing.T) {
 	extractor := NewMockExtractorOk()
 	loader := NewMockLoaderOk()
 	jobCh := make(chan string)
-	deadLetterCh := make(chan deadletter.DeadLetter)
+	completeJobCh := make(chan CompleteJob)
 	workerNum := 3
 	ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Second)
 	defer cancel() // Terminates the worker below on function exit
 
 	// Start worker in the background
 	go Worker(ctx, mockLogger, quizUtil, extractor, loader, "/question/set/base/path",
-			jobCh, deadLetterCh, workerNum)
+			jobCh, completeJobCh, workerNum)
 
 	// Process quiz
 	jobCh<-quizId
@@ -508,8 +507,10 @@ func TestWorker_deleteQuestionsFile_error(t *testing.T) {
 				// Received it - test pass
 				return
 			}
-		case deadLetter := <-deadLetterCh:
-			t.Fatalf("Received deadLetter: %+v", deadLetter)
+		case completeJob := <-completeJobCh:
+			if completeJob.Err != nil {
+				t.Fatalf("Received deadLetter: %+v", completeJob)
+			}
 		case <-ctx.Done():
 			t.Fatalf("Context cancelled. Error: %+v", ctx.Err())
 		}
