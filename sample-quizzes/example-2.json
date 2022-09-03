@@ -67,7 +67,7 @@
     ]
   },
   {
-    "question": "When purchasing brocoli from Coles at a price of > $8/kg how long will it last in the fridge before it grows mould?",
+    "question": "When purchasing brocoli from Coles at a price of > $8/kg, how many days will it last in the fridge before it grows mould?",
     "category": "Food",
     "options": [
       "1",
@@ -89,7 +89,7 @@
       "4"
     ],
     "answers": [
-      2
+      3
     ]
   },
   {

@@ -14,17 +14,13 @@ import { Frontend } from "../constructs/frontend";
 import { CloudfrontDistro } from "../constructs/cloudfront";
 import { SpeedRunStore } from "../constructs/speed-run-store";
 import { QuizResultLoader } from "../constructs/quiz-result-loader";
-import { InterfaceVpcEndpointAwsService } from "aws-cdk-lib/aws-ec2";
+import { HostedZone } from "../constructs/hosted-zone";
 
 interface QuizStackProps extends StackProps {
     vpc: ec2.IVpc,
-}
-
-// TODO: Pass these in through secrets manager
-const JWT: Jwt = {
-    secret: "secret",
-    audience: "http://0.0.0.0/",
-    issuer: "http://sign-on/",
+    // The Route53 zone backed resource encapsulating the domain name
+    hostedZone: HostedZone,
+    jwt: Jwt,
 }
 
 /**
@@ -49,13 +45,13 @@ export class QuizStack extends Stack {
         const questionSetLoader = new QuestionSetLoader(this, "QuestionSetLoader", {
             vpc: props.vpc,
             questionSetStoreAccessPoint: questionSetStore.accessPoint,
-            jwt: JWT,
+            jwt: props.jwt,
         })
 
         const signOn = new SignOn(this, "SignOn", {
             vpc: props.vpc,
             ecsCluster: ecsCluster,
-            jwt: JWT,
+            jwt: props.jwt,
         })
 
         const speedRunCache = new SpeedRunCache(this, "SpeedRunCache", {
@@ -76,7 +72,7 @@ export class QuizStack extends Stack {
             questionSetStore: questionSetStore,
             speedRunCache: speedRunCache,
             ecsCluster: ecsCluster,
-            jwt: JWT
+            jwt: props.jwt,
         })
 
         const appLoadBalancer = new AppLoadBalancer(this, "ApplicationLoadBalancer", {
@@ -102,22 +98,23 @@ export class QuizStack extends Stack {
 
         const frontend = new Frontend(this, "Frontend", {})
 
-        const distribution = new CloudfrontDistro(this, "CloudfrontDistrubution", {
+        new CloudfrontDistro(this, "CloudfrontDistrubution", {
             frontendBucket: frontend.bucket,
-            loadBalancer: appLoadBalancer.loadBalancer
+            loadBalancer: appLoadBalancer.loadBalancer,
+            r53HostedZone: props.hostedZone.r53HostedZone,
         })
 
         new CfnOutput(this, "CloudfrontDnsAddress", {
             exportName: "CF-DNS-name",
             description: "The public DNS name to reach the cloudfront distribution",
-            value: `https://${distribution.domainName}`,
+            value: `https://${props.hostedZone.r53HostedZone.zoneName}`,
         })
 
         const speedRunStore = new SpeedRunStore(this, "SpeedRunStore", {
             vpc: props.vpc,
         })
 
-        const quizResultLoader = new QuizResultLoader(this, "QuizResulLoader", {
+        new QuizResultLoader(this, "QuizResulLoader", {
             questionSetStoreAccessPoint: questionSetStore.accessPoint,
             vpc: props.vpc,
             completionJobQ: completionJobQueue,

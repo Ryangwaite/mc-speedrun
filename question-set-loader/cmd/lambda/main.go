@@ -34,6 +34,9 @@ func loadLambdaConfig() (lambdaConfig, error) {
 		return config, fmt.Errorf("required env var '%s' was missing", loaderDstDirKey) // TODO: Use custom error type
 	}
 
+	// NOTE: This is an unsecure way of doing this. Ideally these should be ARNS's to
+	// secrets in AWS secrets manager which the lambda should query at runtime using it's
+	// execution role that has permissions to read from secrets manager.
 	jwtSecretKey := ENV_VAR_PREFIX + "JWT_SECRET"
 	if config.jwt.Secret = os.Getenv(jwtSecretKey); config.jwt.Secret == "" {
 		return config, fmt.Errorf("required env var '%s' was missing", jwtSecretKey)
