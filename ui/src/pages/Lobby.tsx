@@ -25,6 +25,9 @@ function Lobby(props: ILobbyProps) {
     const otherParticipants = leaderboard.filter(participant => participant.userId !== userId)
     
     function onJoin(name: string) {
+        // FIXME: Fix a couple of bugs:
+        //  1. If a user is midway through inputing their name and another user joins then there current input will be erased and they'll need to re-enter it again
+        //  2. If a user joins before the websocket is connected (i think) then they will get stuck on the screen saying 'Waiting for host to start...'
         setUserJoined(true)
         dispatch(setUsername(name))
     }
