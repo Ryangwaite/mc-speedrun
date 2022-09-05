@@ -7,7 +7,7 @@ To run:
 # In ../../deployment/docker-compose/
 docker-compose up
 ```
-2. Run `pytest --headed --slowmo 100`
+2. Run `pipenv run pytest --headed --slowmo 100`
 3. Terminate the compose environment
 ```bash
 # In ../../deployment/docker-compose/

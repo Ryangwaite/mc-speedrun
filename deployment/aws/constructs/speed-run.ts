@@ -80,7 +80,7 @@ export class SpeedRun extends Construct {
             assignPublicIp: true, // Enables it to route through the internet gateway through to ECR to pull the image
             cluster: props.ecsCluster,
             taskDefinition: speedRunTaskDefinition,
-            desiredCount: 1,  // TODO: Tune tasks count
+            desiredCount: 2,
         })
     }
 }

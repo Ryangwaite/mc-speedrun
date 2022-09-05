@@ -3,22 +3,27 @@ from models import Question
 from playwright.sync_api._generated import Browser, Page
 from playwright.sync_api import expect
 
+# TODO: pass in through cmdline
+hostname = "localhost"
+
+
 def _add_participant(browser: Browser, username: str, access_code: str) -> Page:
     """ Starts a new browser session, opens a new page and joins
         a new participant with the provided username.
     """
+
     # Open new page
     participant_context = browser.new_context(ignore_https_errors=True)
     participant_page = participant_context.new_page()
 
-    # Go to https://localhost/
-    participant_page.goto("https://localhost/")
+    # Go to homepage
+    participant_page.goto(f"https://{hostname}/")
 
     # Insert access code
     participant_page.locator("input[type=\"text\"]").fill(access_code)
 
     # Click "enter"
-    with participant_page.expect_navigation(url="https://localhost/lobby"):
+    with participant_page.expect_navigation(url=f"https://{hostname}/lobby"):
         participant_page.locator("text=Enter").click()
 
     # Insert username
@@ -55,9 +60,9 @@ def test_happy_path_15_participants(browser: Browser, quiz_question_filepath: st
 
     # Start host page and configure anything
     host_page: Page = host_context.new_page()
-    host_page.goto("https://localhost/")
+    host_page.goto(f"https://{hostname}/")
 
-    with host_page.expect_navigation(url="https://localhost/config"):
+    with host_page.expect_navigation(url=f"https://{hostname}/config"):
         # Click begin button which should redirect to /config page
         host_page.locator("text=Begin").click()
 
@@ -92,12 +97,12 @@ def test_happy_path_15_participants(browser: Browser, quiz_question_filepath: st
     #### Stop Host Config ####
     #### Start add participants ####
     participant_pages = []
-    for i in range(15):
+    for i in range(3):
         participant_pages += [_add_participant(browser, f"user{i}", access_code)]
     
     #### Stop add participants ####
     #### Start Quiz ####
-    with host_page.expect_navigation(url="https://localhost/summary"):
+    with host_page.expect_navigation(url=f"https://{hostname}/summary"):
             host_page.locator("text=Start").click()
     #### Stop Quiz ####
     #### Start Answer questions ####
@@ -112,17 +117,17 @@ def test_happy_path_15_participants(browser: Browser, quiz_question_filepath: st
     #### Stop Answer questions ####
     #### Start Assert final result ####
     
-    expect(host_page).to_have_url("https://localhost/summary")
+    expect(host_page).to_have_url(f"https://{hostname}/summary")
     for participant_page in participant_pages:
-        expect(participant_page).to_have_url("https://localhost/summary")
+        expect(participant_page).to_have_url(f"https://{hostname}/summary")
 
     # Host return to home
     host_page.locator("text=RETURN TO HOME").click()
-    expect(host_page).to_have_url("https://localhost/")
+    expect(host_page).to_have_url(f"https://{hostname}/")
 
     # Participants return to home
     for participant_page in participant_pages:
         participant_page.locator("text=RETURN TO HOME").click()
-        expect(participant_page).to_have_url("https://localhost/")
+        expect(participant_page).to_have_url(f"https://{hostname}/")
 
     #### Stop Assert final result ####
