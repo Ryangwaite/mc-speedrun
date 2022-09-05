@@ -42,7 +42,7 @@ export class SpeedRun extends Construct {
         props.completionJobQ.grantSendMessages(speedRunTaskDefinition.taskRole)
 
         const speedRunContainer = speedRunTaskDefinition.addContainer("SpeedRunContainer", {
-            image: ecs.ContainerImage.fromAsset("../../../speed-run/", {
+            image: ecs.ContainerImage.fromAsset("../../speed-run/", {
                 file: "Dockerfile",
                 target: "AWS",
             }),

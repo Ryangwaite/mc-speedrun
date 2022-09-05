@@ -11,11 +11,18 @@
   - [3.7 speed-run Store](#37-speed-run-store)
   - [3.8 sign-on](#38-sign-on)
   - [3.9 CloudFront](#39-cloudfront)
+- [Useful commands](#useful-commands)
+- [Steps to create the cross account delegation role for Route 53 in the parent account and grant access to the sub account](#steps-to-create-the-cross-account-delegation-role-for-route-53-in-the-parent-account-and-grant-access-to-the-sub-account)
 
 ## 1. Setup
-Before deploying to aws, the following needs to be installed:
+
+ a) Before deploying to aws, the following needs to be installed:
 - [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install)
 - [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install-linux.html)
+
+ b) Follow these [steps](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-creds-create#cli-configure-quickstart-creds) to download a new key pair for programmatic access to AWS.
+
+ c) Run `make init` and configure `.env` with all the relevant details.
 
 
 ## 2. Deploying
@@ -67,3 +74,54 @@ Facilitates hosts creating multiple choice speedruns and participants joining th
 Serves static assets from S3, reverse-proxies requests to API gateway via AWS backbone network.
 
 Will be something similar to: https://www.rehanvdm.com/blog/cloudfront-reverse-proxy-api-gateway-to-prevent-cors
+
+
+----------------------------------
+# This was from a nested README. TODO: combine it all into this README properly:
+
+
+
+# Welcome to your CDK TypeScript project
+
+This is a blank project for CDK development with TypeScript.
+
+The `cdk.json` file tells the CDK Toolkit how to execute your app.
+
+## Useful commands
+
+* `npm run build`   compile typescript to js
+* `npm run watch`   watch for changes and compile
+* `npm run test`    perform the jest unit tests
+* `cdk deploy`      deploy this stack to your default AWS account/region
+* `cdk diff`        compare deployed stack with current state
+* `cdk synth`       emits the synthesized CloudFormation template
+
+
+## Steps to create the cross account delegation role for Route 53 in the parent account and grant access to the sub account
+
+1. In the parent account, create a new IAM role where the trusted entity type is "AWS Account"
+2. Check the "Another AWS account" radio button and enter the ID of the sub account
+3. Leave options unchecked and press "next"
+4. Don't attach any permissions and press "next" again
+5. For the role name enter "mcspeedrun-route53-delagation-role", followed by "Create role"
+6. Click on the role, scroll down, click "Add permissions" drop down followed by "Create inline policy"
+7. Switch to the JSON editor and input:
+    ```json
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": "route53:ChangeResourceRecordSets",
+                "Resource": "arn:aws:route53:::hostedzone/<REPLACE WITH YOUR ZONE ID>"
+            },
+            {
+                "Effect": "Allow",
+                "Action": "route53:ListHostedZonesByName",
+                "Resource": "*"
+            }
+        ]
+    }
+    ```
+8. Click "Review policy"
+9. Input a name and click "Create policy"

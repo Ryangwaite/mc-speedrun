@@ -24,7 +24,7 @@ export class QuestionSetLoader extends Construct {
             filesystem: lambda.FileSystem.fromEfsAccessPoint(props.questionSetStoreAccessPoint, quizDirPath),
             vpc: props.vpc, // Put in data subnets and create a Security Group. TODO: Move to application subnets
             runtime: lambda.Runtime.GO_1_X,
-            code: lambda.Code.fromAsset("../../../question-set-loader/", {
+            code: lambda.Code.fromAsset("../../question-set-loader/", {
                 bundling: {
                     image: lambda.Runtime.GO_1_X.bundlingImage,
                     user: "root",

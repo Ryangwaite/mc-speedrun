@@ -24,7 +24,7 @@ export class SignOn extends Construct {
             memoryLimitMiB: 512,
         })
         const signOnContainer = signOnTaskDefinition.addContainer("SignOnContainer", {
-            image: ecs.ContainerImage.fromAsset("../../../sign-on/", {
+            image: ecs.ContainerImage.fromAsset("../../sign-on/", {
                 file: "Dockerfile",
             }),
             portMappings: [{

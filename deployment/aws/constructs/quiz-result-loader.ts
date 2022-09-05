@@ -28,7 +28,7 @@ export class QuizResultLoader extends Construct {
             vpc: props.vpc,
             vpcSubnets: { subnets: props.vpc.isolatedSubnets },
             runtime: lambda.Runtime.GO_1_X,
-            code: lambda.Code.fromAsset("../../../quiz-result-loader/", {
+            code: lambda.Code.fromAsset("../../quiz-result-loader/", {
                 bundling: {
                     image: lambda.Runtime.GO_1_X.bundlingImage,
                     user: "root",

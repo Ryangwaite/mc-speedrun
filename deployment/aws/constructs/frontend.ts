@@ -23,7 +23,7 @@ export class Frontend extends Construct {
         })
         new s3deploy.BucketDeployment(this, "DeployFrontend", {
             sources: [
-                s3deploy.Source.asset("../../../ui/build"), // NOTE: The sources must exist for this to work
+                s3deploy.Source.asset("../../ui/build"), // NOTE: The sources must exist for this to work
             ],
             destinationBucket: this.bucket,
         })
