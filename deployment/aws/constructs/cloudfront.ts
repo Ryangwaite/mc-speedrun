@@ -24,6 +24,9 @@ export class CloudfrontDistro extends Construct {
             domainName: domainName,
             hostedZone: props.r53HostedZone,
             region: "us-east-1", // Region must be this for cloudfront
+            // Without this DNS records created as part of domain name ownership validation would
+            // cause the destroy phase of the stack to fail and require manual cleanup
+            cleanupRoute53Records: true,
         })
 
         const distribution = new cloudfront.Distribution(this, "Distribution", {

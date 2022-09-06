@@ -3,6 +3,18 @@ include .env
 export $(shell grep '=' .env | sed 's/=.*//' .env)
 
 
+.PHONY: bootstrap
+# Boostraps the AWS account for cdk deployment
+bootstrap:
+	@echo TODO: implement this something like 'cdk bootstrap aws://<aws-account>/us-east-1' though
+
+
+.PHONY: unbootstrap
+# Removes all traces of the bootstrapping of the account
+unbootstrap:
+	@echo TODO: implement this
+
+
 .PHONY: deploy
 # Deploy the entire application to AWS
 deploy:
@@ -18,4 +30,4 @@ watch:
 .PHONY: destroy
 # Deletes the entire deployment from AWS
 destroy:
-	@cdk destroy TODO: finish this one off
+	@cdk destroy --all
