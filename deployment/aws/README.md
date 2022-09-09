@@ -155,7 +155,6 @@ It's execution role requires permissions to mount EFS filesystems, receive and d
 
 A single DynamoDB standard table configured with "Provisioned" capacity mode. This capacity mode is sufficient and cheap (free-tier eligible).
 
-
 ## 3. Miscellaneous
 ### 3.1 `cdk` commands
 
