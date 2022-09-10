@@ -1,6 +1,16 @@
 
-include .env
-export $(shell grep '=' .env | sed 's/=.*//' .env)
+-include .env
+export $(shell test -e .env && grep '=' .env | sed 's/=.*//' .env)
+
+.PHONY: init
+# Initialises the dotenv file
+init:
+	@if [ ! -e .env ]; then \
+		cp .env.example .env; \
+		echo "Created '.env'. Configure it with the variables needed to deploy to your environment."; \
+	else \
+		echo "'.env' already exists. Leaving alone."; \
+	fi;
 
 
 .PHONY: bootstrap
@@ -19,7 +29,7 @@ bootstrap:
 .PHONY: unbootstrap
 # Removes all traces of the bootstrapping of the account
 unbootstrap:
-	@# Empty the bucket of all versions and objects if it exists
+	@# Empty the bucket of all versions and objects if it exists before deleting it
 	-@S3_BUCKET=$$(aws s3 ls | grep cdk | cut -d' ' -f3) && \
 	if [ -z $$S3_BUCKET ]; then \
 		echo "Could not find bucket" && exit 1; \
@@ -45,7 +55,10 @@ unbootstrap:
 		echo "Finished deleting delete markers from S3 bucket."; \
 	else \
 		echo "No delete markers to delete from S3 bucket"; \
-	fi;
+	fi && \
+	echo "Deleting bucket '$${S3_BUCKET}'..." && \
+	aws s3 rb "s3://$${S3_BUCKET}" && \
+	echo "Bucket deleted";
 	
 	@# Delete the ECR repo forcefully first since the stack deletion won't remove it if it has objects in it
 	-@ECR_REPO=$$(aws ecr describe-repositories | jq -r .repositories[].repositoryName | grep cdk) && \
