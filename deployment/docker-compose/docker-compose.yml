@@ -1,19 +1,18 @@
 # Spins-up an entire local mc-speedrun environment
-# TODO: Move pass in secrets through an .env file
 
 version: '3.9'
 services:
-  redis:
+  speed-run-cache:
     image: redis:6.2.6-alpine
-  dynamodb-local:
+  quiz-result-store:
     command: "-jar DynamoDBLocal.jar -sharedDb -inMemory -port 8000"
     image: "amazon/dynamodb-local:latest"
     working_dir: /home/dynamodblocal
   quiz-completion-queue:
     image: rabbitmq:management
     environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=passwd
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:?Please ensure this is set in .env}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:?Please ensure this is set in .env}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
@@ -22,7 +21,7 @@ services:
       start_period: 5s
   sign-on:
     depends_on:
-      - redis
+      - speed-run-cache
     image: sign-on
     build:
       # sign-on/ as context and dockerfile path relative to it
@@ -30,15 +29,15 @@ services:
       dockerfile: Dockerfile
     environment:
       - SIGN_ON_PORT=80
-      - JWT_SECRET=dockercomposesecret
-      - JWT_ISSUER=http://sign-on/
-      - JWT_AUDIENCE=http://0.0.0.0/
+      - JWT_SECRET
+      - JWT_ISSUER
+      - JWT_AUDIENCE
   speed-run:
     depends_on:
       quiz-completion-queue:
         # Wait for rabbit mq to initialise within the container before starting
         condition: service_healthy
-      redis:
+      speed-run-cache:
         condition: service_started
     image: speed-run
     build:
@@ -48,15 +47,15 @@ services:
       target: "base"
     environment:
       - SPEED_RUN_PORT=80
-      - JWT_SECRET=dockercomposesecret
-      - JWT_ISSUER=http://sign-on/
-      - JWT_AUDIENCE=http://0.0.0.0/
-      - REDIS_HOST=redis
+      - JWT_SECRET
+      - JWT_ISSUER
+      - JWT_AUDIENCE
+      - REDIS_HOST=speed-run-cache
       - REDIS_PORT=6379
       - QUIZ_DIRECTORY=/quiz-questions
       - NOTIFY_RABBITMQ_HOST=quiz-completion-queue
-      - NOTIFY_RABBITMQ_USERNAME=admin
-      - NOTIFY_RABBITMQ_PASSWORD=passwd
+      - NOTIFY_RABBITMQ_USERNAME=${RABBITMQ_USER:?Please ensure this is set in .env}
+      - NOTIFY_RABBITMQ_PASSWORD=${RABBITMQ_PASS:?Please ensure this is set in .env}
       - NOTIFY_QUEUE_NAME=quiz-complete
       - NOTIFY_DESTINATION_TYPE=rabbitmq
     volumes:
@@ -76,9 +75,9 @@ services:
       dockerfile: Dockerfile
     environment:
       - PORT=80
-      - JWT_SECRET=dockercomposesecret
-      - JWT_ISSUER=http://sign-on/
-      - JWT_AUDIENCE=http://0.0.0.0/
+      - JWT_SECRET
+      - JWT_ISSUER
+      - JWT_AUDIENCE
       - LOADER_DST_DIR=/quiz-questions/
     volumes:
       - type: volume
@@ -97,18 +96,18 @@ services:
       quiz-completion-queue:
         # Wait for rabbit mq to initialise within the container before starting
         condition: service_healthy
-      redis:
+      speed-run-cache:
         condition: service_started
-      dynamodb-local:
+      quiz-result-store:
         condition: service_started
     environment:
       - RABBITMQ_HOST=quiz-completion-queue
-      - RABBITMQ_USERNAME=admin
-      - RABBITMQ_PASSWORD=passwd
-      - REDIS_HOST=redis
+      - RABBITMQ_USERNAME=${RABBITMQ_USER:?Please ensure this is set in .env}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:?Please ensure this is set in .env}
+      - REDIS_HOST=speed-run-cache
       - REDIS_PORT=6379
       - QUESTION_SET_PATH=/question-sets
-      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
+      - DYNAMODB_ENDPOINT_URL=http://quiz-result-store:8000
     volumes:
       - type: volume
         source: quiz-questions

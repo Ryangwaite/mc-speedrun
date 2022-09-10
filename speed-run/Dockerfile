@@ -7,6 +7,8 @@ COPY settings.gradle.kts .
 
 RUN gradle installDist
 
+# TODO: This image has been deprecated. Switch to a new one. Refer to: https://github.com/docker-library/openjdk/issues/505
+# Also would be good to get a much slimer one to reduce upload times to AWS ECR
 FROM openjdk:11 AS base
 
 COPY --from=builder /home/gradle/build/install/com.ryangwaite.speed-run /app/

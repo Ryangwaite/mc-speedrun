@@ -26,13 +26,15 @@ class RabbitMqNotifier(val config: ApplicationConfig): INotifier {
      */
     @ExperimentalSerializationApi
     override fun notify(event: Event) {
+        // FIXME: It is expensive to reopen a channel just for a single operation. Change
+        // this to re-use a channel per notification.
         connection.createChannel().use {channel ->
             channel.queueDeclare(this.queueName, true, false, false, null)
 
             val eventByteStream = ByteArrayOutputStream()
             Json.encodeToStream(event, eventByteStream)
             channel.basicPublish(
-                "",
+                "", // Use default exchange which enqueues msg into the queue with the same name as the routing key
                 this.queueName,
                 MessageProperties.PERSISTENT_TEXT_PLAIN,
                 eventByteStream.toByteArray(),

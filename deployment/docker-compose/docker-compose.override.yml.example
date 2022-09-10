@@ -5,10 +5,10 @@
 
 version: '3.9'
 services:
-  redis:
+  speed-run-cache:
     ports:
       - "6379:6379"
-  dynamodb-local:
+  quiz-result-store:
     ports:
       - "8000:8000"
   quiz-completion-queue:

@@ -181,6 +181,7 @@ docker-compose.override.yml
 /quiz-result-loader/python-env/
 
 secrets/
+.env
 
 question-set-loader/bin/
 question-set-loader/asset-output/

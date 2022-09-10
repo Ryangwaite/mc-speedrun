@@ -3,19 +3,30 @@ SECRETS ?= secrets
 SERVER_KEY = "${SECRETS}/server-key.pem"
 SERVER_CRT = "${SECRETS}/server-crt.pem"
 
+.PHONY: init
+# Initialises the dotenv file
+init:
+	@if [ ! -e .env ]; then \
+		cp .env.example .env; \
+		echo "Created '.env'. Configure it with the variables needed to deploy to your environment."; \
+	else \
+		echo "'.env' already exists. Leaving alone."; \
+	fi;
+
+
 .PHONY: pki
 # Generate the nginx server certificate and private key for SSL connections.
 # NOTE: This is a self-signed certificate with a private key that doesn't have a password.
 pki:
-	@if [ -f ${SERVER_CRT} -a -f ${SERVER_KEY} ]; then \
-		echo "Certificate and key already exist. Reusing them" && exit 0; \
+	@if [ -f $(SERVER_CRT) -a -f $(SERVER_KEY) ]; then \
+		echo "Certificate and key already exist. Reusing them"; \
 	else \
 		# Create certificate and key \
-		mkdir -p "${SECRETS}"; \
+		mkdir -p "$(SECRETS)"; \
 		openssl req -x509 \
 			-newkey rsa:4096 \
-			-keyout "${SERVER_KEY}" \
-			-out "${SERVER_CRT}" \
+			-keyout "$(SERVER_KEY)" \
+			-out "$(SERVER_CRT)" \
 			-sha256 \
 			-nodes \
 			-days 365; \
@@ -24,7 +35,7 @@ pki:
 
 .PHONY: clean
 clean:
-	@rm -rf ${SECRETS}
+	@rm -rf $(SECRETS)
 
 
 .PHONY: build
