@@ -5,9 +5,9 @@
 - [3. Usage](#3-usage)
   - [3.1 Host](#31-host)
   - [3.2 Container](#32-container)
-- [3. Tests](#3-tests)
-- [4. Tips and Tricks](#4-tips-and-tricks)
-  - [4.1 Uploading a file to a running server](#41-uploading-a-file-to-a-running-server)
+- [4. Tests](#4-tests)
+- [5. Tips and Tricks](#5-tips-and-tricks)
+  - [5.1 Uploading a file to a running server](#51-uploading-a-file-to-a-running-server)
 
 ## 1. Overview
 An HTTP server with an endpoint for uploading question sets. When a request is received, its checked for authorization and that the content of the uploaded file is valid then it gets written to the local filesystem.
@@ -24,7 +24,7 @@ To run locally on the host you need to install:
 ### 3.1 Host
 To run the binary on the host run:
 ```bash
-go run cmd/container.main.go
+go run cmd/container/main.go
 ```
 or in development mode:
 ```bash
@@ -40,14 +40,14 @@ And run it with:
 ```bash
 make container-run
 ```
-## 3. Tests
+## 4. Tests
 The tests can be run with:
 ```bash
 go test ./...
 ```
 
-## 4. Tips and Tricks
-### 4.1 Uploading a file to a running server
+## 5. Tips and Tricks
+### 5.1 Uploading a file to a running server
 
 To upload a file run:
 ```bash
