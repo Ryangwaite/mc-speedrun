@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ApplicationKt-dev-with-compose-env" type="JetRunConfigurationType">
+    <envs>
+      <env name="JWT_SECRET" value="dockercomposesecret" />
+      <env name="JWT_ISSUER" value="http://sign-on/" />
+      <env name="JWT_AUDIENCE" value="http://0.0.0.0/" />
+      <env name="SPEED_RUN_DEVELOPMENT_MODE" value="true" />
+      <env name="QUIZ_DIRECTORY" value="/tmp/mc-speedrun-quiz-questions/" />
+      <env name="NOTIFY_DESTINATION_TYPE" value="rabbitmq" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="com.ryangwaite.ApplicationKt" />
+    <module name="com.ryangwaite.speed-run.main" />
+    <shortenClasspath name="NONE" />
+    <option name="VM_PARAMETERS" value="-Dio.ktor.development=true" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

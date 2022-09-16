@@ -26,7 +26,7 @@ To run locally on the host you need to install:
 
 ### 3.1 Host
 
-To build the application then run it on the host:
+To build the application:
 ```bash
 ./gradlew installDist
 ```
@@ -35,7 +35,7 @@ or to build but exclude tests:
 ./gradlew installDist -x test
 ```
 
-To run it:
+And to run it:
 ```bash
 ./build/install/com.ryangwaite.sign-on/bin/com.ryangwaite.sign-on
 ```
