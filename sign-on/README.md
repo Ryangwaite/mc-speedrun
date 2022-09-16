@@ -1,44 +1,69 @@
 # sign-on
 
+- [1. Overview](#1-overview)
+- [2. Installation](#2-installation)
+- [3. Usage](#3-usage)
+  - [3.1 Host](#31-host)
+  - [3.2 Container](#32-container)
+- [4. Tests](#4-tests)
+- [5. Tips and Tricks](#5-tips-and-tricks)
+  - [5.1 Hot-reloading with intellij IDEA Community](#51-hot-reloading-with-intellij-idea-community)
 
-## Local Development
+## 1. Overview
+An HTTP server that responds to requests with an auth token for authenticating the user to other services. There's two types of tokens with different claims. One for hosts and one for clients.
 
-### intellij IDEA Community
+Amongst the wider mc-speedrun architecture, it allowed other services auth logic to be implemented without relying on a full-fledged auth solution.
 
-To run in development mode locally run the default launch configuration with the additional `-Dio.ktor.development=true` VM option.
+In future, it's likely this service will be removed for something more full featured when the flows through the application change e.g. login screen gated quiz creation.
 
-To enable auto-build on save, in a seperate terminal in the root of this directory run:
+## 2. Installation
+
+To run locally on the host you need to install:
+ - [OpenJDK11](https://openjdk.org/install/)
+
+
+## 3. Usage
+
+### 3.1 Host
+
+To build the application then run it on the host:
 ```bash
- ./gradlew -t build -x test -i
+./gradlew installDist
+```
+or to build but exclude tests:
+```bash
+./gradlew installDist -x test
 ```
 
-## Running Tests
-### Command-line
+To run it:
+```bash
+./build/install/com.ryangwaite.sign-on/bin/com.ryangwaite.sign-on
+```
+
+### 3.2 Container
+
+To build the container:
+```bash
+docker build --tag sign-on .
+```
+
+And to run it:
+```bash
+docker run --rm -p 8080:8080 sign-on
+```
+
+## 4. Tests
+The tests can be run with:
 ```bash
 ./gradlew test
 ```
 
-## Dockerfile
+## 5. Tips and Tricks
+### 5.1 Hot-reloading with intellij IDEA Community
 
-To build container run:
+Run the *ApplicationKt-DEV* run configuration then in another terminal run:
 ```bash
-docker build -t sign-on .
-```
-And to run:
-```bash
-docker run --rm -p 8080:8080 -it sign-on:latest
+./gradlew -t build -x test -i
 ```
 
-### Notes
-There's weirdness when using jdk8 when trying to run the tests as part of `./gradlew build`. It complains with a method not being found.
-If jdk11 is used (which matches my local dev environment) then it works.
-TODO: Determine consistent set of jdk/jvms across all environments.
-
-https://stackoverflow.com/questions/61267495/exception-in-thread-main-java-lang-nosuchmethoderror-java-nio-bytebuffer-flip
-
-## Deploying to AWS ECS (fargate)
-
-- Use a single task definition for the sign-on service, another one for the speed-run service
-- Use a service to manage the task definition which will help maintain desired number of tasks
-- To run the container in a private subnet and be able to pull the image from ecr, i think i need to give ecr a vpc interface endpoint
-- The ECR registry will be private and need to be authenticated with. The credentials should be stored in secrets manager.
+Whenever a file is changed and saved, the server will automatically notice, build the change and hot-swap it all without having to restart the server.
